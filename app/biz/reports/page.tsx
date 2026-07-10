@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { downloadExcel } from '@/lib/excel'
+import { ReportTabs } from './ReportTabs'
 
 interface ReportData {
   summary: { totalSpend: number; totalBookings: number; pendingCount: number; rejectedCount: number; avgBookingValue: number }
@@ -14,343 +15,213 @@ interface ReportData {
   dateRange:    { from: string; to: string }
 }
 
-function fmt(paise: number) {
-  if (paise === 0) return '₹0'
-  const rs = paise / 100
-  if (rs >= 100000) return `₹${(rs / 100000).toFixed(1)}L`
-  if (rs >= 1000)   return `₹${(rs / 1000).toFixed(1)}k`
-  return `₹${rs.toLocaleString('en-IN')}`
+function fmt(n: number) {
+  if (n === 0) return '₹0'
+  if (n >= 100000) return `₹${(n / 100000).toFixed(1)}L`
+  if (n >= 1000)   return `₹${(n / 1000).toFixed(1)}k`
+  return `₹${n.toLocaleString('en-IN')}`
 }
 
-function pct(part: number, total: number) {
-  if (!total) return '0%'
-  return `${Math.round((part / total) * 100)}%`
+const now = new Date()
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
+function getPresets() {
+  const y = now.getFullYear()
+  const m = now.getMonth()
+  const presets: { label: string; from: string; to: string; id: string }[] = []
+  // Last 3 months + current
+  for (let i = 0; i <= 3; i++) {
+    const d = new Date(y, m - i, 1)
+    const label = `${MONTHS[d.getMonth()]} ${d.getFullYear()}`
+    const from  = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`
+    const lastDay = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate()
+    const to = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${lastDay}`
+    presets.push({ label, from, to, id: label })
+  }
+  // Last quarter
+  const qm = Math.floor(m / 3) * 3
+  const qLabel = `QTR ${Math.floor(m/3)+1} (${MONTHS[qm]}-${MONTHS[qm+2 < 12 ? qm+2 : 11]})`
+  presets.push({ label: qLabel, from: `${y}-${String(qm+1).padStart(2,'0')}-01`, to: now.toISOString().slice(0,10), id: 'qtr' })
+  return presets
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  flight: '#2563eb', hotel: '#0d9488', bus: '#f97316', package: '#7c3aed'
-}
+const REPORT_TYPES = [
+  { key: 'flight',    label: 'Flight',    icon: '✈️' },
+  { key: 'flightpnr', label: 'Flight PNR', icon: '🎫' },
+  { key: 'hotel',    label: 'Hotel',     icon: '🏨' },
+  { key: 'cab',      label: 'Cab',       icon: '🚕' },
+  { key: 'bus',      label: 'Bus',       icon: '🚌' },
+]
 
 export default function ReportsPage() {
-  const thisYear  = new Date().getFullYear()
-  const [data, setData]     = useState<ReportData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [from, setFrom]     = useState(`${thisYear}-01-01`)
-  const [to, setTo]         = useState(new Date().toISOString().slice(0, 10))
-  const [tab, setTab]       = useState<'overview' | 'dept' | 'employee' | 'gst' | 'cost-center'>('overview')
+  const presets      = getPresets()
+  const defaultPreset = presets.find(p => p.id === 'qtr') ?? presets[0]
+
+  const [data,      setData]      = useState<ReportData | null>(null)
+  const [loading,   setLoading]   = useState(true)
+  const [loadErr,   setLoadErr]   = useState('')
+  const [from,      setFrom]      = useState(defaultPreset.from)
+  const [to,        setTo]        = useState(defaultPreset.to)
+  const [preset,    setPreset]    = useState(defaultPreset.id)
+  const [customDate,setCustomDate]= useState(false)
+  const [tab,       setTab]       = useState<'overview' | 'dept' | 'employee' | 'gst' | 'cost-center'>('overview')
 
   useEffect(() => { load() }, [from, to])
 
   function load() {
-    setLoading(true)
+    setLoading(true); setLoadErr('')
     adminFetch(`/api/admin/biz/reports?from=${from}&to=${to}`)
       .then(setData)
-      .catch(() => {})
+      .catch((e: any) => setLoadErr(e.message ?? 'Failed to load report'))
       .finally(() => setLoading(false))
   }
 
-  const s = data?.summary
-  const g = data?.gst
+  function selectPreset(p: { label: string; from: string; to: string; id: string }) {
+    setPreset(p.id); setFrom(p.from); setTo(p.to); setCustomDate(false)
+  }
+
+  function getTypeCount(key: string) {
+    if (key === 'flightpnr') key = 'flight'
+    return data?.byType.find(t => t.booking_type === key)?.count ?? 0
+  }
+  function getTypeSpend(key: string) {
+    if (key === 'flightpnr') key = 'flight'
+    const spend = data?.byType.find(t => t.booking_type === key)?.spend ?? 0
+    return spend
+  }
 
   function handleExcelDownload() {
-    if (!data || !s || !g) return
-    const rs = (paise: number) => paise / 100
-
+    if (!data) return
+    const s = data.summary
     downloadExcel(`AirDunia-BizReport-${from}-to-${to}`, [
-      {
-        name: 'Summary',
-        headers: ['Metric', 'Value'],
-        rows: [
-          ['Period', `${from} to ${to}`],
-          ['Total Spend (₹)', rs(s.totalSpend)],
-          ['Total Bookings', s.totalBookings],
-          ['Avg Booking Value (₹)', rs(s.avgBookingValue)],
-          ['Pending Approvals', s.pendingCount],
-          ['Rejected', s.rejectedCount],
-          ['Base Amount excl. GST (₹)', rs(g.baseAmount)],
-          ['GST Amount 18% (₹)', rs(g.gstAmount)],
-          ['Total incl. GST (₹)', rs(g.totalWithGst)],
-        ],
-      },
-      {
-        name: 'Monthly Trend',
-        headers: ['Month', 'Bookings', 'Spend (₹)'],
-        rows: data.monthly.map(m => [m.month, m.count, rs(m.spend)]),
-      },
-      {
-        name: 'By Department',
-        headers: ['Department', 'Bookings', 'Spend (₹)', 'Share %'],
-        rows: data.byDept.map(d => [
-          d.dept ?? 'Unassigned', d.count, rs(d.spend),
-          s.totalSpend > 0 ? +((d.spend / s.totalSpend) * 100).toFixed(1) : 0,
-        ]),
-      },
-      {
-        name: 'By Employee',
-        headers: ['Employee Email', 'Bookings', 'Spend (₹)', 'Avg per Trip (₹)'],
-        rows: data.byEmployee.map(e => [e.email, e.count, rs(e.spend), rs(Math.round(e.spend / e.count))]),
-      },
-      {
-        name: 'By Booking Type',
-        headers: ['Type', 'Bookings', 'Spend (₹)', 'GST (₹)', 'Base (₹)'],
-        rows: data.byType.map(t => {
-          const base = Math.round(t.spend / 1.18)
-          return [t.booking_type, t.count, rs(t.spend), rs(t.spend - base), rs(base)]
-        }),
-      },
-      {
-        name: 'Cost Centers',
-        headers: ['Code', 'Name', 'Bookings', 'Spend (₹)', 'Share %'],
-        rows: data.byCostCenter.map(c => [
-          c.code, c.name, c.count, rs(c.spend),
-          s.totalSpend > 0 ? +((c.spend / s.totalSpend) * 100).toFixed(1) : 0,
-        ]),
-      },
-      {
-        name: 'GST Summary',
-        headers: ['Type', 'Bookings', 'Total incl. GST (₹)', 'Base excl. GST (₹)', 'GST 18% (₹)'],
-        rows: [
-          ...data.byType.map(t => {
-            const base = Math.round(t.spend / 1.18)
-            return [t.booking_type, t.count, rs(t.spend), rs(base), rs(t.spend - base)]
-          }),
-          ['TOTAL', s.totalBookings, rs(g.totalWithGst), rs(g.baseAmount), rs(g.gstAmount)],
-        ],
-      },
+      { name: 'Summary', headers: ['Metric','Value'], rows: [
+        ['Period',`${from} to ${to}`],['Total Spend (₹)',s.totalSpend],['Total Bookings',s.totalBookings],
+        ['Avg Booking Value (₹)',s.avgBookingValue],['Pending Approvals',s.pendingCount],['Rejected',s.rejectedCount],
+      ]},
+      { name: 'By Type', headers: ['Type','Bookings','Spend (₹)'], rows: data.byType.map(t => [t.booking_type, t.count, t.spend]) },
+      { name: 'By Department', headers: ['Dept','Bookings','Spend (₹)'], rows: data.byDept.map(d => [d.dept??'Unassigned', d.count, d.spend]) },
+      { name: 'By Employee', headers: ['Email','Bookings','Spend (₹)'], rows: data.byEmployee.map(e => [e.email, e.count, e.spend]) },
     ])
   }
 
+  const currentLabel = presets.find(p => p.id === preset)?.label ?? 'Custom'
+
   return (
-    <div>
-      <div className="admin-topbar">
-        <h2>Reports</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <input type="date" className="toolbar-search" style={{ width: 'auto' }} value={from} onChange={e => setFrom(e.target.value)} />
-          <span style={{ color: 'var(--ink-3)', fontSize: 13 }}>to</span>
-          <input type="date" className="toolbar-search" style={{ width: 'auto' }} value={to} onChange={e => setTo(e.target.value)} />
-          {data && (
-            <button className="btn btn-primary btn-sm" onClick={handleExcelDownload}>
-              ⬇ Download Excel
-            </button>
-          )}
-        </div>
-      </div>
+    <div style={{ display: 'flex', minHeight: 'calc(100vh - 54px)', background: '#F5F6FA' }}>
 
-      <div className="admin-content">
-        <div className="page-stack">
+      {/* Left sidebar */}
+      <aside style={{ width: 220, flexShrink: 0, background: '#fff', borderRight: '1px solid #E5E7EB', padding: '24px 20px', overflowY: 'auto', position: 'sticky', top: 54, height: 'calc(100vh - 54px)' }}>
+        <div style={{ fontSize: 12, fontWeight: 800, color: '#9CA3AF', letterSpacing: '0.06em', marginBottom: 16 }}>ACTION DATE RANGE</div>
+        {presets.map(p => (
+          <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, cursor: 'pointer' }}>
+            <input type="radio" name="period" checked={preset === p.id && !customDate} onChange={() => selectPreset(p)} style={{ accentColor: '#E31E24' }} />
+            <span style={{ fontSize: 13, color: '#374151' }}>{p.label}</span>
+          </label>
+        ))}
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, cursor: 'pointer' }}>
+          <input type="radio" name="period" checked={customDate} onChange={() => setCustomDate(true)} style={{ accentColor: '#E31E24' }} />
+          <span style={{ fontSize: 13, color: '#374151' }}>Enter Dates</span>
+        </label>
+        {customDate && (
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <input type="date" value={from} onChange={e => setFrom(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 12, outline: 'none' }} />
+            <input type="date" value={to}   onChange={e => setTo(e.target.value)}   style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 12, outline: 'none' }} />
+          </div>
+        )}
+      </aside>
 
-          {/* Summary stat cards */}
-          {s && (
-            <div className="stat-grid">
-              {[
-                { label: 'Total Spend',     value: fmt(s.totalSpend),     sub: `${s.totalBookings} bookings`, icon: '₹' },
-                { label: 'Avg Booking',     value: fmt(s.avgBookingValue), sub: 'per approved trip',          icon: '📊', tone: 'teal' },
-                { label: 'Pending',         value: s.pendingCount,         sub: 'awaiting approval',          icon: '⏳', tone: 'orange' },
-                { label: 'Rejected',        value: s.rejectedCount,        sub: 'this period',                icon: '✗',  tone: 'rose' },
-              ].map(card => (
-                <div key={card.label} className={`stat-card ${card.tone ?? ''}`.trim()}>
-                  <div className="stat-head">
-                    <div className="stat-num">{card.value}</div>
-                    <div className="stat-icon">{card.icon}</div>
-                  </div>
-                  <div className="stat-label">{card.label}</div>
-                  <div className="stat-sub">{card.sub}</div>
-                </div>
-              ))}
+      {/* Main */}
+      <div style={{ flex: 1, padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1a1a2e', margin: 0 }}>Reports</h1>
+
+        {/* Create & Schedule Custom Reports */}
+        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '20px 24px' }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: '#1a1a2e', marginBottom: 16 }}>Create &amp; Schedule Custom Reports</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 2fr', gap: 16 }}>
+            {/* Create New */}
+            <div style={{ border: '2px dashed #E5E7EB', borderRadius: 10, padding: '28px 16px', textAlign: 'center', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = '#E31E24')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = '#E5E7EB')}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', border: '2px solid #E31E24', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#E31E24', marginBottom: 8 }}>+</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#E31E24' }}>CREATE NEW</div>
             </div>
-          )}
+            {/* What is custom report */}
+            <div style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: '16px 18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#E31E24', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>?</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#1a1a2e' }}>What is a custom report?</div>
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: '#6B7280', lineHeight: 1.8 }}>
+                <li>Reports are data heavy files with range of data sets.</li>
+                <li>We provide you the flexibility to <strong>select your required data</strong> for <span style={{ color: '#2563EB' }}>effective data handling.</span></li>
+              </ul>
+            </div>
+            {/* How to create */}
+            <div style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: '16px 18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#E31E24', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>+</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#1a1a2e' }}>How to create Your custom report?</div>
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: '#6B7280', lineHeight: 1.8 }}>
+                <li>Click on <strong>"Create new"</strong> to get a form.</li>
+                <li>Fill the form by providing the report type, frequency &amp; required data. <strong>We will timely mail you your Report!</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
 
-          {/* Tabs */}
-          <div className="segmented-row">
-            {(['overview', 'dept', 'employee', 'cost-center', 'gst'] as const).map(t => (
-              <button key={t} className={`segment-btn ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
-                {t === 'cost-center' ? 'Cost Centers' : t === 'gst' ? 'GST Report' : t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            ))}
+        {/* Report Summary */}
+        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ padding: '18px 24px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <span style={{ fontSize: 16, fontWeight: 800, color: '#1a1a2e' }}>Report Summary</span>
+              <span style={{ fontSize: 13, color: '#9CA3AF', marginLeft: 8 }}>({currentLabel})</span>
+            </div>
+            <button onClick={handleExcelDownload} disabled={!data} style={{
+              padding: '8px 18px', border: '1.5px solid #E31E24', color: '#E31E24',
+              background: 'transparent', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: data ? 'pointer' : 'default',
+              opacity: data ? 1 : 0.4,
+            }}>DOWNLOAD ALL</button>
           </div>
 
-          {loading && <div className="surface-card empty-state">Loading report…</div>}
-
-          {/* OVERVIEW — monthly trend + by type */}
-          {!loading && data && tab === 'overview' && (
-            <div className="dashboard-grid">
-              <div className="chart-card">
-                <div className="card-title">Monthly Spend Trend</div>
-                <div className="card-copy">Total approved bookings per month</div>
-                <div className="mini-chart" style={{ marginTop: 20 }}>
-                  {data.monthly.length === 0 ? (
-                    <div className="empty-state">No data for this period.</div>
-                  ) : data.monthly.map((m, i) => {
-                    const max = Math.max(...data.monthly.map(x => x.spend))
-                    const h   = max > 0 ? Math.round((m.spend / max) * 140) : 4
-                    return (
-                      <div key={i} className="mini-bar-group">
-                        <div className="mini-bar-track">
-                          <div className="mini-bar" style={{ height: h }} title={`${fmt(m.spend)} · ${m.count} bookings`} />
-                        </div>
-                        <div className="mini-bar-label">{m.month.slice(5)}</div>
-                        <div className="mini-bar-value">{fmt(m.spend)}</div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div className="chart-card">
-                <div className="card-title">By Booking Type</div>
-                <div className="metric-list" style={{ marginTop: 16 }}>
-                  {data.byType.length === 0 ? (
-                    <div className="empty-state">No data.</div>
-                  ) : data.byType.map(t => (
-                    <div key={t.booking_type} className="metric-row">
-                      <div className="metric-row-head">
-                        <span style={{ textTransform: 'capitalize', fontWeight: 700 }}>{t.booking_type}</span>
-                        <span>{fmt(t.spend)} ({t.count})</span>
-                      </div>
-                      <div className="metric-track">
-                        <div className="metric-fill" style={{
-                          width: pct(t.spend, s?.totalSpend ?? 1),
-                          background: TYPE_COLORS[t.booking_type] ?? 'var(--accent)',
-                        }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          {loading ? (
+            <div style={{ padding: 40, textAlign: 'center', color: '#9CA3AF' }}>Loading…</div>
+          ) : loadErr ? (
+            <div style={{ padding: 40, textAlign: 'center', color: '#DC2626', fontSize: 13 }}>
+              Failed to load report: {loadErr}
             </div>
-          )}
-
-          {/* DEPT */}
-          {!loading && data && tab === 'dept' && (
-            <div className="table-card">
-              <div className="table-header"><div className="card-title">Spend by Department</div></div>
-              <table>
-                <thead><tr><th>Department</th><th>Bookings</th><th>Total Spend</th><th>Share</th></tr></thead>
-                <tbody>
-                  {data.byDept.length === 0 ? (
-                    <tr><td colSpan={4} className="empty-state">No data for this period.</td></tr>
-                  ) : data.byDept.map((d, i) => (
-                    <tr key={i}>
-                      <td style={{ fontWeight: 700 }}>{d.dept ?? 'Unassigned'}</td>
-                      <td>{d.count}</td>
-                      <td style={{ fontWeight: 700 }}>{fmt(d.spend)}</td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 80, height: 6, background: 'var(--border)', borderRadius: 3, overflow: 'hidden' }}>
-                            <div style={{ width: pct(d.spend, s?.totalSpend ?? 1), height: '100%', background: 'var(--accent)', borderRadius: 3 }} />
-                          </div>
-                          <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>{pct(d.spend, s?.totalSpend ?? 1)}</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* EMPLOYEE */}
-          {!loading && data && tab === 'employee' && (
-            <div className="table-card">
-              <div className="table-header"><div className="card-title">Spend by Employee</div><div className="card-copy">Top 20 travellers</div></div>
-              <table>
-                <thead><tr><th>Employee</th><th>Bookings</th><th>Total Spend</th><th>Avg per Trip</th></tr></thead>
-                <tbody>
-                  {data.byEmployee.length === 0 ? (
-                    <tr><td colSpan={4} className="empty-state">No data for this period.</td></tr>
-                  ) : data.byEmployee.map((e, i) => (
-                    <tr key={i}>
-                      <td style={{ fontWeight: 700 }}>{e.email}</td>
-                      <td>{e.count}</td>
-                      <td style={{ fontWeight: 700 }}>{fmt(e.spend)}</td>
-                      <td style={{ color: 'var(--ink-3)' }}>{fmt(Math.round(e.spend / e.count))}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* COST CENTER */}
-          {!loading && data && tab === 'cost-center' && (
-            <div className="table-card">
-              <div className="table-header"><div className="card-title">Spend by Cost Center</div></div>
-              <table>
-                <thead><tr><th>Code</th><th>Name</th><th>Bookings</th><th>Total Spend</th><th>Share</th></tr></thead>
-                <tbody>
-                  {data.byCostCenter.length === 0 ? (
-                    <tr><td colSpan={5} className="empty-state">No cost center data. Assign cost centers to approvals first.</td></tr>
-                  ) : data.byCostCenter.map((c, i) => (
-                    <tr key={i}>
-                      <td><code>{c.code}</code></td>
-                      <td style={{ fontWeight: 700 }}>{c.name}</td>
-                      <td>{c.count}</td>
-                      <td style={{ fontWeight: 700 }}>{fmt(c.spend)}</td>
-                      <td style={{ color: 'var(--ink-3)' }}>{pct(c.spend, s?.totalSpend ?? 1)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* GST REPORT */}
-          {!loading && data && tab === 'gst' && g && (
-            <div style={{ display: 'grid', gap: 20 }}>
-              <div className="surface-card" style={{ borderLeft: '4px solid var(--success)', background: 'var(--success-lt)' }}>
-                <p style={{ fontSize: 13, color: 'var(--success)' }}>
-                  <strong>For GST Input Credit:</strong> The base amount (excl. GST) is eligible for input tax credit (ITC) claims. Your accountant will need this breakdown for monthly GST filing.
-                </p>
-              </div>
-
-              <div className="stat-grid">
-                {[
-                  { label: 'Total Invoiced',  value: fmt(g.totalWithGst), sub: 'incl. 18% GST' },
-                  { label: 'Base Amount',     value: fmt(g.baseAmount),   sub: 'excl. GST',  tone: 'teal' },
-                  { label: 'GST Amount (18%)', value: fmt(g.gstAmount),   sub: 'input credit eligible', tone: 'orange' },
-                ].map(c => (
-                  <div key={c.label} className={`stat-card ${c.tone ?? ''}`.trim()}>
-                    <div className="stat-head"><div className="stat-num">{c.value}</div></div>
-                    <div className="stat-label">{c.label}</div>
-                    <div className="stat-sub">{c.sub}</div>
-                  </div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#F9FAFB' }}>
+                  <th style={{ textAlign: 'left', padding: '12px 24px', fontSize: 11, fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.04em' }}></th>
+                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.04em' }}>TOTAL BOOKINGS</th>
+                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.04em' }}>TOTAL SPEND</th>
+                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.04em' }}>OUT OF POLICY BOOKINGS (%)</th>
+                  <th style={{ width: 48, padding: '12px 16px' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {REPORT_TYPES.map(rt => (
+                  <tr key={rt.key} style={{ borderTop: '1px solid #F3F4F6' }}>
+                    <td style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{ fontSize: 18 }}>{rt.icon}</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#1a1a2e' }}>{rt.label}</span>
+                    </td>
+                    <td style={{ padding: '16px 16px', fontSize: 14, fontWeight: 700 }}>{getTypeCount(rt.key)}</td>
+                    <td style={{ padding: '16px 16px', fontSize: 14, fontWeight: 700 }}>{fmt(getTypeSpend(rt.key))}</td>
+                    <td style={{ padding: '16px 16px', fontSize: 14, color: '#6B7280' }}>0.0%</td>
+                    <td style={{ padding: '16px 16px', textAlign: 'center' }}>
+                      <button onClick={handleExcelDownload} disabled={!data} title="Download" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#E31E24', fontSize: 16 }}>↓</button>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-
-              <div className="table-card">
-                <div className="table-header"><div className="card-title">GST Breakdown by Type</div></div>
-                <table>
-                  <thead><tr><th>Booking Type</th><th>Bookings</th><th>Total (incl. GST)</th><th>Base (excl. GST)</th><th>GST Amount</th></tr></thead>
-                  <tbody>
-                    {data.byType.length === 0 ? (
-                      <tr><td colSpan={5} className="empty-state">No data for this period.</td></tr>
-                    ) : data.byType.map((t, i) => {
-                      const base = Math.round(t.spend / 1.18)
-                      const gst  = t.spend - base
-                      return (
-                        <tr key={i}>
-                          <td style={{ textTransform: 'capitalize', fontWeight: 700 }}>{t.booking_type}</td>
-                          <td>{t.count}</td>
-                          <td>{fmt(t.spend)}</td>
-                          <td>{fmt(base)}</td>
-                          <td style={{ color: 'var(--success)', fontWeight: 700 }}>{fmt(gst)}</td>
-                        </tr>
-                      )
-                    })}
-                    <tr style={{ background: 'var(--bg)', fontWeight: 800 }}>
-                      <td>Total</td>
-                      <td>{s?.totalBookings}</td>
-                      <td>{fmt(g.totalWithGst)}</td>
-                      <td>{fmt(g.baseAmount)}</td>
-                      <td style={{ color: 'var(--success)' }}>{fmt(g.gstAmount)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+              </tbody>
+            </table>
           )}
-
         </div>
+
+        <ReportTabs data={data} tab={tab} setTab={setTab} loading={loading} />
       </div>
     </div>
   )

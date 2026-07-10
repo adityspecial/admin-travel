@@ -7,11 +7,37 @@ function formatCount(value?: number) {
   return typeof value === 'number' ? value.toLocaleString('en-IN') : '--'
 }
 
+function formatMoney(value?: number) {
+  if (typeof value !== 'number') return '--'
+  if (value >= 1_00_00_000) return `₹${(value / 1_00_00_000).toFixed(1)}Cr`
+  if (value >= 1_00_000)    return `₹${(value / 1_00_000).toFixed(1)}L`
+  return '₹' + value.toLocaleString('en-IN')
+}
+
+function formatDate(iso?: string | null) {
+  if (!iso) return 'No bookings yet'
+  return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+const TYPE_STYLE: Record<string, { bg: string; color: string }> = {
+  'GDS':     { bg: '#EFF6FF', color: '#1D4ED8' },
+  'B2B GDS': { bg: '#F5F3FF', color: '#7C3AED' },
+  'Charter': { bg: '#FFF7ED', color: '#C2410C' },
+}
+
+interface ApiStat {
+  key: string; name: string; type: string; env: string; description: string
+  total: number; last30: number; revenue: number; lastBooking: string | null
+  bySource: { consumer: number; mybiz: number; mypartner: number } | null
+}
+
 export default function SuperDashboard() {
-  const [stats, setStats] = useState<any>(null)
+  const [stats,     setStats]     = useState<any>(null)
+  const [apiHealth, setApiHealth] = useState<ApiStat[] | null>(null)
 
   useEffect(() => {
     adminFetch('/api/admin/super/stats').then(setStats).catch(() => {})
+    adminFetch('/api/admin/super/api-health').then(d => setApiHealth(d.apis)).catch(() => {})
   }, [])
 
   const totalOrgs = stats?.totalOrgs ?? 0
@@ -149,6 +175,91 @@ export default function SuperDashboard() {
                 </a>
               ))}
             </div>
+          </section>
+
+          {/* ── API Health & Usage ── */}
+          <section className="table-card">
+            <div className="table-header">
+              <div>
+                <div className="card-title">API Health &amp; Usage</div>
+                <div className="card-copy">All flight booking APIs integrated on the platform — live booking counts and revenue.</div>
+              </div>
+            </div>
+
+            {!apiHealth ? (
+              <div style={{ padding: '32px 0', textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>Loading API stats…</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, marginTop: 20 }}>
+                {apiHealth.map(api => {
+                  const typeStyle = TYPE_STYLE[api.type] ?? { bg: '#F3F4F6', color: '#374151' }
+                  const totalSrc  = api.bySource ? api.bySource.consumer + api.bySource.mybiz + api.bySource.mypartner : 0
+                  return (
+                    <div key={api.key} style={{ background: '#fff', border: '1.5px solid #E5E7EB', borderRadius: 16, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                      {/* Header row */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                        <div>
+                          <div style={{ fontSize: 16, fontWeight: 800, color: '#111827', marginBottom: 4 }}>{api.name}</div>
+                          <div style={{ fontSize: 12, color: '#6B7280' }}>{api.description}</div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: typeStyle.bg, color: typeStyle.color }}>{api.type}</span>
+                          <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: '#DCFCE7', color: '#166534' }}>● LIVE</span>
+                        </div>
+                      </div>
+
+                      {/* Booking stats */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, background: '#F9FAFB', borderRadius: 12, padding: '12px 14px' }}>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: 20, fontWeight: 800, color: '#111827' }}>{formatCount(api.total)}</div>
+                          <div style={{ fontSize: 10, color: '#6B7280', fontWeight: 600, marginTop: 2 }}>Total</div>
+                        </div>
+                        <div style={{ textAlign: 'center', borderLeft: '1px solid #E5E7EB', borderRight: '1px solid #E5E7EB' }}>
+                          <div style={{ fontSize: 20, fontWeight: 800, color: api.last30 > 0 ? '#16A34A' : '#9CA3AF' }}>{formatCount(api.last30)}</div>
+                          <div style={{ fontSize: 10, color: '#6B7280', fontWeight: 600, marginTop: 2 }}>Last 30d</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: 16, fontWeight: 800, color: '#F97316' }}>{formatMoney(api.revenue)}</div>
+                          <div style={{ fontSize: 10, color: '#6B7280', fontWeight: 600, marginTop: 2 }}>Revenue</div>
+                        </div>
+                      </div>
+
+                      {/* Source breakdown */}
+                      {api.bySource ? (
+                        <div>
+                          <div style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Bookings by channel</div>
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                            {[
+                              { label: 'Consumer', value: api.bySource.consumer, bg: '#EFF6FF', color: '#1D4ED8' },
+                              { label: 'MyBiz',    value: api.bySource.mybiz,    bg: '#F0FDF4', color: '#16A34A' },
+                              { label: 'Partner',  value: api.bySource.mypartner, bg: '#FFF7ED', color: '#C2410C' },
+                            ].map(s => (
+                              <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 5, background: s.bg, border: `1px solid ${s.color}22`, borderRadius: 8, padding: '4px 10px' }}>
+                                <span style={{ fontSize: 13, fontWeight: 800, color: s.color }}>{formatCount(s.value)}</span>
+                                <span style={{ fontSize: 11, color: s.color, fontWeight: 600 }}>{s.label}</span>
+                                {totalSrc > 0 && (
+                                  <span style={{ fontSize: 10, color: '#9CA3AF' }}>({Math.round(s.value / totalSrc * 100)}%)</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: 11, color: '#9CA3AF', fontStyle: 'italic' }}>Channel breakdown stored in JSONB — query via raw_book_response</div>
+                      )}
+
+                      {/* Last booking */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
+                        <span style={{ fontSize: 11, color: '#6B7280' }}>Last booking:</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: api.lastBooking ? '#374151' : '#9CA3AF' }}>
+                          {formatDate(api.lastBooking)}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </section>
         </div>
       </div>

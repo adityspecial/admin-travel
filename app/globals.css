@@ -955,6 +955,11 @@ code {
   border-left: none;
 }
 
+/* ── Hide scrollbars on sticky sidebars ────────────────────────────── */
+
+aside::-webkit-scrollbar { display: none; }
+aside { scrollbar-width: none; -ms-overflow-style: none; }
+
 /* ── Reduced motion ─────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {

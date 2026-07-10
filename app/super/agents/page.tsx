@@ -9,6 +9,12 @@ interface Agent {
   agency_name: string
   contact_name: string
   email: string
+  phone?: string
+  city?: string
+  state?: string
+  gst_number?: string | null
+  pan_number?: string
+  pan_card_url?: string | null
   tier: string
   status: string
   commission_pct: number
@@ -237,6 +243,26 @@ export default function AgentsPage() {
               <button className="btn btn-ghost btn-sm" onClick={() => setEditAgent(null)}>Close</button>
             </div>
             {editError && <div className="login-error" style={{ marginBottom: 12 }}>{editError}</div>}
+
+            {editAgent.status === 'pending' && (
+              <div className="banner-soft" style={{ marginBottom: 16 }}>
+                <div style={{ fontWeight: 800, marginBottom: 10 }}>KYC submitted at registration</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 16px', fontSize: 13 }}>
+                  <span style={{ color: '#64748B' }}>Phone</span><span>{editAgent.phone || '--'}</span>
+                  <span style={{ color: '#64748B' }}>City / State</span><span>{[editAgent.city, editAgent.state].filter(Boolean).join(', ') || '--'}</span>
+                  <span style={{ color: '#64748B' }}>GST Number</span><span>{editAgent.gst_number || '--'}</span>
+                  <span style={{ color: '#64748B' }}>PAN Number</span><span>{editAgent.pan_number || '--'}</span>
+                </div>
+                {editAgent.pan_card_url ? (
+                  <a href={editAgent.pan_card_url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ marginTop: 10 }}>
+                    View PAN Card
+                  </a>
+                ) : (
+                  <div style={{ fontSize: 12, color: '#DC2626', marginTop: 10 }}>No PAN card on file.</div>
+                )}
+              </div>
+            )}
+
             <form onSubmit={saveEdit}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div className="form-group">
@@ -248,6 +274,7 @@ export default function AgentsPage() {
                 <div className="form-group">
                   <label>Status</label>
                   <select value={editForm.status} onChange={(e) => setEditForm((form) => ({ ...form, status: e.target.value }))}>
+                    <option value="pending">Pending</option>
                     <option value="active">Active</option>
                     <option value="suspended">Suspended</option>
                   </select>

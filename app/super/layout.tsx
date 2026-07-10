@@ -12,6 +12,11 @@ const NAV = [
   { href: '/super/users',        label: 'All Members',           icon: 'MB' },
   { href: '/super/fixed-flights',label: 'Fixed Departures',      icon: 'FD' },
   { href: '/super/fareguide',    label: 'FareGuide Fixed Flights',icon: 'FG' },
+  { href: '/super/packages',       label: 'Holiday Packages',      icon: '🌍' },
+  { href: '/super/visa',           label: 'Visa Pages',            icon: '🛂' },
+  { href: '/super/home-banners',  label: "What's New Banners",    icon: '📢' },
+  { href: '/super/promos',        label: 'Promo Codes',           icon: 'CP' },
+  { href: '/super/consumer',     label: 'Fee Settings',          icon: '₹'  },
   { href: '/super/permissions',  label: 'Permissions',           icon: '🔐' },
 ]
 

@@ -16,11 +16,12 @@ interface User {
 interface Override { module: string; permission: string; enabled: boolean; reason?: string }
 
 interface Props {
-  portal:  string
-  modules: ModuleDef[]
+  portal:       string
+  modules:      ModuleDef[]
+  overridesUrl?: string
 }
 
-export function OverrideEngine({ portal, modules }: Props) {
+export function OverrideEngine({ portal, modules, overridesUrl = '/api/admin/super/permissions/overrides' }: Props) {
   const defaultType: TargetType = portal === 'biz' ? 'biz_member' : portal === 'partner' ? 'partner_agent' : 'admin_staff'
   const [targetType, setTargetType] = useState<TargetType>(defaultType)
   const [query,      setQuery]      = useState('')
@@ -35,7 +36,7 @@ export function OverrideEngine({ portal, modules }: Props) {
     if (q.length < 2) { setResults([]); return }
     setSearching(true)
     try {
-      const d = await adminFetch('/api/admin/super/permissions/overrides', {
+      const d = await adminFetch(overridesUrl, {
         method: 'POST',
         body: JSON.stringify({ portal, q, type: targetType }),
       })
@@ -46,7 +47,7 @@ export function OverrideEngine({ portal, modules }: Props) {
 
   async function selectUser(u: User) {
     setSelected(u); setResults([]); setQuery(userName(u))
-    const d = await adminFetch(`/api/admin/super/permissions/overrides?targetType=${u._type}&targetId=${u.id}&portal=${portal}`)
+    const d = await adminFetch(`${overridesUrl}?targetType=${u._type}&targetId=${u.id}&portal=${portal}`)
     setOverrides(d.overrides ?? [])
   }
 
@@ -58,7 +59,7 @@ export function OverrideEngine({ portal, modules }: Props) {
     if (!selected) return
     const key = `${module}.${perm}`
     setSaving(key)
-    await adminFetch('/api/admin/super/permissions/overrides', {
+    await adminFetch(overridesUrl, {
       method: 'PATCH',
       body: JSON.stringify({
         portal, targetType: selected._type, targetId: selected.id,
@@ -74,7 +75,7 @@ export function OverrideEngine({ portal, modules }: Props) {
 
   async function clearOverride(module: string, perm: string) {
     if (!selected) return
-    await adminFetch('/api/admin/super/permissions/overrides', {
+    await adminFetch(overridesUrl, {
       method: 'DELETE',
       body: JSON.stringify({ targetType: selected._type, targetId: selected.id, module, permission: perm }),
     })

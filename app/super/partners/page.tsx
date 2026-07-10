@@ -6,6 +6,7 @@ import { Pagination, usePagination } from '@/components/Pagination'
 interface Partner {
   id: string
   adminId: string
+  agentId: string
   agentName: string
   agentCode: string
   contactName: string
@@ -83,7 +84,8 @@ export default function PartnersPage() {
         setCreateSuccess('')
       }, 2000)
     } catch (error: any) {
-      setCreateError(error.message)
+      try { setCreateError(JSON.parse(error.message).error ?? error.message) }
+      catch { setCreateError(error.message) }
     }
     setCreating(false)
   }
@@ -97,10 +99,9 @@ export default function PartnersPage() {
 
   const { slice: pagePartners, page, setPage, total } = usePagination(filtered, 20)
 
-  // Agents not yet assigned as partners
-  const availableAgents = agents.filter(a =>
-    !partners.some(p => p.agentName === a.agency_name)
-  )
+  // Agents not yet assigned a partner admin — compare by ID to avoid name-mismatch false positives
+  const assignedAgentIds = new Set(partners.map(p => p.agentId).filter(Boolean))
+  const availableAgents = agents.filter(a => !assignedAgentIds.has(a.id))
 
   return (
     <div>

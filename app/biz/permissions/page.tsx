@@ -23,7 +23,7 @@ export default function BizPermissionsPage() {
 
   useEffect(() => {
     setLoading(true)
-    adminFetch(`/api/admin/super/permissions/roles?portal=${PORTAL}`)
+    adminFetch('/api/admin/biz/permissions/roles')
       .then(d => {
         setRoles(d.roles ?? [])
         if (d.roles?.length) { setActiveRoleId(d.roles[0].id); setLocalMatrix(d.roles[0].matrix ?? {}) }
@@ -35,9 +35,9 @@ export default function BizPermissionsPage() {
     if (!activeRoleId) return
     setSaving(`${module}.${permission}`)
     setLocalMatrix(prev => ({ ...prev, [module]: { ...(prev[module] ?? {}), [permission]: enabled } }))
-    await adminFetch('/api/admin/super/permissions/matrix', {
+    await adminFetch('/api/admin/biz/permissions/matrix', {
       method: 'PATCH',
-      body: JSON.stringify({ roleId: activeRoleId, portal: PORTAL, module, permission, enabled }),
+      body: JSON.stringify({ roleId: activeRoleId, module, permission, enabled }),
     }).catch(() => setLocalMatrix(prev => ({ ...prev, [module]: { ...(prev[module] ?? {}), [permission]: !enabled } })))
     setSaving(null)
   }
@@ -45,9 +45,9 @@ export default function BizPermissionsPage() {
   async function commit() {
     if (!activeRoleId) return
     setCommitting(true)
-    await adminFetch('/api/admin/super/permissions/matrix', {
+    await adminFetch('/api/admin/biz/permissions/matrix', {
       method: 'PUT',
-      body: JSON.stringify({ roleId: activeRoleId, portal: PORTAL, matrix: localMatrix }),
+      body: JSON.stringify({ roleId: activeRoleId, matrix: localMatrix }),
     })
     setCommitting(false); setCommitted(true)
     setTimeout(() => setCommitted(false), 3000)
@@ -86,7 +86,7 @@ export default function BizPermissionsPage() {
       {/* Main */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px', background: '#F9FAFB' }}>
         {view === 'overrides' ? (
-          <OverrideEngine portal={PORTAL} modules={BIZ_MODULES} />
+          <OverrideEngine portal={PORTAL} modules={BIZ_MODULES} overridesUrl="/api/admin/biz/permissions/overrides" />
         ) : activeRole ? (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/api'
 import {
   LayoutDashboard, Network, Ticket, Users, Layers,
-  BarChart3, ArrowDownToLine, FileText, Shield, LogOut,
+  BarChart3, ArrowDownToLine, FileText, Shield, LogOut, Tag,
 } from 'lucide-react'
 
 const NAV = [
@@ -14,6 +14,7 @@ const NAV = [
   { href: '/partner/bookings',     label: 'Bookings',    Icon: Ticket          },
   { href: '/partner/customers',    label: 'Customers',   Icon: Users           },
   { href: '/partner/markups',      label: 'Markups',     Icon: Layers          },
+  { href: '/partner/promos',        label: 'Promo Codes', Icon: Tag             },
   { href: '/partner/earnings',     label: 'Earnings',    Icon: BarChart3       },
   { href: '/partner/payouts',      label: 'Payouts',     Icon: ArrowDownToLine },
   { href: '/partner/reports',      label: 'Reports',     Icon: FileText        },

@@ -18,11 +18,12 @@ export default function EditOrgPage() {
   const [deleting, setDeleting] = useState(false)
 
   const [form, setForm] = useState({
-    name:       '',
-    flight_cap: '',
-    hotel_cap:  '',
-    gst_number: '',
-    is_active:  true,
+    name:          '',
+    flight_cap:    '',
+    hotel_cap:     '',
+    insurance_cap: '',
+    gst_number:    '',
+    is_active:     true,
   })
 
   useEffect(() => {
@@ -31,11 +32,12 @@ export default function EditOrgPage() {
         setOrg(d.org)
         setMembers(d.org.biz_members ?? [])
         setForm({
-          name:       d.org.name ?? '',
-          flight_cap: String(d.org.flight_cap ?? 10000),
-          hotel_cap:  String(d.org.hotel_cap ?? 5000),
-          gst_number: d.org.gst_number ?? '',
-          is_active:  d.org.is_active ?? true,
+          name:          d.org.name ?? '',
+          flight_cap:    String(d.org.flight_cap    ?? 10000),
+          hotel_cap:     String(d.org.hotel_cap     ?? 5000),
+          insurance_cap: String(d.org.insurance_cap ?? 3000),
+          gst_number:    d.org.gst_number ?? '',
+          is_active:     d.org.is_active  ?? true,
         })
       })
       .catch(() => setError('Organisation not found'))
@@ -49,11 +51,12 @@ export default function EditOrgPage() {
       const d = await adminFetch(`/api/admin/super/orgs/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({
-          name:       form.name,
-          flightCap:  Number(form.flight_cap),
-          hotelCap:   Number(form.hotel_cap),
-          gstNumber:  form.gst_number || null,
-          isActive:   form.is_active,
+          name:         form.name,
+          flightCap:    Number(form.flight_cap),
+          hotelCap:     Number(form.hotel_cap),
+          insuranceCap: Number(form.insurance_cap),
+          gstNumber:    form.gst_number || null,
+          isActive:     form.is_active,
         }),
       })
       setOrg(d.org)
@@ -127,7 +130,7 @@ export default function EditOrgPage() {
               <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
               <div className="form-group">
                 <label>Flight Cap (₹ per trip)</label>
                 <input type="number" min="0" value={form.flight_cap} onChange={e => setForm(f => ({ ...f, flight_cap: e.target.value }))} />
@@ -135,6 +138,10 @@ export default function EditOrgPage() {
               <div className="form-group">
                 <label>Hotel Cap (₹ per night)</label>
                 <input type="number" min="0" value={form.hotel_cap} onChange={e => setForm(f => ({ ...f, hotel_cap: e.target.value }))} />
+              </div>
+              <div className="form-group">
+                <label>Insurance Cap (₹ per policy)</label>
+                <input type="number" min="0" value={form.insurance_cap} onChange={e => setForm(f => ({ ...f, insurance_cap: e.target.value }))} />
               </div>
             </div>
 
