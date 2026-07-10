@@ -6,9 +6,6 @@ console.log(`\x1b[35m[AirDunia]\x1b[0m \x1b[1mSuper Admin\x1b[0m  →  Backend: 
 
 const nextConfig: NextConfig = {
   devIndicators: false,
-  env: {
-    BACKEND_URL: BACKEND,
-  },
   async rewrites() {
     return [
       {
