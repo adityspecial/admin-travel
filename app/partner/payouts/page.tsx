@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { useSearchParams } from 'next/navigation'
 import { Pagination, usePagination } from '@/components/Pagination'
@@ -11,6 +11,14 @@ const fmt = (n: number) => `₹${n.toLocaleString('en-IN')}`
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })
 
 export default function PartnerPayoutsPage() {
+  return (
+    <Suspense fallback={null}>
+      <PartnerPayoutsContent />
+    </Suspense>
+  )
+}
+
+function PartnerPayoutsContent() {
   const sp        = useSearchParams()
   const agentId   = sp.get('agentId') ?? ''
   const agentName = sp.get('agentName') ?? 'Agent'

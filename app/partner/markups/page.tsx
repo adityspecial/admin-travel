@@ -1,11 +1,19 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { useSearchParams } from 'next/navigation'
 
 interface Markup { id: string; booking_type: string; markup_type: string; markup_value: number; airline_code?: string; is_active: boolean }
 
 export default function PartnerMarkupsPage() {
+  return (
+    <Suspense fallback={null}>
+      <PartnerMarkupsContent />
+    </Suspense>
+  )
+}
+
+function PartnerMarkupsContent() {
   const sp        = useSearchParams()
   const agentId   = sp.get('agentId') ?? ''
   const agentName = sp.get('agentName') ?? 'Agent'

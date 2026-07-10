@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { useSearchParams } from 'next/navigation'
 import { Pagination, usePagination } from '@/components/Pagination'
@@ -9,6 +9,14 @@ interface Customer { id: string; name: string; email?: string; phone?: string; p
 function fmtDate(d?: string) { return d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '--' }
 
 export default function PartnerCustomersPage() {
+  return (
+    <Suspense fallback={null}>
+      <PartnerCustomersContent />
+    </Suspense>
+  )
+}
+
+function PartnerCustomersContent() {
   const sp       = useSearchParams()
   const agentId  = sp.get('agentId') ?? ''
   const agentName = sp.get('agentName') ?? 'Agent'

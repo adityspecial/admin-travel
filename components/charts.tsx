@@ -11,14 +11,14 @@ interface BarDatum {
 interface MeterDatum {
   label: string
   value: number
-  tone?: 'blue' | 'teal' | 'orange'
+  tone?: 'blue' | 'teal' | 'orange' | 'rose'
 }
 
 function toneClass(tone?: Tone) {
   return tone && tone !== 'blue' ? tone : ''
 }
 
-function meterToneClass(tone?: 'blue' | 'teal' | 'orange') {
+function meterToneClass(tone?: 'blue' | 'teal' | 'orange' | 'rose') {
   return tone && tone !== 'blue' ? tone : ''
 }
 

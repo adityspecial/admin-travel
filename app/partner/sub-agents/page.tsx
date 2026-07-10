@@ -94,44 +94,46 @@ export default function SubAgentsPage() {
           {loading ? (
             <p style={{ padding: 20, color: 'var(--muted)' }}>Loading…</p>
           ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Agent</th>
-                  <th>Code</th>
-                  <th>Tier</th>
-                  <th>Commission</th>
-                  <th>Wallet</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={7} className="empty-state">No sub-agents found.</td></tr>
-                ) : pageAgents.map(a => (
-                  <tr key={a.id}>
-                    <td>
-                      <div style={{ fontWeight: 700 }}>{a.agency_name}</div>
-                      <div style={{ fontSize: 12, color: 'var(--muted)' }}>{a.contact_name} · {a.email}</div>
-                    </td>
-                    <td><code style={{ fontSize: 12, background: 'var(--surface-tint)', padding: '2px 6px', borderRadius: 6 }}>{a.agent_code}</code></td>
-                    <td><span className={`badge ${a.tier === 'elite' ? 'badge-violet' : a.tier === 'premium' ? 'badge-yellow' : 'badge-gray'}`}>{a.tier}</span></td>
-                    <td style={{ fontWeight: 700 }}>{a.commission_pct}%</td>
-                    <td>₹{(a.wallet?.balance ?? 0).toLocaleString('en-IN')}</td>
-                    <td>
-                      <span className={`badge ${a.status === 'active' ? 'badge-green' : a.status === 'suspended' ? 'badge-red' : 'badge-gray'}`}>
-                        {a.status}
-                      </span>
-                    </td>
-                    <td>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(a)}>Edit</button>
-                    </td>
+            <>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th>Code</th>
+                    <th>Tier</th>
+                    <th>Commission</th>
+                    <th>Wallet</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <Pagination total={total} page={page} perPage={20} onPage={setPage} />
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr><td colSpan={7} className="empty-state">No sub-agents found.</td></tr>
+                  ) : pageAgents.map(a => (
+                    <tr key={a.id}>
+                      <td>
+                        <div style={{ fontWeight: 700 }}>{a.agency_name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--muted)' }}>{a.contact_name} · {a.email}</div>
+                      </td>
+                      <td><code style={{ fontSize: 12, background: 'var(--surface-tint)', padding: '2px 6px', borderRadius: 6 }}>{a.agent_code}</code></td>
+                      <td><span className={`badge ${a.tier === 'elite' ? 'badge-violet' : a.tier === 'premium' ? 'badge-yellow' : 'badge-gray'}`}>{a.tier}</span></td>
+                      <td style={{ fontWeight: 700 }}>{a.commission_pct}%</td>
+                      <td>₹{(a.wallet?.balance ?? 0).toLocaleString('en-IN')}</td>
+                      <td>
+                        <span className={`badge ${a.status === 'active' ? 'badge-green' : a.status === 'suspended' ? 'badge-red' : 'badge-gray'}`}>
+                          {a.status}
+                        </span>
+                      </td>
+                      <td>
+                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(a)}>Edit</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pagination total={total} page={page} perPage={20} onPage={setPage} />
+            </>
           )}
         </div>
       </div>

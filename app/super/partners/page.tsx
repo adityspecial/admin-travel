@@ -68,6 +68,7 @@ export default function PartnersPage() {
       setPartners(prev => [...prev, {
         id: result.adminId,
         adminId: result.adminId,
+        agentId: form.agentId,
         agentName: result.agentName,
         agentCode: '',
         contactName: '',
