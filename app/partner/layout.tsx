@@ -5,13 +5,14 @@ import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/api'
 import {
   LayoutDashboard, Network, Ticket, Users, Layers,
-  BarChart3, ArrowDownToLine, FileText, Shield, LogOut, Tag,
+  BarChart3, ArrowDownToLine, FileText, Shield, LogOut, Tag, Globe,
 } from 'lucide-react'
 
 const NAV = [
   { href: '/partner',              label: 'Dashboard',   Icon: LayoutDashboard },
   { href: '/partner/sub-agents',   label: 'Sub-Agents',  Icon: Network         },
   { href: '/partner/bookings',     label: 'Bookings',    Icon: Ticket          },
+  { href: '/partner/visa-enquiries', label: 'Visa Enquiries', Icon: Globe      },
   { href: '/partner/customers',    label: 'Customers',   Icon: Users           },
   { href: '/partner/markups',      label: 'Markups',     Icon: Layers          },
   { href: '/partner/promos',        label: 'Promo Codes', Icon: Tag             },

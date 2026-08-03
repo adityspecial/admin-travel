@@ -1,7 +1,6 @@
 'use client'
-import { Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
-import { useSearchParams } from 'next/navigation'
 import { Pagination, usePagination } from '@/components/Pagination'
 
 interface Payout { id: string; amount: number; status: string; bank_name?: string; account_no?: string; upi_id?: string; notes?: string; created_at: string; processed_at?: string }
@@ -11,17 +10,7 @@ const fmt = (n: number) => `₹${n.toLocaleString('en-IN')}`
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })
 
 export default function PartnerPayoutsPage() {
-  return (
-    <Suspense fallback={null}>
-      <PartnerPayoutsContent />
-    </Suspense>
-  )
-}
-
-function PartnerPayoutsContent() {
-  const sp        = useSearchParams()
-  const agentId   = sp.get('agentId') ?? ''
-  const agentName = sp.get('agentName') ?? 'Agent'
+  const [agentId] = useState(() => typeof window !== 'undefined' ? sessionStorage.getItem('partner_agent_id') ?? '' : '')
   const [payouts, setPayouts] = useState<Payout[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving]   = useState<string | null>(null)
@@ -50,7 +39,7 @@ function PartnerPayoutsContent() {
   return (
     <div>
       <div className="admin-topbar">
-        <h2>{agentName} — Payouts</h2>
+        <h2>Payouts</h2>
         {pending.length > 0 && <span className="badge badge-yellow">{pending.length} pending</span>}
       </div>
       <div className="admin-content">

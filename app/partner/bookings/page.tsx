@@ -13,6 +13,8 @@ interface Booking {
   customer_name: string
   travel_date: string
   created_at: string
+  payment_method: 'razorpay' | 'wallet' | null
+  wallet_type: string | null
   agent?: { agency_name: string; agent_code: string }
 }
 
@@ -107,13 +109,14 @@ export default function PartnerBookingsPage() {
                       <th>Agent</th>
                       <th>Amount</th>
                       <th>Commission</th>
+                      <th>Payment</th>
                       <th>Travel Date</th>
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.length === 0 ? (
-                      <tr><td colSpan={8} className="empty-state">No bookings found.</td></tr>
+                      <tr><td colSpan={9} className="empty-state">No bookings found.</td></tr>
                     ) : pageBookings.map(b => (
                       <tr key={b.id}>
                         <td><code style={{ fontSize: 12 }}>{b.booking_ref}</code></td>
@@ -125,6 +128,15 @@ export default function PartnerBookingsPage() {
                         </td>
                         <td style={{ fontWeight: 700 }}>₹{b.amount.toLocaleString('en-IN')}</td>
                         <td style={{ color: 'var(--success)', fontWeight: 700 }}>+₹{b.commission.toLocaleString('en-IN')}</td>
+                        <td>
+                          {b.payment_method === 'wallet' ? (
+                            <span className="badge badge-violet">Wallet</span>
+                          ) : b.payment_method === 'razorpay' ? (
+                            <span className="badge badge-blue">Razorpay</span>
+                          ) : (
+                            <span style={{ color: 'var(--muted)' }}>--</span>
+                          )}
+                        </td>
                         <td style={{ color: 'var(--muted)' }}>{b.travel_date ? new Date(b.travel_date).toLocaleDateString('en-IN') : '--'}</td>
                         <td>
                           <span className={`badge ${b.status === 'confirmed' ? 'badge-green' : b.status === 'cancelled' ? 'badge-red' : 'badge-gray'}`}>

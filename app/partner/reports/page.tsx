@@ -1,7 +1,6 @@
 'use client'
-import { Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
-import { useSearchParams } from 'next/navigation'
 import { downloadExcel } from '@/lib/excel'
 
 interface ReportData {
@@ -15,17 +14,7 @@ const fmt = (n: number) => n >= 100000 ? `₹${(n / 100000).toFixed(1)}L` : n >=
 const TYPE_COLORS: Record<string, string> = { flight: '#1663eb', hotel: '#6d4aff', bus: '#16a34a' }
 
 export default function PartnerReportsPage() {
-  return (
-    <Suspense fallback={null}>
-      <PartnerReportsContent />
-    </Suspense>
-  )
-}
-
-function PartnerReportsContent() {
-  const sp        = useSearchParams()
-  const agentId   = sp.get('agentId') ?? ''
-  const agentName = sp.get('agentName') ?? 'Agent'
+  const [agentId] = useState(() => typeof window !== 'undefined' ? sessionStorage.getItem('partner_agent_id') ?? '' : '')
   const yr = new Date().getFullYear()
   const [data, setData]     = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -57,7 +46,7 @@ function PartnerReportsContent() {
   return (
     <div>
       <div className="admin-topbar">
-        <h2>{agentName} — Reports</h2>
+        <h2>Reports</h2>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <input type="date" className="toolbar-search" style={{ width: 'auto' }} value={from} onChange={e => setFrom(e.target.value)} />
           <span style={{ fontSize: 13, color: 'var(--ink-3)' }}>to</span>

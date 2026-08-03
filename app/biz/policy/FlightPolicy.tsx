@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import { ApprovalTiersEditor, type ApprovalTier } from './ApprovalTiers'
 
 interface S {
   require_request_form: boolean; colleague_booking: string
@@ -10,7 +11,11 @@ interface S {
   addon_meals: boolean; addon_seats: boolean; addon_baggage: boolean
   addon_fast_forward: boolean; addon_cabs: boolean; addon_insurance: boolean
   date_change: boolean; date_change_approval: boolean; date_change_skip: boolean
+  // in_policy_approval/out_policy_approval are kept in sync from approval_tiers[0]
+  // and approval_tiers[last] on save, purely so any old reader still checking
+  // those two fields directly gets a sensible value.
   in_policy_approval: string; out_policy_approval: string
+  approval_tiers?: ApprovalTier[]
   wallet_for: string; auto_booking: boolean
 }
 
@@ -26,7 +31,7 @@ const DFLT: S = {
   wallet_for: 'none', auto_booking: false,
 }
 
-const TITLES: Record<string, string> = { domestic_flight: 'Domestic Flight', international_flight: 'International Flight' }
+const TITLES: Record<string, string> = { domestic_flight: 'Flight' }
 const SEL = { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid #E5E7EB', fontSize: 13, outline: 'none' as const, background: '#fff' }
 
 function Tog({ v, set }: { v: boolean; set: (x: boolean) => void }) {
@@ -65,7 +70,16 @@ export function FlightPolicy({ type }: { type: string }) {
     adminFetch(`/api/admin/biz/policy/travel?type=${type}`)
       .then(d => {
         const r = d.settings ?? {}
-        setS({ ...DFLT, ...r, max_price: String(r.max_price ?? DFLT.max_price), dynamic_range: String(r.dynamic_range ?? DFLT.dynamic_range) })
+        const maxPrice = Number(r.max_price ?? DFLT.max_price) || 0
+        // No tiers saved yet — seed 2 tiers from the existing flat in/out-of-policy
+        // settings so nothing changes behaviourally until an admin edits the tiers.
+        const tiers: ApprovalTier[] = Array.isArray(r.approval_tiers) && r.approval_tiers.length
+          ? r.approval_tiers
+          : [
+              { maxAmount: maxPrice, approval: r.in_policy_approval  ?? DFLT.in_policy_approval },
+              { maxAmount: null,     approval: r.out_policy_approval ?? DFLT.out_policy_approval },
+            ]
+        setS({ ...DFLT, ...r, max_price: String(r.max_price ?? DFLT.max_price), dynamic_range: String(r.dynamic_range ?? DFLT.dynamic_range), approval_tiers: tiers })
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -73,9 +87,21 @@ export function FlightPolicy({ type }: { type: string }) {
 
   async function save() {
     setSaving(true)
+    const tiers = s.approval_tiers ?? []
     await adminFetch('/api/admin/biz/policy/travel', {
       method: 'PATCH',
-      body: JSON.stringify({ type, settings: { ...s, max_price: Number(s.max_price) || null, dynamic_range: Number(s.dynamic_range) } }),
+      body: JSON.stringify({
+        type,
+        settings: {
+          ...s,
+          max_price: Number(s.max_price) || null,
+          dynamic_range: Number(s.dynamic_range),
+          approval_tiers: tiers,
+          // Kept in sync for any reader still checking the old flat fields directly.
+          in_policy_approval:  tiers[0]?.approval ?? s.in_policy_approval,
+          out_policy_approval: tiers[tiers.length - 1]?.approval ?? s.out_policy_approval,
+        },
+      }),
     }).catch(() => {})
     setSaving(false); setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -193,19 +219,9 @@ export function FlightPolicy({ type }: { type: string }) {
       <div style={card}>
         <Sec t="APPROVAL AND WALLET POLICY" />
         <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 12 }}>Booking and Approval</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            {([['in_policy_approval', 'In Policy'], ['out_policy_approval', 'Out of Policy']] as [keyof S, string][]).map(([k, l]) => (
-              <div key={k}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#6B7280', marginBottom: 6 }}>{l}</div>
-                <select value={s[k] as string} onChange={e => setS(p => ({ ...p, [k]: e.target.value }))} style={SEL}>
-                  <option value="none">No Approval Required</option>
-                  <option value="manager">Manager Approval</option>
-                  <option value="hod">HOD Approval</option>
-                </select>
-              </div>
-            ))}
-          </div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Booking and Approval</div>
+          <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>Route approval by total booking amount — add tiers for auto-approve, manager, and HOD thresholds.</div>
+          <ApprovalTiersEditor tiers={s.approval_tiers ?? []} onChange={tiers => setS(p => ({ ...p, approval_tiers: tiers }))} />
         </div>
         <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 6 }}>Wallet Allowed For</div>

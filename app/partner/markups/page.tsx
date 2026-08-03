@@ -1,22 +1,11 @@
 'use client'
-import { Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
-import { useSearchParams } from 'next/navigation'
 
 interface Markup { id: string; booking_type: string; markup_type: string; markup_value: number; airline_code?: string; is_active: boolean }
 
 export default function PartnerMarkupsPage() {
-  return (
-    <Suspense fallback={null}>
-      <PartnerMarkupsContent />
-    </Suspense>
-  )
-}
-
-function PartnerMarkupsContent() {
-  const sp        = useSearchParams()
-  const agentId   = sp.get('agentId') ?? ''
-  const agentName = sp.get('agentName') ?? 'Agent'
+  const [agentId] = useState(() => typeof window !== 'undefined' ? sessionStorage.getItem('partner_agent_id') ?? '' : '')
   const [markups, setMarkups]   = useState<Markup[]>([])
   const [loading, setLoading]   = useState(true)
   const [saving, setSaving]     = useState<string | null>(null)
@@ -39,7 +28,7 @@ function PartnerMarkupsContent() {
   return (
     <div>
       <div className="admin-topbar">
-        <h2>{agentName} — Markups</h2>
+        <h2>Markups</h2>
         <span className="topbar-meta">{markups.filter(m => m.is_active).length} active rules</span>
       </div>
       <div className="admin-content">

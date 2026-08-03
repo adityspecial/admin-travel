@@ -27,6 +27,9 @@ export default function LoginPage() {
       }
 
       sessionStorage.setItem('admin_dev_token', data.token)
+      if (data.role === 'partner' && data.agentId) {
+        sessionStorage.setItem('partner_agent_id', data.agentId)
+      }
       const redirect = data.role === 'super' ? '/super' : data.role === 'partner' ? '/partner' : '/biz'
       window.location.href = redirect
     } catch {

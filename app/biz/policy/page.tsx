@@ -2,14 +2,12 @@
 import { useState } from 'react'
 import { FlightPolicy } from './FlightPolicy'
 import { InsurancePolicy } from './InsurancePolicy'
+import { EligibilityPolicy } from './EligibilityPolicy'
 
 const TYPES = [
-  { key: 'domestic_flight',      label: 'Domestic Flights',      icon: '✈️' },
-  { key: 'international_flight', label: 'International Flights', icon: '🌍' },
-  { key: 'domestic_hotel',       label: 'Domestic Hotels',       icon: '🏨' },
-  { key: 'international_hotel',  label: 'International Hotels',  icon: '🏩' },
-  { key: 'airport_cab',          label: 'Airport Cabs',          icon: '🚖' },
-  { key: 'intercity_cab',        label: 'Intercity Cabs',        icon: '🚕' },
+  { key: 'domestic_flight',      label: 'Flights',                icon: '✈️' },
+  { key: 'hotel',                label: 'Hotels',                icon: '🏨' },
+  { key: 'cab',                  label: 'Cabs',                  icon: '🚖' },
   { key: 'bus',                  label: 'Bus',                   icon: '🚌' },
   { key: 'train',                label: 'Train',                 icon: '🚂' },
   { key: 'rental_cab',           label: 'Rental Cabs',           icon: '🚗' },
@@ -19,7 +17,7 @@ const TYPES = [
   { key: 'insurance',            label: 'Insurance',             icon: '🛡️' },
 ]
 
-const LIVE = new Set(['domestic_flight', 'international_flight', 'insurance'])
+const LIVE = new Set(['domestic_flight', 'hotel', 'cab', 'insurance'])
 
 export default function PolicyPage() {
   const [sel, setSel] = useState('domestic_flight')
@@ -57,6 +55,10 @@ export default function PolicyPage() {
       <div style={{ flex: 1, padding: '28px 32px', overflowY: 'auto' as const }}>
         {sel === 'insurance' ? (
           <InsurancePolicy />
+        ) : sel === 'hotel' ? (
+          <EligibilityPolicy key={sel} type="hotel" title="Hotel" />
+        ) : sel === 'cab' ? (
+          <EligibilityPolicy key={sel} type="cab" title="Cab" />
         ) : LIVE.has(sel) ? (
           <FlightPolicy key={sel} type={sel} />
         ) : (

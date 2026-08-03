@@ -1,7 +1,6 @@
 'use client'
-import { Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
-import { useSearchParams } from 'next/navigation'
 import { Pagination, usePagination } from '@/components/Pagination'
 
 interface Customer { id: string; name: string; email?: string; phone?: string; passport_no?: string; passport_expiry?: string; gender?: string; created_at: string }
@@ -9,17 +8,7 @@ interface Customer { id: string; name: string; email?: string; phone?: string; p
 function fmtDate(d?: string) { return d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '--' }
 
 export default function PartnerCustomersPage() {
-  return (
-    <Suspense fallback={null}>
-      <PartnerCustomersContent />
-    </Suspense>
-  )
-}
-
-function PartnerCustomersContent() {
-  const sp       = useSearchParams()
-  const agentId  = sp.get('agentId') ?? ''
-  const agentName = sp.get('agentName') ?? 'Agent'
+  const [agentId] = useState(() => typeof window !== 'undefined' ? sessionStorage.getItem('partner_agent_id') ?? '' : '')
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading]     = useState(true)
   const [search, setSearch]       = useState('')
@@ -44,7 +33,7 @@ function PartnerCustomersContent() {
   return (
     <div>
       <div className="admin-topbar">
-        <h2>{agentName} — Customers</h2>
+        <h2>Customers</h2>
         <span className="topbar-meta">{customers.length} saved profiles</span>
       </div>
       <div className="admin-content">

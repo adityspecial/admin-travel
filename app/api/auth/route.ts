@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
   const { data: adminUser, error } = await supabaseAdmin
     .from('admin_users')
-    .select('role, password_hash, org_id')
+    .select('id, role, password_hash, org_id')
     .eq('email', normalised)
     .single()
 
@@ -81,10 +81,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
   }
 
+  let agentId: string | null = null
+  if (adminUser.role === 'partner') {
+    const { data: link } = await supabaseAdmin
+      .from('partner_agent_admins')
+      .select('agent_id')
+      .eq('admin_id', adminUser.id)
+      .maybeSingle()
+    agentId = link?.agent_id ?? null
+  }
+
   clearRate(ip)
   return NextResponse.json({
     token: signToken(normalised, adminUser.role, adminUser.org_id),
     role: adminUser.role,
     orgId: adminUser.org_id ?? null,
+    agentId,
   })
 }

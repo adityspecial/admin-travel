@@ -14,8 +14,9 @@ const NAV = [
   { href: '/super/fareguide',    label: 'FareGuide Fixed Flights',icon: 'FG' },
   { href: '/super/packages',       label: 'Holiday Packages',      icon: '🌍' },
   { href: '/super/visa',           label: 'Visa Pages',            icon: '🛂' },
-  { href: '/super/home-banners',  label: "What's New Banners",    icon: '📢' },
+  { href: '/super/featured-content', label: 'Featured Content',    icon: '📢' },
   { href: '/super/promos',        label: 'Promo Codes',           icon: 'CP' },
+  { href: '/super/payments',     label: 'Razorpay Payments',     icon: '💳' },
   { href: '/super/consumer',     label: 'Fee Settings',          icon: '₹'  },
   { href: '/super/permissions',  label: 'Permissions',           icon: '🔐' },
 ]

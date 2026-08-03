@@ -13,7 +13,7 @@ export default function CompanyDetailsPage() {
   const [addresses,   setAddresses]   = useState<Address[]>([])
   const [loading,     setLoading]     = useState(true)
   const [editing,     setEditing]     = useState(false)
-  const [editForm,    setEditForm]    = useState({ name: '', domain: '' })
+  const [editForm,    setEditForm]    = useState({ name: '', orgCode: '' })
   const [addingId,    setAddingId]    = useState(false)
   const [idForm,      setIdForm]      = useState({ number: '', alias: '', address: '', is_hq: false })
   const [addingAddr,  setAddingAddr]  = useState(false)
@@ -32,7 +32,7 @@ export default function CompanyDetailsPage() {
       adminFetch('/api/admin/biz/addresses'),
     ]).then(([p, ids, addrs]) => {
       setPolicy(p.policy)
-      setEditForm({ name: p.policy?.name ?? '', domain: p.policy?.domain ?? '' })
+      setEditForm({ name: p.policy?.name ?? '', orgCode: p.policy?.org_code ?? '' })
       setLogoUrl(p.policy?.logo_url ?? '')
       setIdentifiers(ids.identifiers ?? [])
       setAddresses(addrs.addresses ?? [])
@@ -76,12 +76,14 @@ export default function CompanyDetailsPage() {
   }
 
   async function savePolicy() {
+    if (!editForm.orgCode.trim()) { setError('Org code is required.'); return }
     setSaving(true); setError(''); setSuccess('')
     try {
-      await adminFetch('/api/admin/biz/policy', {
+      const d = await adminFetch('/api/admin/biz/policy', {
         method: 'PATCH',
-        body: JSON.stringify({ gstNumber: policy?.gst_number }),
+        body: JSON.stringify({ name: editForm.name, orgCode: editForm.orgCode, gstNumber: policy?.gst_number }),
       })
+      setPolicy(d.policy)
       setSuccess('Company details saved.')
       setEditing(false)
     } catch (e: any) { setError(e.message) }
@@ -132,7 +134,16 @@ export default function CompanyDetailsPage() {
                         style={{ fontSize: 20, fontWeight: 800, border: '1.5px solid #E5E7EB', borderRadius: 6, padding: '4px 10px', outline: 'none' }} />
                     ) : (policy?.name ?? '—')}
                   </div>
-                  <div style={{ fontSize: 13, color: '#6B7280' }}>{policy?.domain ?? policy?.org_code ?? '—'}</div>
+                  <div style={{ fontSize: 13, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    Org Code:
+                    {editing ? (
+                      <input value={editForm.orgCode} onChange={e => setEditForm(f => ({ ...f, orgCode: e.target.value.toUpperCase().replace(/\s/g, '') }))}
+                        maxLength={12}
+                        style={{ fontSize: 13, fontWeight: 700, border: '1.5px solid #E5E7EB', borderRadius: 6, padding: '2px 8px', outline: 'none', width: 140 }} />
+                    ) : (
+                      <code style={{ background: '#F1F5F9', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>{policy?.org_code ?? '—'}</code>
+                    )}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   {editing ? (

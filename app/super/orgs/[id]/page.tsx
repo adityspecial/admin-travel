@@ -19,6 +19,8 @@ export default function EditOrgPage() {
 
   const [form, setForm] = useState({
     name:          '',
+    org_code:      '',
+    domain:        '',
     flight_cap:    '',
     hotel_cap:     '',
     insurance_cap: '',
@@ -33,6 +35,8 @@ export default function EditOrgPage() {
         setMembers(d.org.biz_members ?? [])
         setForm({
           name:          d.org.name ?? '',
+          org_code:      d.org.org_code ?? '',
+          domain:        d.org.domain ?? '',
           flight_cap:    String(d.org.flight_cap    ?? 10000),
           hotel_cap:     String(d.org.hotel_cap     ?? 5000),
           insurance_cap: String(d.org.insurance_cap ?? 3000),
@@ -52,6 +56,8 @@ export default function EditOrgPage() {
         method: 'PATCH',
         body: JSON.stringify({
           name:         form.name,
+          orgCode:      form.org_code,
+          domain:       form.domain || null,
           flightCap:    Number(form.flight_cap),
           hotelCap:     Number(form.hotel_cap),
           insuranceCap: Number(form.insurance_cap),
@@ -85,13 +91,14 @@ export default function EditOrgPage() {
     await adminFetch(`/api/admin/biz/members/${memberId}`, {
       method: 'PATCH',
       body: JSON.stringify({ role }),
+      orgId: id,
     }).catch(() => {})
     setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role } : m))
   }
 
   async function removeMember(memberId: string, email: string) {
     if (!confirm(`Remove ${email} from this organisation?`)) return
-    await adminFetch(`/api/admin/biz/members/${memberId}`, { method: 'DELETE' }).catch(() => {})
+    await adminFetch(`/api/admin/biz/members/${memberId}`, { method: 'DELETE', orgId: id }).catch(() => {})
     setMembers(prev => prev.filter(m => m.id !== memberId))
   }
 
@@ -128,6 +135,27 @@ export default function EditOrgPage() {
             <div className="form-group">
               <label>Company Name</label>
               <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
+            </div>
+
+            <div className="form-group">
+              <label>Org Code</label>
+              <input
+                value={form.org_code}
+                onChange={e => setForm(f => ({ ...f, org_code: e.target.value.toUpperCase().replace(/\s/g, '') }))}
+                maxLength={12}
+                required
+              />
+              <span style={{ fontSize: 11, color: '#94A3B8', marginTop: 4, display: 'block' }}>Internal reference only — auto-generated, not used to join anymore.</span>
+            </div>
+
+            <div className="form-group">
+              <label>Google Workspace Domain</label>
+              <input
+                value={form.domain}
+                onChange={e => setForm(f => ({ ...f, domain: e.target.value.toLowerCase().trim() }))}
+                placeholder="acme.com"
+              />
+              <span style={{ fontSize: 11, color: '#94A3B8', marginTop: 4, display: 'block' }}>Employees signing in with a Google Workspace account on this domain join here automatically.</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
@@ -173,7 +201,6 @@ export default function EditOrgPage() {
           <div className="form-card" style={{ padding: 24 }}>
             <h3 style={{ marginBottom: 16, fontSize: 15, fontWeight: 700 }}>Info</h3>
             {[
-              { label: 'Org Code',  value: <code style={{ background: '#F1F5F9', padding: '2px 8px', borderRadius: 4 }}>{org?.org_code}</code> },
               { label: 'Members',   value: `${members.length} members` },
               { label: 'Status',    value: <span className={`badge ${org?.is_active ? 'badge-green' : 'badge-red'}`}>{org?.is_active ? 'Active' : 'Inactive'}</span> },
               { label: 'Created',   value: org?.created_at ? new Date(org.created_at).toLocaleDateString('en-IN') : '—' },

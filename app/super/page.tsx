@@ -23,12 +23,17 @@ const TYPE_STYLE: Record<string, { bg: string; color: string }> = {
   'GDS':     { bg: '#EFF6FF', color: '#1D4ED8' },
   'B2B GDS': { bg: '#F5F3FF', color: '#7C3AED' },
   'Charter': { bg: '#FFF7ED', color: '#C2410C' },
+  'Hotel':   { bg: '#ECFDF5', color: '#047857' },
+  'Package': { bg: '#FDF2F8', color: '#BE185D' },
+  'Cab':     { bg: '#F0FDFA', color: '#0F766E' },
+  'Insurance': { bg: '#FEF9C3', color: '#854D0E' },
 }
 
 interface ApiStat {
   key: string; name: string; type: string; env: string; description: string
   total: number; last30: number; revenue: number; lastBooking: string | null
   bySource: { consumer: number; mybiz: number; mypartner: number } | null
+  balance?: { creditBalance: number; effectiveBalance: number; lienBalance: number; odAmount: number } | null
 }
 
 export default function SuperDashboard() {
@@ -182,7 +187,7 @@ export default function SuperDashboard() {
             <div className="table-header">
               <div>
                 <div className="card-title">API Health &amp; Usage</div>
-                <div className="card-copy">All flight booking APIs integrated on the platform — live booking counts and revenue.</div>
+                <div className="card-copy">All booking APIs integrated on the platform — live booking counts and revenue.</div>
               </div>
             </div>
 
@@ -207,6 +212,21 @@ export default function SuperDashboard() {
                           <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: '#DCFCE7', color: '#166534' }}>● LIVE</span>
                         </div>
                       </div>
+
+                      {/* Trade API wallet balance — only FlightSeva returns this today */}
+                      {api.balance && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 12, padding: '12px 14px' }}>
+                          <div>
+                            <div style={{ fontSize: 10, color: '#92400E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Wallet Balance</div>
+                            <div style={{ fontSize: 18, fontWeight: 800, color: '#92400E', marginTop: 2 }}>{formatMoney(api.balance.effectiveBalance)}</div>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, justifyContent: 'center', fontSize: 11, color: '#92400E' }}>
+                            <div>Credit: {formatMoney(api.balance.creditBalance)}</div>
+                            <div>Lien: {formatMoney(api.balance.lienBalance)}</div>
+                            <div>OD: {formatMoney(api.balance.odAmount)}</div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Booking stats */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, background: '#F9FAFB', borderRadius: 12, padding: '12px 14px' }}>
@@ -245,7 +265,7 @@ export default function SuperDashboard() {
                           </div>
                         </div>
                       ) : (
-                        <div style={{ fontSize: 11, color: '#9CA3AF', fontStyle: 'italic' }}>Channel breakdown stored in JSONB — query via raw_book_response</div>
+                        <div style={{ fontSize: 11, color: '#9CA3AF', fontStyle: 'italic' }}>Channel breakdown not available yet — only bookable via one channel today</div>
                       )}
 
                       {/* Last booking */}

@@ -118,11 +118,12 @@ export default function BizAdminLayout({ children }: { children: React.ReactNode
               <NavLink href="#" label="Travel Management" active={
                 is('/biz/reports') || is('/biz/invoices') || is('/biz/policy') ||
                 is('/biz/approvals') || is('/biz/auto-approval') ||
-                is('/biz/blackout-dates') || is('/biz/promos')
+                is('/biz/blackout-dates') || is('/biz/promos') || is('/biz/visa-enquiries')
               } dropdown />
               {open === 'travel' && (
                 <DropMenu onClose={() => setOpen(null)} items={[
                   { label: 'Manage Bookings',    href: '/biz/approvals',     badge: pendingCount > 0 ? String(pendingCount) : undefined },
+                  { label: 'Visa Enquiries',     href: '/biz/visa-enquiries' },
                   { label: 'Travel Reports',     href: '/biz/reports'        },
                   { label: 'Travel Invoices',    href: '/biz/invoices'       },
                   { label: 'Travel Policy',      href: '/biz/policy'         },
