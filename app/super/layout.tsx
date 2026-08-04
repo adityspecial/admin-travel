@@ -1,25 +1,46 @@
 'use client'
 import Link from 'next/link'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/api'
 
+import {
+  LayoutDashboard,
+  Building2,
+  Users,
+  ShieldCheck,
+  UserCheck,
+  Plane,
+  Ticket,
+  Palmtree,
+  FileCheck,
+  Megaphone,
+  Tag,
+  CreditCard,
+  BadgePercent,
+  KeyRound,
+  ScrollText,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
+
 const NAV = [
-  { href: '/super',              label: 'Dashboard',             icon: 'DB' },
-  { href: '/super/orgs',         label: 'Organisations',         icon: 'OR' },
-  { href: '/super/agents',       label: 'myPartner Agents',      icon: 'AG' },
-  { href: '/super/partners',     label: 'Partner Admins',        icon: 'PA' },
-  { href: '/super/users',        label: 'All Members',           icon: 'MB' },
-  { href: '/super/fixed-flights',label: 'Fixed Departures',      icon: 'FD' },
-  { href: '/super/fareguide',    label: 'FareGuide Fixed Flights',icon: 'FG' },
-  { href: '/super/packages',       label: 'Holiday Packages',      icon: '🌍' },
-  { href: '/super/visa',           label: 'Visa Pages',            icon: '🛂' },
-  { href: '/super/featured-content', label: 'Featured Content',    icon: '📢' },
-  { href: '/super/promos',        label: 'Promo Codes',           icon: 'CP' },
-  { href: '/super/payments',     label: 'Razorpay Payments',     icon: '💳' },
-  { href: '/super/consumer',     label: 'Fee Settings',          icon: '₹'  },
-  { href: '/super/permissions',  label: 'Permissions',           icon: '🔐' },
-  { href: '/super/audit-log',    label: 'Audit Log',             icon: '📜' },
+  { href: '/super',              label: 'Dashboard',              Icon: LayoutDashboard },
+  { href: '/super/orgs',         label: 'Organisations',          Icon: Building2 },
+  { href: '/super/agents',       label: 'myPartner Agents',       Icon: Users },
+  { href: '/super/partners',     label: 'Partner Admins',         Icon: ShieldCheck },
+  { href: '/super/users',        label: 'All Members',            Icon: UserCheck },
+  // { href: '/super/fixed-flights',label: 'Fixed Departures',       Icon: Plane },
+  // { href: '/super/fareguide',    label: 'FareGuide Fixed Flights',Icon: Ticket },
+  { href: '/super/packages',     label: 'Holiday Packages',       Icon: Palmtree },
+  { href: '/super/visa',         label: 'Visa Pages',             Icon: FileCheck },
+  { href: '/super/featured-content', label: 'Featured Content',   Icon: Megaphone },
+  { href: '/super/promos',        label: 'Promo Codes',            Icon: Tag },
+  { href: '/super/payments',     label: 'Razorpay Payments',      Icon: CreditCard },
+  { href: '/super/consumer',     label: 'Fee Settings',           Icon: BadgePercent },
+  { href: '/super/permissions',  label: 'Permissions',            Icon: KeyRound },
+  { href: '/super/audit-log',    label: 'Audit Log',              Icon: ScrollText },
 ]
 
 export default function SuperLayout({ children }: { children: React.ReactNode }) {
@@ -27,6 +48,15 @@ export default function SuperLayout({ children }: { children: React.ReactNode })
   const router   = useRouter()
 
   const checked = useRef(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
+
+  // Load saved sidebar state from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebar_collapsed')
+    if (saved === 'true') {
+      setIsCollapsed(true)
+    }
+  }, [])
 
   // ── Role guard: only 'super' tokens may access /super ────────────
   useEffect(() => {
@@ -64,23 +94,49 @@ export default function SuperLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="admin-shell">
-      <aside className="sidebar">
+      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-logo">
-          <h1>AirDunia</h1>
-          <span>Super Admin</span>
+          <div className="sidebar-logo-text">
+            <h1>AirDunia</h1>
+            <span>Super Admin</span>
+          </div>
+          <button
+            className="sidebar-toggle-btn"
+            onClick={() => {
+              const next = !isCollapsed
+              setIsCollapsed(next)
+              localStorage.setItem('sidebar_collapsed', String(next))
+            }}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+          </button>
         </div>
         <nav className="sidebar-nav">
           <div className="nav-section">Platform</div>
           {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className={`nav-link ${pathname === item.href ? 'active' : ''}`}>
-              <span className="nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`nav-link ${pathname === item.href ? 'active' : ''}`}
+              data-tooltip={item.label}
+            >
+              <span className="nav-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <item.Icon size={15} strokeWidth={2} />
+              </span>
+              <span className="nav-link-text">{item.label}</span>
             </Link>
           ))}
           <div className="nav-section" style={{ marginTop: 16 }}>Account</div>
-          <button className="nav-link nav-link-plain" onClick={logout}>
-            <span className="nav-icon">SO</span>
-            <span>Sign Out</span>
+          <button
+            className="nav-link nav-link-plain"
+            onClick={logout}
+            data-tooltip="Sign Out"
+          >
+            <span className="nav-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <LogOut size={15} strokeWidth={2} />
+            </span>
+            <span className="nav-link-text">Sign Out</span>
           </button>
         </nav>
       </aside>

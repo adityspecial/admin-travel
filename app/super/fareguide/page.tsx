@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import { StatCard } from '@/components/ui/StatCard'
+import { Ticket, TrendingUp, Users, Building2 } from 'lucide-react'
 
 type TabType = 'bookings' | 'sectors' | 'settings'
 
@@ -205,18 +207,51 @@ export default function FareGuidePage() {
         {tab === 'bookings' && (
           <>
             {stats && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-                {[
-                  { label: 'Total Bookings', value: stats.total_bookings },
-                  { label: 'Total Revenue',  value: fmtAmt(stats.total_revenue) },
-                  { label: 'Consumer',       value: stats.by_source.consumer },
-                  { label: 'myBiz / Partner',value: stats.by_source.mybiz + stats.by_source.mypartner },
-                ].map(({ label, value }) => (
-                  <div key={label} style={{ background: '#0F172A', borderRadius: 12, padding: '16px 20px', border: '1px solid #1E293B' }}>
-                    <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: '#F1F5F9' }}>{value}</div>
-                  </div>
-                ))}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 24 }}>
+                <StatCard
+                  label="Total Bookings"
+                  value={stats.total_bookings}
+                  sub="FareGuide charter bookings"
+                  badge="FareGuide"
+                  Icon={Ticket}
+                  iconBg="#eff6ff"
+                  iconColor="#2563eb"
+                  badgeBg="#dbeafe"
+                  badgeColor="#1d4ed8"
+                />
+                <StatCard
+                  label="Total Revenue"
+                  value={fmtAmt(stats.total_revenue)}
+                  sub="Revenue generated all time"
+                  badge="Revenue"
+                  Icon={TrendingUp}
+                  iconBg="#f0fdf4"
+                  iconColor="#0d9488"
+                  badgeBg="#ccfbf1"
+                  badgeColor="#0f766e"
+                />
+                <StatCard
+                  label="Consumer Channel"
+                  value={stats.by_source.consumer}
+                  sub="Bookings via consumer app"
+                  badge="B2C"
+                  Icon={Users}
+                  iconBg="#fff7ed"
+                  iconColor="#ea580c"
+                  badgeBg="#ffedd5"
+                  badgeColor="#c2410c"
+                />
+                <StatCard
+                  label="myBiz & Partner"
+                  value={stats.by_source.mybiz + stats.by_source.mypartner}
+                  sub="Bookings via B2B partners"
+                  badge="B2B"
+                  Icon={Building2}
+                  iconBg="#fdf2f8"
+                  iconColor="#db2777"
+                  badgeBg="#fce7f3"
+                  badgeColor="#be185d"
+                />
               </div>
             )}
 

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import '../public/css/style.css'
+import ThemeCustomizer from "@/components/ui/ThemeCustomizer";
 
 // Inter — the definitive product UI typeface: optical sizing, variable weight, superb at density
 const inter = Inter({
@@ -17,8 +19,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body>{children}</body>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        {children}
+        <ThemeCustomizer />
+      </body>
     </html>
   )
 }

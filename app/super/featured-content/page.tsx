@@ -1,60 +1,110 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { adminFetch } from '@/lib/api'
+import { StatCard } from '@/components/ui/StatCard'
+import { DataTable, ColumnDef } from '@/components/ui/DataTable'
+import { AppInput } from '@/components/ui/AppInput'
+import { AppPopup } from '@/components/ui/AppPopup'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import { Sparkles, CheckCircle2, Clock, Layers, Plus, Pencil, Trash2, Layout, Tag, Plane } from 'lucide-react'
 
 interface Item {
-  id: string; placement: string; category: string | null
-  title: string; subtitle: string; tag: string | null
-  image_url: string | null; bg_color: string; icon: string
-  target_from: string | null; target_to: string | null
-  static_price_label: string | null; use_live_price: boolean
-  pill1_label: string | null; pill2_label: string | null
-  deeplink: string | null; sort_order: number
-  is_active: boolean; valid_from: string | null; valid_until: string | null
+  id: string
+  placement: string
+  category: string | null
+  title: string
+  subtitle: string
+  tag: string | null
+  image_url: string | null
+  bg_color: string
+  icon: string
+  target_from: string | null
+  target_to: string | null
+  static_price_label: string | null
+  use_live_price: boolean
+  pill1_label: string | null
+  pill2_label: string | null
+  deeplink: string | null
+  sort_order: number
+  is_active: boolean
+  valid_from: string | null
+  valid_until: string | null
 }
 
 const PLACEMENTS = [
-  { value: 'home_consumer',        label: 'Home — Consumer (What\'s New banners)' },
-  { value: 'home_collection',      label: 'Home — Collections' },
-  { value: 'home_biz',             label: 'Home — MyBiz (mobile)' },
-  { value: 'home_biz_web',         label: 'Home — MyBiz (biz-portal offers rail)' },
-  { value: 'home_biz_benefits',    label: 'Home — MyBiz (biz-portal corporate benefits)' },
+  { value: 'home_consumer', label: "Home — Consumer (What's New banners)" },
+  { value: 'home_collection', label: 'Home — Collections' },
+  { value: 'home_biz', label: 'Home — MyBiz (mobile)' },
+  { value: 'home_biz_web', label: 'Home — MyBiz (biz-portal offers rail)' },
+  { value: 'home_biz_benefits', label: 'Home — MyBiz (biz-portal corporate benefits)' },
   { value: 'destination_suggestion', label: 'Destination Suggestions' },
-  { value: 'nearby_getaway',       label: 'Nearby Getaways' },
-  { value: 'popular_destination',  label: 'Popular Destinations' },
-  { value: 'hotel_search',         label: 'Hotel Search Page' },
-  { value: 'cab_search',           label: 'Cab Search Page' },
-  { value: 'insurance_search',     label: 'Insurance Page' },
+  { value: 'nearby_getaway', label: 'Nearby Getaways' },
+  { value: 'popular_destination', label: 'Popular Destinations' },
+  { value: 'hotel_search', label: 'Hotel Search Page' },
+  { value: 'cab_search', label: 'Cab Search Page' },
+  { value: 'insurance_search', label: 'Insurance Page' },
 ]
 
 const BLANK = {
-  placement: 'home_consumer', category: '', title: '', subtitle: '', tag: '',
-  image_url: '', bg_color: '#1463F3', icon: 'airplane',
-  target_from: '', target_to: '', static_price_label: '', use_live_price: false,
-  pill1_label: '', pill2_label: '',
-  deeplink: '', sort_order: 0, valid_from: '', valid_until: '',
+  placement: 'home_consumer',
+  category: '',
+  title: '',
+  subtitle: '',
+  tag: '',
+  image_url: '',
+  bg_color: '#1463F3',
+  icon: 'airplane',
+  target_from: '',
+  target_to: '',
+  static_price_label: '',
+  use_live_price: false,
+  pill1_label: '',
+  pill2_label: '',
+  deeplink: '',
+  sort_order: 0,
+  valid_from: '',
+  valid_until: '',
 }
 
 const ICON_OPTIONS = [
-  'airplane', 'bed-outline', 'notifications-outline', 'shield-checkmark-outline',
-  'cash-outline', 'document-text-outline', 'gift-outline', 'star-outline',
-  'umbrella-outline', 'car-outline', 'globe-outline', 'wallet-outline',
+  'airplane',
+  'bed-outline',
+  'notifications-outline',
+  'shield-checkmark-outline',
+  'cash-outline',
+  'document-text-outline',
+  'gift-outline',
+  'star-outline',
+  'umbrella-outline',
+  'car-outline',
+  'globe-outline',
+  'wallet-outline',
 ]
 
 const COLOR_PRESETS = [
-  '#1463F3', '#7C3AED', '#0891B2', '#059669', '#D97706', '#DC2626',
-  '#0D9488', '#DB2777', '#4F46E5', '#92400E',
+  '#1463F3',
+  '#7C3AED',
+  '#0891B2',
+  '#059669',
+  '#D97706',
+  '#DC2626',
+  '#0D9488',
+  '#DB2777',
+  '#4F46E5',
+  '#92400E',
 ]
 
 export default function FeaturedContentPage() {
-  const [items,    setItems]    = useState<Item[]>([])
-  const [filter,   setFilter]   = useState('')
-  const [loading,  setLoading]  = useState(true)
-  const [msg,      setMsg]      = useState('')
-  const [showForm, setShowForm] = useState(false)
-  const [editId,   setEditId]   = useState<string | null>(null)
-  const [form,     setForm]     = useState(BLANK)
-  const [saving,   setSaving]   = useState(false)
+  const [items, setItems]               = useState<Item[]>([])
+  const [filter, setFilter]             = useState('')
+  const [loading, setLoading]           = useState(true)
+  const [msg, setMsg]                   = useState('')
+  const [showForm, setShowForm]         = useState(false)
+  const [editId, setEditId]             = useState<string | null>(null)
+  const [form, setForm]                 = useState(BLANK)
+  const [saving, setSaving]             = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Item | null>(null)
+  const [deleting, setDeleting]         = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -64,9 +114,14 @@ export default function FeaturedContentPage() {
       .finally(() => setLoading(false))
   }, [filter])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+  }, [load])
 
-  function flash(m: string) { setMsg(m); setTimeout(() => setMsg(''), 3000) }
+  function flash(m: string) {
+    setMsg(m)
+    setTimeout(() => setMsg(''), 3000)
+  }
 
   function openCreate() {
     setEditId(null)
@@ -77,291 +132,549 @@ export default function FeaturedContentPage() {
   function openEdit(it: Item) {
     setEditId(it.id)
     setForm({
-      placement: it.placement, category: it.category ?? '', title: it.title, subtitle: it.subtitle,
-      tag: it.tag ?? '', image_url: it.image_url ?? '', bg_color: it.bg_color, icon: it.icon,
-      target_from: it.target_from ?? '', target_to: it.target_to ?? '',
-      static_price_label: it.static_price_label ?? '', use_live_price: it.use_live_price,
-      pill1_label: it.pill1_label ?? '', pill2_label: it.pill2_label ?? '',
-      deeplink: it.deeplink ?? '', sort_order: it.sort_order,
-      valid_from: it.valid_from ?? '', valid_until: it.valid_until ?? '',
+      placement: it.placement,
+      category: it.category ?? '',
+      title: it.title,
+      subtitle: it.subtitle,
+      tag: it.tag ?? '',
+      image_url: it.image_url ?? '',
+      bg_color: it.bg_color,
+      icon: it.icon,
+      target_from: it.target_from ?? '',
+      target_to: it.target_to ?? '',
+      static_price_label: it.static_price_label ?? '',
+      use_live_price: it.use_live_price,
+      pill1_label: it.pill1_label ?? '',
+      pill2_label: it.pill2_label ?? '',
+      deeplink: it.deeplink ?? '',
+      sort_order: it.sort_order,
+      valid_from: it.valid_from ?? '',
+      valid_until: it.valid_until ?? '',
     })
     setShowForm(true)
   }
 
   async function save() {
-    if (!form.placement || !form.title) { flash('Placement and Title are required.'); return }
+    if (!form.placement || !form.title) {
+      flash('Placement and Title are required.')
+      return
+    }
     setSaving(true)
     try {
       const body = {
         ...form,
-        category:  form.category || null,
-        tag:       form.tag || null,
+        category: form.category || null,
+        tag: form.tag || null,
         image_url: form.image_url || null,
         target_from: form.target_from || null,
-        target_to:   form.target_to || null,
+        target_to: form.target_to || null,
         static_price_label: form.static_price_label || null,
         pill1_label: form.pill1_label || null,
         pill2_label: form.pill2_label || null,
-        deeplink:    form.deeplink || null,
-        valid_from:  form.valid_from || null,
+        deeplink: form.deeplink || null,
+        valid_from: form.valid_from || null,
         valid_until: form.valid_until || null,
-        sort_order:  Number(form.sort_order),
+        sort_order: Number(form.sort_order),
       }
       if (editId) {
-        await adminFetch(`/api/admin/super/featured-content/${editId}`, { method: 'PATCH', body: JSON.stringify(body) })
-        flash('Updated.')
+        await adminFetch(`/api/admin/super/featured-content/${editId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(body),
+        })
+        flash('Updated successfully.')
       } else {
-        await adminFetch('/api/admin/super/featured-content', { method: 'POST', body: JSON.stringify(body) })
-        flash('Created.')
+        await adminFetch('/api/admin/super/featured-content', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        })
+        flash('Created successfully.')
       }
-      setShowForm(false); setEditId(null); load()
-    } catch (e: any) { flash('Error: ' + (e.message ?? 'Failed')) }
-    finally { setSaving(false) }
+      setShowForm(false)
+      setEditId(null)
+      load()
+    } catch (e: any) {
+      flash('Error: ' + (e.message ?? 'Failed'))
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function toggleActive(it: Item) {
-    await adminFetch(`/api/admin/super/featured-content/${it.id}`, { method: 'PATCH', body: JSON.stringify({ is_active: !it.is_active }) })
+    await adminFetch(`/api/admin/super/featured-content/${it.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_active: !it.is_active }),
+    })
     load()
   }
 
-  async function del(it: Item) {
-    if (!confirm(`Delete "${it.title}"?`)) return
-    await adminFetch(`/api/admin/super/featured-content/${it.id}`, { method: 'DELETE' })
-    flash('Deleted.'); load()
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      await adminFetch(`/api/admin/super/featured-content/${deleteTarget.id}`, { method: 'DELETE' })
+      flash('Deleted successfully.')
+      setDeleteTarget(null)
+      load()
+    } catch (e: any) {
+      flash('Error: ' + (e.message ?? 'Delete failed'))
+    } finally {
+      setDeleting(false)
+    }
   }
 
   function f(key: keyof typeof BLANK) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       const v = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value
-      setForm(p => ({ ...p, [key]: v }))
+      setForm((p) => ({ ...p, [key]: v }))
     }
   }
 
-  const placementLabel = (v: string) => PLACEMENTS.find(p => p.value === v)?.label ?? v
+  const placementLabel = (v: string) => PLACEMENTS.find((p) => p.value === v)?.label ?? v
+
+  const activeCount = useMemo(() => items.filter((i) => i.is_active).length, [items])
+  const draftCount  = useMemo(() => items.filter((i) => !i.is_active).length, [items])
+
+  const columns: ColumnDef<Item>[] = [
+    {
+      key: 'sort_order',
+      header: '#',
+      render: (it) => <span className="data-table-code-pill">{it.sort_order}</span>,
+    },
+    {
+      key: 'placement',
+      header: 'Placement',
+      render: (it) => (
+        <div>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#2563eb', background: '#eff6ff', borderRadius: 6, padding: '3px 8px' }}>
+            {placementLabel(it.placement)}
+          </span>
+          {it.category && <div className="data-table-muted-cell" style={{ fontSize: 11, marginTop: 2 }}>{it.category}</div>}
+        </div>
+      ),
+    },
+    {
+      key: 'title',
+      header: 'Title & Subtitle',
+      render: (it) => (
+        <div style={{ maxWidth: 220 }}>
+          <div className="data-table-cell-bold">{it.title}</div>
+          <div className="data-table-muted-cell" style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {it.subtitle}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'route',
+      header: 'Route / Target',
+      render: (it) => (
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: '#334155' }}>
+          {it.target_from ? `${it.target_from}${it.target_to ? ` → ${it.target_to}` : ''}` : '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'price',
+      header: 'Price Type',
+      render: (it) => (
+        <span style={{ fontSize: 12.5, fontWeight: 700 }}>
+          {it.use_live_price ? (
+            <span style={{ color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: 6 }}>● Live Price</span>
+          ) : (
+            it.static_price_label || '—'
+          )}
+        </span>
+      ),
+    },
+    {
+      key: 'dates',
+      header: 'Validity',
+      render: (it) => (
+        <span className="data-table-muted-cell" style={{ fontSize: 11.5, whiteSpace: 'nowrap' }}>
+          {it.valid_from ?? '∞'} → {it.valid_until ?? '∞'}
+        </span>
+      ),
+    },
+    {
+      key: 'is_active',
+      header: 'Status',
+      render: (it) => (
+        <button
+          type="button"
+          onClick={() => toggleActive(it)}
+          className={`data-table-status-pill ${it.is_active ? 'active' : 'inactive'}`}
+          style={{ border: 'none', cursor: 'pointer' }}
+        >
+          {it.is_active ? '● Active' : '● Draft'}
+        </button>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (it) => (
+        <div className="data-table-actions">
+          <button
+            type="button"
+            className="data-table-btn data-table-btn-edit"
+            onClick={() => openEdit(it)}
+          >
+            <Pencil size={12} />
+            <span>Edit</span>
+          </button>
+          <button
+            type="button"
+            className="data-table-btn data-table-btn-danger"
+            onClick={() => setDeleteTarget(it)}
+          >
+            <Trash2 size={12} />
+            <span>Delete</span>
+          </button>
+        </div>
+      ),
+    },
+  ]
 
   return (
-    <div style={{ padding: 28, fontFamily: "'Inter', sans-serif", maxWidth: 1200 }}>
-
-      {/* Header */}
-      <div style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Featured Content</h1>
-          <p style={{ color: '#6B7280', fontSize: 13, margin: '4px 0 0' }}>
-            Every promotional card shown anywhere in the app — home screens, search pages, destination suggestions · {items.length} items
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {msg && <span style={{ fontSize: 13, fontWeight: 600, color: msg.startsWith('Error') ? '#dc2626' : '#16a34a' }}>{msg}</span>}
-          <button onClick={openCreate} style={btn('#2563EB')}>+ New Item</button>
-        </div>
+    <div>
+      <div className="admin-topbar">
+        <h2>Featured Content</h2>
+        <span className="topbar-meta">{items.length.toLocaleString('en-IN')} promotional cards configured</span>
       </div>
 
-      {/* Placement filter tabs */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-        <button onClick={() => setFilter('')} style={tabBtn(filter === '')}>All</button>
-        {PLACEMENTS.map(p => (
-          <button key={p.value} onClick={() => setFilter(p.value)} style={tabBtn(filter === p.value)}>{p.label}</button>
-        ))}
-      </div>
-
-      {/* Create / Edit form */}
-      {showForm && (
-        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E5E7EB', padding: 24, marginBottom: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: 15, fontWeight: 700 }}>{editId ? 'Edit Item' : 'New Item'}</h3>
-
-          {/* Live preview */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Preview</div>
-            <div style={{ width: 340, height: 110, borderRadius: 16, backgroundColor: form.bg_color, padding: '14px 18px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ position: 'absolute', width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', right: -20, top: -30 }} />
-              <div>
-                {form.tag && <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.2)', borderRadius: 99, padding: '2px 8px', fontSize: 10, fontWeight: 700, color: '#fff', marginBottom: 5 }}>{form.tag}</div>}
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>{form.title || 'Title'}</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 3 }}>
-                  {form.use_live_price ? 'Live price from calendar fare' : form.static_price_label || form.subtitle || 'Subtitle text'}
-                </div>
-              </div>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>✈</div>
-            </div>
+      <div className="admin-content">
+        <div className="page-stack">
+          {/* Stat Cards */}
+          <div className="stat-grid">
+            <StatCard
+              Icon={Sparkles}
+              label="Total Promos"
+              value={items.length}
+              sub="App-wide promotional assets"
+              badge="Promotions"
+            />
+            <StatCard
+              Icon={CheckCircle2}
+              label="Active Campaigns"
+              value={activeCount}
+              sub="Live on mobile & web apps"
+              badge="Live"
+            />
+            <StatCard
+              Icon={Clock}
+              label="Draft Items"
+              value={draftCount}
+              sub="Pending publishing"
+              badge="Drafts"
+            />
+            <StatCard
+              Icon={Layers}
+              label="Placements Active"
+              value={PLACEMENTS.length}
+              sub="Configurable app surfaces"
+              badge="Surfaces"
+            />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          {/* Alert Message Banner */}
+          {msg && (
+            <div
+              style={{
+                background: msg.startsWith('Error') ? '#fef2f2' : '#dcfce7',
+                color: msg.startsWith('Error') ? '#991b1b' : '#15803d',
+                border: `1px solid ${msg.startsWith('Error') ? '#fecaca' : '#bbf7d0'}`,
+                borderRadius: 12,
+                padding: '12px 16px',
+                fontSize: 13,
+                fontWeight: 700,
+              }}
+            >
+              {msg.startsWith('Error') ? '❌ ' : '✅ '}
+              {msg}
+            </div>
+          )}
+
+          {/* Placement Filter Pills */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              className={`btn btn-sm ${filter === '' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setFilter('')}
+            >
+              All Placements
+            </button>
+            {PLACEMENTS.map((p) => (
+              <button
+                key={p.value}
+                className={`btn btn-sm ${filter === p.value ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setFilter(p.value)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* DataTable */}
+          <DataTable
+            title="Featured Promotional Assets"
+            subtitle="Manage every promotional banner, collection card, and seasonal campaign across mobile and desktop applications."
+            headerAction={
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={openCreate}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
+              >
+                <Plus size={14} />
+                <span>New Item</span>
+              </button>
+            }
+            columns={columns}
+            data={items}
+            loading={loading}
+            emptyMessage="No promotional items found for this placement filter."
+            keyExtractor={(it) => it.id}
+          />
+        </div>
+      </div>
+
+      {/* Create / Edit Item AppPopup Modal */}
+      <AppPopup
+        isOpen={showForm}
+        title={editId ? 'Edit Featured Item' : 'New Featured Item'}
+        subtitle="Configure card styling, route targeting, and live price bindings"
+        icon={<Tag size={22} strokeWidth={2.2} />}
+        iconTone="blue"
+        maxWidth={640}
+        onClose={() => {
+          setShowForm(false)
+          setEditId(null)
+        }}
+      >
+        {/* Live Card Preview */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>
+            Card Live Preview
+          </div>
+          <div
+            style={{
+              width: '100%',
+              height: 110,
+              borderRadius: 16,
+              backgroundColor: form.bg_color,
+              padding: '14px 18px',
+              position: 'relative',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              boxShadow: '0 10px 20px rgba(0,0,0,0.12)',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                width: 140,
+                height: 140,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.12)',
+                right: -20,
+                top: -30,
+              }}
+            />
             <div>
-              <label style={lbl}>Placement *</label>
-              <select value={form.placement} onChange={f('placement')} style={inp()}>
-                {PLACEMENTS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+              {form.tag && (
+                <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.25)', borderRadius: 99, padding: '2px 8px', fontSize: 10, fontWeight: 700, color: '#fff', marginBottom: 5 }}>
+                  {form.tag}
+                </div>
+              )}
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>
+                {form.title || 'Title Here'}
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 3 }}>
+                {form.use_live_price ? 'Live lowest fare' : form.static_price_label || form.subtitle || 'Subtitle text'}
+              </div>
+            </div>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+              <Plane size={22} />
+            </div>
+          </div>
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            save()
+          }}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="app-input-group">
+              <label className="app-input-label">Placement *</label>
+              <select className="app-input" value={form.placement} onChange={f('placement')}>
+                {PLACEMENTS.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
               </select>
             </div>
-            <div>
-              <label style={lbl}>Category (optional sub-tab)</label>
-              <input value={form.category} onChange={f('category')} placeholder="e.g. flight, hotels" style={inp()} />
-            </div>
+
+            <AppInput
+              label="Category"
+              value={form.category}
+              onChange={f('category')}
+              placeholder="e.g. flight, hotels"
+            />
+
             <div style={{ gridColumn: '1 / -1' }}>
-              <label style={lbl}>Title *</label>
-              <input value={form.title} onChange={f('title')} placeholder="e.g. Goa Getaway" style={inp()} />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={lbl}>Subtitle</label>
-              <input value={form.subtitle} onChange={f('subtitle')} placeholder="e.g. Beaches & nightlife" style={inp()} />
-            </div>
-            <div>
-              <label style={lbl}>Tag / Badge</label>
-              <input value={form.tag} onChange={f('tag')} placeholder="e.g. Trending" style={inp()} />
-            </div>
-            <div>
-              <label style={lbl}>Sort Order</label>
-              <input type="number" value={form.sort_order} onChange={f('sort_order')} style={inp()} />
+              <AppInput
+                label="Title *"
+                required
+                value={form.title}
+                onChange={f('title')}
+                placeholder="e.g. Goa Weekend Getaway"
+              />
             </div>
 
-            <div>
-              <label style={lbl}>Route/Target From (IATA code, city_id, or location)</label>
-              <input value={form.target_from} onChange={f('target_from')} placeholder="e.g. DEL" style={inp()} />
-            </div>
-            <div>
-              <label style={lbl}>Route/Target To</label>
-              <input value={form.target_to} onChange={f('target_to')} placeholder="e.g. BOM" style={inp()} />
+            <div style={{ gridColumn: '1 / -1' }}>
+              <AppInput
+                label="Subtitle"
+                value={form.subtitle}
+                onChange={f('subtitle')}
+                placeholder="e.g. Beaches, nightlife & luxury stays"
+              />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 22 }}>
-              <input type="checkbox" checked={form.use_live_price} onChange={f('use_live_price')} id="ulp" />
-              <label htmlFor="ulp" style={{ fontSize: 13, color: '#374151' }}>Use live lowest fare (calendar-fare) instead of a static price label</label>
+            <AppInput
+              label="Tag / Badge"
+              value={form.tag}
+              onChange={f('tag')}
+              placeholder="e.g. Trending"
+            />
+
+            <AppInput
+              label="Sort Order"
+              type="number"
+              value={String(form.sort_order)}
+              onChange={f('sort_order')}
+            />
+
+            <AppInput
+              label="Route From (IATA / City)"
+              value={form.target_from}
+              onChange={f('target_from')}
+              placeholder="e.g. DEL"
+            />
+
+            <AppInput
+              label="Route To (IATA / City)"
+              value={form.target_to}
+              onChange={f('target_to')}
+              placeholder="e.g. BOM"
+            />
+
+            <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
+              <input
+                type="checkbox"
+                checked={form.use_live_price}
+                onChange={f('use_live_price')}
+                id="ulp"
+                style={{ width: 16, height: 16, cursor: 'pointer' }}
+              />
+              <label htmlFor="ulp" style={{ fontSize: 13, fontWeight: 600, color: '#334155', cursor: 'pointer' }}>
+                Use live lowest fare (calendar-fare) instead of a static price label
+              </label>
             </div>
+
             {!form.use_live_price && (
-              <div>
-                <label style={lbl}>Static Price Label</label>
-                <input value={form.static_price_label} onChange={f('static_price_label')} placeholder="e.g. from ₹2,400" style={inp()} />
+              <div style={{ gridColumn: '1 / -1' }}>
+                <AppInput
+                  label="Static Price Label"
+                  value={form.static_price_label}
+                  onChange={f('static_price_label')}
+                  placeholder="e.g. from ₹2,400"
+                />
               </div>
             )}
 
-            <div>
-              <label style={lbl}>Pill 1 Label (optional sub-badge, e.g. "Lower Fares")</label>
-              <input value={form.pill1_label} onChange={f('pill1_label')} placeholder="e.g. Lower Fares" style={inp()} />
-            </div>
-            <div>
-              <label style={lbl}>Pill 2 Label (optional sub-badge, e.g. "Flexible Changes")</label>
-              <input value={form.pill2_label} onChange={f('pill2_label')} placeholder="e.g. Flexible Changes" style={inp()} />
+            <div style={{ gridColumn: '1 / -1' }}>
+              <AppInput
+                label="Deeplink"
+                value={form.deeplink}
+                onChange={f('deeplink')}
+                placeholder="e.g. /(app)/flights/search?from=DEL&to=BOM"
+              />
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>
-              <label style={lbl}>Deeplink (in-app route or https://…)</label>
-              <input value={form.deeplink} onChange={f('deeplink')} placeholder="e.g. /(app)/flights/search?from=DEL&to=BOM" style={inp()} />
+              <AppInput
+                label="Image URL (overrides color)"
+                value={form.image_url}
+                onChange={f('image_url')}
+                placeholder="https://…"
+              />
             </div>
+
             <div style={{ gridColumn: '1 / -1' }}>
-              <label style={lbl}>Image URL (overrides solid color)</label>
-              <input value={form.image_url} onChange={f('image_url')} placeholder="https://…" style={inp()} />
-              {form.image_url && <img src={form.image_url} alt="preview" style={{ marginTop: 8, width: '100%', maxWidth: 340, height: 80, objectFit: 'cover', borderRadius: 10 }} />}
-            </div>
-            <div>
-              <label style={lbl}>Icon</label>
-              <select value={form.icon} onChange={f('icon')} style={inp()}>
-                {ICON_OPTIONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={lbl}>Background Color</label>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
-                {COLOR_PRESETS.map(c => (
-                  <button key={c} onClick={() => setForm(p => ({ ...p, bg_color: c }))}
-                    style={{ width: 28, height: 28, borderRadius: 6, background: c, border: form.bg_color === c ? '3px solid #111' : '2px solid transparent', cursor: 'pointer' }} />
+              <label className="app-input-label">Background Preset Color</label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+                {COLOR_PRESETS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setForm((p) => ({ ...p, bg_color: c }))}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      background: c,
+                      border: form.bg_color === c ? '3px solid #0f172a' : '2px solid transparent',
+                      cursor: 'pointer',
+                    }}
+                  />
                 ))}
-                <input type="color" value={form.bg_color} onChange={f('bg_color')} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #E5E7EB', cursor: 'pointer', padding: 1 }} />
+                <input
+                  type="color"
+                  value={form.bg_color}
+                  onChange={f('bg_color')}
+                  style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', padding: 2 }}
+                />
               </div>
             </div>
-            <div>
-              <label style={lbl}>Valid From (optional)</label>
-              <input type="date" value={form.valid_from} onChange={f('valid_from')} style={inp()} />
-            </div>
-            <div>
-              <label style={lbl}>Valid Until (optional)</label>
-              <input type="date" value={form.valid_until} onChange={f('valid_until')} style={inp()} />
-            </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-end' }}>
-            <button onClick={() => { setShowForm(false); setEditId(null) }} style={btn('#6B7280')}>Cancel</button>
-            <button onClick={save} disabled={saving} style={{ ...btn('#2563EB'), opacity: saving ? 0.6 : 1 }}>
-              {saving ? 'Saving…' : editId ? 'Update' : 'Create'}
+          <div className="app-popup-footer">
+            <button
+              type="button"
+              className="confirm-modal-btn confirm-modal-btn-cancel"
+              onClick={() => {
+                setShowForm(false)
+                setEditId(null)
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="confirm-modal-btn confirm-modal-btn-success"
+              disabled={saving}
+            >
+              {saving ? 'Saving…' : editId ? 'Update Item' : 'Create Item'}
             </button>
           </div>
-        </div>
-      )}
+        </form>
+      </AppPopup>
 
-      {/* Table */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: 60, color: '#6B7280' }}>Loading…</div>
-      ) : items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF', fontSize: 14 }}>
-          No items{filter ? ` for ${placementLabel(filter)}` : ''} yet. Click <strong>+ New Item</strong> to create one.
-        </div>
-      ) : (
-        <div style={{ overflowX: 'auto', borderRadius: 10, border: '1px solid #E5E7EB' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead>
-              <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                {['#', 'Placement', 'Title', 'Route/Target', 'Price', 'Dates', 'Active', 'Actions'].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((it, i) => (
-                <tr key={it.id} style={{ borderBottom: '1px solid #F3F4F6', background: i % 2 === 0 ? '#fff' : '#FAFAFA' }}>
-                  <td style={{ padding: '10px 14px', color: '#9CA3AF', fontSize: 12 }}>{it.sort_order}</td>
-                  <td style={{ padding: '10px 14px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#2563EB', background: '#EFF6FF', borderRadius: 6, padding: '3px 8px' }}>{placementLabel(it.placement)}</span>
-                    {it.category && <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 3 }}>{it.category}</div>}
-                  </td>
-                  <td style={{ padding: '10px 14px', maxWidth: 180 }}>
-                    <div style={{ fontWeight: 600, color: '#111' }}>{it.title}</div>
-                    <div style={{ color: '#6B7280', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.subtitle}</div>
-                  </td>
-                  <td style={{ padding: '10px 14px', color: '#374151' }}>
-                    {it.target_from ? `${it.target_from}${it.target_to ? ` → ${it.target_to}` : ''}` : '—'}
-                  </td>
-                  <td style={{ padding: '10px 14px', color: '#374151' }}>
-                    {it.use_live_price ? <span style={{ color: '#059669', fontWeight: 600 }}>Live</span> : (it.static_price_label || '—')}
-                  </td>
-                  <td style={{ padding: '10px 14px', color: '#6B7280', fontSize: 11, whiteSpace: 'nowrap' }}>
-                    {it.valid_from ?? '∞'} → {it.valid_until ?? '∞'}
-                  </td>
-                  <td style={{ padding: '10px 14px' }}>
-                    <button onClick={() => toggleActive(it)} style={toggleBtn(it.is_active)}>{it.is_active ? 'Active' : 'Draft'}</button>
-                  </td>
-                  <td style={{ padding: '10px 14px' }}>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => openEdit(it)} style={btn('#2563EB', true)}>Edit</button>
-                      <button onClick={() => del(it)} style={btn('#dc2626', true)}>Del</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title="Delete Featured Item"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"?`}
+        confirmLabel="Delete Item"
+        cancelLabel="Cancel"
+        tone="danger"
+        loading={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
-}
-
-const lbl: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }
-const inp = (): React.CSSProperties => ({
-  width: '100%', padding: '8px 12px', border: '1px solid #E5E7EB', borderRadius: 8,
-  fontSize: 14, boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit',
-})
-function btn(color: string, small = false): React.CSSProperties {
-  return { background: color, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', padding: small ? '5px 10px' : '8px 18px', fontSize: small ? 12 : 14, fontWeight: 600 }
-}
-function toggleBtn(active: boolean): React.CSSProperties {
-  return {
-    background: active ? '#f0fdf4' : '#F3F4F6', color: active ? '#16a34a' : '#6B7280',
-    border: `1px solid ${active ? '#86efac' : '#E5E7EB'}`, borderRadius: 20,
-    cursor: 'pointer', padding: '3px 10px', fontSize: 11, fontWeight: 600,
-  }
-}
-function tabBtn(active: boolean): React.CSSProperties {
-  return {
-    padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-    border: `1.5px solid ${active ? '#2563EB' : '#E5E7EB'}`,
-    background: active ? '#EFF6FF' : '#fff', color: active ? '#2563EB' : '#6B7280',
-  }
 }

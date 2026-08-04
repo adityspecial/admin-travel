@@ -1,0 +1,122 @@
+/* ── Reusable Component: AppPopup (components/ui/AppPopup.css) ────────── */
+
+.app-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: appPopupFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes appPopupFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.app-popup-box {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  padding: 24px 26px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: appPopupScale 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes appPopupScale {
+  from { transform: scale(0.94); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.app-popup-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.app-popup-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-popup-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.app-popup-icon-blue { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+.app-popup-icon-teal { background: #f0fdf4; color: #0d9488; border: 1px solid #bbf7d0; }
+.app-popup-icon-orange { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
+.app-popup-icon-violet { background: #f5f3ff; color: #7c3aed; border: 1px solid #ede9fe; }
+.app-popup-icon-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+.app-popup-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+  letter-spacing: -0.02em;
+}
+
+.app-popup-subtitle {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #64748b;
+  margin: 0;
+}
+
+.app-popup-close-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.app-popup-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.app-popup-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.app-popup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 6px;
+}
