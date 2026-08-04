@@ -1,31 +1,45 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { adminFetch } from '@/lib/api'
 import { PackageEditModal } from './PackageEditModal'
+import { StatCard } from '@/components/ui/StatCard'
+import { DataTable, ColumnDef } from '@/components/ui/DataTable'
+import { AppInput } from '@/components/ui/AppInput'
+import { AppImageModal } from '@/components/ui/AppImageModal'
+import { Pagination } from '@/components/Pagination'
+import { Package, Sparkles, CheckCircle2, Compass, Search, Pencil, Star, MapPin } from 'lucide-react'
 
-interface Package {
-  id: string; name: string; destination: string
-  duration_nights: number; duration_days: number
-  base_price: number; operator: string | null
-  rating: number | null; is_featured: boolean; is_active: boolean
-  thumbnail_url: string | null; created_at: string
+interface HolidayPackage {
+  id: string
+  name: string
+  destination: string
+  duration_nights: number
+  duration_days: number
+  base_price: number
+  operator: string | null
+  rating: number | null
+  is_featured: boolean
+  is_active: boolean
+  thumbnail_url: string | null
+  created_at: string
 }
 
 const PAGE_SIZE = 20
 
 export default function SuperPackagesPage() {
-  const [packages, setPackages]   = useState<Package[]>([])
-  const [total, setTotal]         = useState(0)
-  const [loading, setLoading]     = useState(true)
-  const [search, setSearch]       = useState('')
-  const [page, setPage]           = useState(1)
-  const [editId, setEditId]       = useState<string | null>(null)
-  const [msg, setMsg]             = useState('')
+  const [packages, setPackages]         = useState<HolidayPackage[]>([])
+  const [total, setTotal]               = useState(0)
+  const [loading, setLoading]           = useState(true)
+  const [search, setSearch]             = useState('')
+  const [page, setPage]                 = useState(1)
+  const [editId, setEditId]             = useState<string | null>(null)
+  const [msg, setMsg]                   = useState('')
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string; subtitle?: string } | null>(null)
 
   const load = useCallback((q: string, p: number) => {
     setLoading(true)
     adminFetch(`/api/admin/super/packages?search=${encodeURIComponent(q)}&page=${p}&limit=${PAGE_SIZE}`)
-      .then((d: { packages: Package[]; total: number }) => {
+      .then((d: { packages: HolidayPackage[]; total: number }) => {
         setPackages(d.packages ?? [])
         setTotal(d.total ?? 0)
       })
@@ -33,7 +47,9 @@ export default function SuperPackagesPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => { load(search, page) }, [page])
+  useEffect(() => {
+    load(search, page)
+  }, [page, load])
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -41,7 +57,7 @@ export default function SuperPackagesPage() {
     load(search, 1)
   }
 
-  async function toggleActive(pkg: Package) {
+  async function toggleActive(pkg: HolidayPackage) {
     await adminFetch(`/api/admin/super/packages/${pkg.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ is_active: !pkg.is_active }),
@@ -49,7 +65,7 @@ export default function SuperPackagesPage() {
     load(search, page)
   }
 
-  async function toggleFeatured(pkg: Package) {
+  async function toggleFeatured(pkg: HolidayPackage) {
     await adminFetch(`/api/admin/super/packages/${pkg.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ is_featured: !pkg.is_featured }),
@@ -57,118 +73,273 @@ export default function SuperPackagesPage() {
     load(search, page)
   }
 
-  const totalPages = Math.ceil(total / PAGE_SIZE)
+  const featuredCount = useMemo(() => packages.filter((p) => p.is_featured).length, [packages])
+  const activeCount   = useMemo(() => packages.filter((p) => p.is_active).length, [packages])
+  const avgPrice      = useMemo(() => {
+    if (packages.length === 0) return '₹0'
+    const sum = packages.reduce((acc, p) => acc + (p.base_price ?? 0), 0)
+    return `₹${Math.round(sum / packages.length).toLocaleString('en-IN')}`
+  }, [packages])
+
+  const columns: ColumnDef<HolidayPackage>[] = [
+    {
+      key: 'thumbnail_url',
+      header: 'Image',
+      render: (pkg) => (
+        <div
+          onClick={() =>
+            pkg.thumbnail_url &&
+            setPreviewImage({
+              src: pkg.thumbnail_url,
+              title: pkg.name,
+              subtitle: pkg.destination,
+            })
+          }
+          style={{
+            width: 56,
+            height: 40,
+            borderRadius: 8,
+            overflow: 'hidden',
+            background: '#f1f5f9',
+            flexShrink: 0,
+            cursor: pkg.thumbnail_url ? 'pointer' : 'default',
+          }}
+          title={pkg.thumbnail_url ? 'Click to open full desktop preview' : undefined}
+        >
+          {pkg.thumbnail_url ? (
+            <img src={pkg.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#94a3b8', fontWeight: 600 }}>
+              No img
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'name',
+      header: 'Package Title',
+      render: (pkg) => (
+        <div style={{ maxWidth: 240 }}>
+          <div className="data-table-cell-bold" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {pkg.name}
+          </div>
+          {pkg.rating != null && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, color: '#d97706', marginTop: 2 }}>
+              <Star size={11} fill="#d97706" />
+              <span>{pkg.rating.toFixed(1)}</span>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'destination',
+      header: 'Destination',
+      render: (pkg) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#334155', fontWeight: 600 }}>
+          <MapPin size={13} color="#64748b" />
+          <span>{pkg.destination}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'duration',
+      header: 'Duration',
+      render: (pkg) => (
+        <span className="data-table-code-pill" style={{ background: '#f1f5f9', color: '#334155' }}>
+          {pkg.duration_nights}N / {pkg.duration_days}D
+        </span>
+      ),
+    },
+    {
+      key: 'base_price',
+      header: 'Base Price',
+      render: (pkg) => (
+        <span style={{ fontWeight: 800, color: '#0f172a' }}>
+          ₹{pkg.base_price.toLocaleString('en-IN')}
+        </span>
+      ),
+    },
+    {
+      key: 'operator',
+      header: 'Operator / DMC',
+      render: (pkg) => <span className="data-table-muted-cell">{pkg.operator ?? '—'}</span>,
+    },
+    {
+      key: 'is_featured',
+      header: 'Featured',
+      render: (pkg) => (
+        <button
+          type="button"
+          onClick={() => toggleFeatured(pkg)}
+          style={{
+            background: pkg.is_featured ? '#fef3c7' : '#f1f5f9',
+            color: pkg.is_featured ? '#b45309' : '#64748b',
+            border: `1px solid ${pkg.is_featured ? '#fde68a' : '#e2e8f0'}`,
+            borderRadius: 99,
+            padding: '3px 10px',
+            fontSize: 11,
+            fontWeight: 800,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
+          <Sparkles size={11} fill={pkg.is_featured ? '#b45309' : 'none'} />
+          <span>{pkg.is_featured ? 'Featured' : 'Feature'}</span>
+        </button>
+      ),
+    },
+    {
+      key: 'is_active',
+      header: 'Status',
+      render: (pkg) => (
+        <button
+          type="button"
+          onClick={() => toggleActive(pkg)}
+          className={`data-table-status-pill ${pkg.is_active ? 'active' : 'inactive'}`}
+          style={{ border: 'none', cursor: 'pointer' }}
+        >
+          {pkg.is_active ? '●Active' : '●Inactive'}
+        </button>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (pkg) => (
+        <div className="data-table-actions">
+          <button
+            type="button"
+            className="data-table-btn data-table-btn-edit"
+            onClick={() => setEditId(pkg.id)}
+          >
+            <Pencil size={12} />
+            <span>Edit</span>
+          </button>
+        </div>
+      ),
+    },
+  ]
 
   return (
-    <div style={{ padding: 28, fontFamily: "'Inter', sans-serif" }}>
-      {/* Header */}
-      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#111' }}>Holiday Packages</h1>
-          <p style={{ color: '#6B7280', fontSize: 13, margin: '4px 0 0' }}>{total} packages in database</p>
-        </div>
-        {msg && <span style={{ fontSize: 13, color: msg.startsWith('Error') ? '#dc2626' : '#16a34a', fontWeight: 600 }}>{msg}</span>}
+    <div>
+      <div className="admin-topbar">
+        <h2>Holiday Packages</h2>
+        <span className="topbar-meta">{total.toLocaleString('en-IN')} packages total</span>
       </div>
 
-      {/* Search */}
-      <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search by name, destination, operator…"
-          style={{ flex: 1, padding: '8px 14px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 14, outline: 'none' }}
-        />
-        <button type="submit" style={btnStyle('#2563EB')}>Search</button>
-        {search && (
-          <button type="button" onClick={() => { setSearch(''); setPage(1); load('', 1) }}
-            style={btnStyle('#6B7280')}>Clear</button>
-        )}
-      </form>
+      <div className="admin-content">
+        <div className="page-stack">
+          {/* Stat Cards */}
+          <div className="stat-grid">
+            <StatCard
+              Icon={Package}
+              label="Total Packages"
+              value={total}
+              sub="Catalog inventory"
+              badge="Packages"
+            />
+            <StatCard
+              Icon={Sparkles}
+              label="Featured Packages"
+              value={featuredCount}
+              sub="Highlighted on storefronts"
+              badge="Storefront"
+            />
+            <StatCard
+              Icon={CheckCircle2}
+              label="Active Listings"
+              value={activeCount}
+              sub="Bookable online"
+              badge="Live"
+            />
+            <StatCard
+              Icon={Compass}
+              label="Avg Base Price"
+              value={avgPrice}
+              sub="Average catalog pricing"
+              badge="Pricing"
+            />
+          </div>
 
-      {/* Table */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: 40, color: '#6B7280' }}>Loading…</div>
-      ) : (
-        <div style={{ overflowX: 'auto', borderRadius: 10, border: '1px solid #E5E7EB' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead>
-              <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                {['Image', 'Package', 'Destination', 'Duration', 'Price', 'Operator', 'Featured', 'Active', 'Actions'].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {packages.map((pkg, i) => (
-                <tr key={pkg.id} style={{ borderBottom: '1px solid #F3F4F6', backgroundColor: i % 2 === 0 ? '#fff' : '#FAFAFA' }}>
-                  <td style={{ padding: '8px 14px' }}>
-                    {pkg.thumbnail_url ? (
-                      <img src={pkg.thumbnail_url} alt="" style={{ width: 56, height: 40, objectFit: 'cover', borderRadius: 6 }} />
-                    ) : (
-                      <div style={{ width: 56, height: 40, borderRadius: 6, background: '#E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#9CA3AF' }}>No img</div>
-                    )}
-                  </td>
-                  <td style={{ padding: '8px 14px', maxWidth: 220 }}>
-                    <div style={{ fontWeight: 600, color: '#111', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pkg.name}</div>
-                    {pkg.rating && <span style={{ fontSize: 11, color: '#f59e0b' }}>★ {pkg.rating.toFixed(1)}</span>}
-                  </td>
-                  <td style={{ padding: '8px 14px', color: '#374151' }}>{pkg.destination}</td>
-                  <td style={{ padding: '8px 14px', color: '#374151', whiteSpace: 'nowrap' }}>{pkg.duration_nights}N {pkg.duration_days}D</td>
-                  <td style={{ padding: '8px 14px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap' }}>₹{pkg.base_price.toLocaleString('en-IN')}</td>
-                  <td style={{ padding: '8px 14px', color: '#6B7280' }}>{pkg.operator ?? '—'}</td>
-                  <td style={{ padding: '8px 14px' }}>
-                    <button onClick={() => toggleFeatured(pkg)} style={toggleBtnStyle(pkg.is_featured, '#f59e0b')}>
-                      {pkg.is_featured ? '★ Featured' : '☆ Feature'}
-                    </button>
-                  </td>
-                  <td style={{ padding: '8px 14px' }}>
-                    <button onClick={() => toggleActive(pkg)} style={toggleBtnStyle(pkg.is_active, '#16a34a')}>
-                      {pkg.is_active ? 'Active' : 'Inactive'}
-                    </button>
-                  </td>
-                  <td style={{ padding: '8px 14px' }}>
-                    <button onClick={() => setEditId(pkg.id)} style={btnStyle('#2563EB', true)}>Edit</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+          {/* Alert Message Banner */}
+          {msg && (
+            <div style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 12, padding: '12px 16px', fontSize: 13, fontWeight: 700 }}>
+              ✅ {msg}
+            </div>
+          )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div style={{ display: 'flex', gap: 8, marginTop: 16, alignItems: 'center', justifyContent: 'center' }}>
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={btnStyle('#6B7280', true)}>← Prev</button>
-          <span style={{ fontSize: 13, color: '#374151' }}>Page {page} of {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={btnStyle('#2563EB', true)}>Next →</button>
+          {/* DataTable */}
+          <DataTable
+            title="Package Inventory"
+            subtitle="Browse, filter, toggle featured status, and edit itinerary details for all holiday packages."
+            headerAction={
+              <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center', gap: 8, width: 340 }}>
+                <div style={{ flex: 1 }}>
+                  <AppInput
+                    placeholder="Search name, destination, operator..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    icon={<Search size={15} />}
+                    wrapperClassName="m-0"
+                    style={{ padding: '8px 12px 8px 36px', fontSize: 13 }}
+                  />
+                </div>
+                {search && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => {
+                      setSearch('')
+                      setPage(1)
+                      load('', 1)
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </form>
+            }
+            columns={columns}
+            data={packages}
+            loading={loading}
+            emptyMessage="No holiday packages found matching your search filter."
+            keyExtractor={(pkg) => pkg.id}
+            footer={
+              <Pagination
+                total={total}
+                page={page}
+                perPage={PAGE_SIZE}
+                onPage={setPage}
+              />
+            }
+          />
         </div>
-      )}
+      </div>
 
       {editId && (
         <PackageEditModal
           pkgId={editId}
           onClose={() => setEditId(null)}
-          onSaved={() => { setMsg('Saved!'); load(search, page); setTimeout(() => setMsg(''), 3000) }}
+          onSaved={() => {
+            setMsg('Package updated successfully!')
+            load(search, page)
+            setTimeout(() => setMsg(''), 3000)
+          }}
         />
       )}
+
+      {/* Full Desktop Image Preview Modal */}
+      <AppImageModal
+        isOpen={Boolean(previewImage)}
+        src={previewImage?.src ?? null}
+        title={previewImage?.title}
+        subtitle={previewImage?.subtitle}
+        onClose={() => setPreviewImage(null)}
+      />
     </div>
   )
-}
-
-function btnStyle(color: string, small = false): React.CSSProperties {
-  return {
-    background: color, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer',
-    padding: small ? '6px 12px' : '8px 16px', fontSize: small ? 12 : 14, fontWeight: 600,
-  }
-}
-
-function toggleBtnStyle(active: boolean, activeColor: string): React.CSSProperties {
-  return {
-    background: active ? activeColor + '20' : '#F3F4F6',
-    color: active ? activeColor : '#6B7280',
-    border: `1px solid ${active ? activeColor + '50' : '#E5E7EB'}`,
-    borderRadius: 20, cursor: 'pointer',
-    padding: '3px 10px', fontSize: 11, fontWeight: 600,
-  }
 }

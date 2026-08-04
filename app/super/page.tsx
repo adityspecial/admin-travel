@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { DonutMeter, MiniBarChart, ProgressMeters } from '@/components/charts'
+import { StatCard } from '@/components/ui/StatCard'
+import { Building2, Users, ClipboardCheck, Zap, BarChart3, Activity, CheckCircle2, XCircle, Plus, Clock, ArrowUpRight, Compass, UserCheck, ShieldCheck, Plane, ArrowRight, Cpu } from 'lucide-react'
 
 function formatCount(value?: number) {
   return typeof value === 'number' ? value.toLocaleString('en-IN') : '--'
@@ -64,6 +66,57 @@ export default function SuperDashboard() {
     [activeOrgs, pendingApprovals, totalApprovals, totalMembers, totalOrgs]
   )
 
+  const statCards = useMemo(() => [
+    {
+      label: 'Total Organisations',
+      value: formatCount(totalOrgs),
+      sub: `${formatCount(activeOrgs)} active accounts`,
+      badge: `${activeOrgs} Live`,
+      Icon: Building2,
+      iconBg: '#eff6ff',
+      iconColor: '#2563eb',
+      badgeBg: '#dbeafe',
+      badgeColor: '#1d4ed8',
+      borderTone: '#bfdbfe',
+    },
+    {
+      label: 'Total Members',
+      value: formatCount(totalMembers),
+      sub: 'Across all active businesses',
+      badge: 'Active Base',
+      Icon: Users,
+      iconBg: '#f0fdf4',
+      iconColor: '#0d9488',
+      badgeBg: '#ccfbf1',
+      badgeColor: '#0f766e',
+      borderTone: '#99f6e4',
+    },
+    {
+      label: 'Total Approvals',
+      value: formatCount(totalApprovals),
+      sub: `${formatCount(pendingApprovals)} waiting for review`,
+      badge: pendingApprovals > 0 ? `${pendingApprovals} Pending` : 'All Clear',
+      Icon: ClipboardCheck,
+      iconBg: '#fff7ed',
+      iconColor: '#ea580c',
+      badgeBg: '#ffedd5',
+      badgeColor: '#c2410c',
+      borderTone: '#fed7aa',
+    },
+    {
+      label: 'Activation Rate',
+      value: `${activeRate}%`,
+      sub: `${formatCount(inactiveOrgs)} organisations inactive`,
+      badge: activeRate >= 90 ? 'Optimal' : 'Needs Focus',
+      Icon: Zap,
+      iconBg: '#fff1f2',
+      iconColor: '#e11d48',
+      badgeBg: '#ffe4e6',
+      badgeColor: '#be123c',
+      borderTone: '#fecdd3',
+    },
+  ], [activeOrgs, activeRate, inactiveOrgs, pendingApprovals, totalApprovals, totalMembers, totalOrgs])
+
   return (
     <div>
       <div className="admin-topbar">
@@ -87,140 +140,276 @@ export default function SuperDashboard() {
           </section>
 
           <section className="stat-grid">
-            {[
-              { label: 'Total Organisations', value: formatCount(totalOrgs), sub: `${formatCount(activeOrgs)} active accounts`, icon: 'ORG', tone: '' },
-              { label: 'Total Members', value: formatCount(totalMembers), sub: 'Across all active businesses', icon: 'MBR', tone: 'teal' },
-              { label: 'Total Approvals', value: formatCount(totalApprovals), sub: `${formatCount(pendingApprovals)} waiting for review`, icon: 'APP', tone: 'orange' },
-              { label: 'Activation Rate', value: `${activeRate}%`, sub: `${formatCount(inactiveOrgs)} organisations inactive`, icon: 'ACT', tone: 'rose' },
-            ].map((card) => (
-              <div className={`stat-card ${card.tone}`.trim()} key={card.label}>
-                <div className="stat-head">
-                  <div className="stat-num">{card.value}</div>
-                  <span className="stat-icon">{card.icon}</span>
-                </div>
-                <div className="stat-label">{card.label}</div>
-                <div className="stat-sub">{card.sub}</div>
-              </div>
+            {statCards.map((card) => (
+              <StatCard key={card.label} {...card} />
             ))}
           </section>
 
           <section className="dashboard-grid">
-            <div className="chart-card">
-              <div className="card-title">Platform Mix</div>
-              <div className="card-copy">A fast visual read on your biggest operating buckets right now.</div>
+            {/* Platform Mix Card */}
+            <div className="dashboard-card-lucrative">
+              <div className="dashboard-card-header">
+                <div className="dashboard-card-title-group">
+                  <div className="dashboard-card-icon-icon dashboard-card-icon-blue">
+                    <BarChart3 size={19} strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <h3 className="dashboard-card-title">Platform Mix</h3>
+                    <p className="dashboard-card-subtitle">Visual read on your biggest operating buckets right now</p>
+                  </div>
+                </div>
+                <span className="dashboard-card-badge-pill">Realtime</span>
+              </div>
+
               <MiniBarChart data={platformBars} />
             </div>
 
-            <div className="chart-card">
-              <div className="card-title">Organisation Health</div>
-              <div className="card-copy">How much of the platform is currently active.</div>
-              <DonutMeter value={activeRate} label="Active" tone="teal" />
-              <div className="metric-list" style={{ marginTop: 18 }}>
-                <div className="metric-row-head"><span>Active organisations</span><span>{formatCount(activeOrgs)}</span></div>
-                <div className="metric-row-head"><span>Inactive organisations</span><span>{formatCount(inactiveOrgs)}</span></div>
+            {/* Organisation Health Card */}
+            <div className="dashboard-card-lucrative">
+              <div className="dashboard-card-header">
+                <div className="dashboard-card-title-group">
+                  <div className="dashboard-card-icon-icon dashboard-card-icon-teal">
+                    <Activity size={19} strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <h3 className="dashboard-card-title">Organisation Health</h3>
+                    <p className="dashboard-card-subtitle">Active vs inactive platform accounts</p>
+                  </div>
+                </div>
+                <span className="dashboard-card-badge-pill dashboard-card-badge-teal">
+                  {activeRate >= 80 ? '●Optimal' : '●Monitoring'}
+                </span>
+              </div>
+
+              <DonutMeter value={activeRate} label="Active Rate" tone="teal" />
+
+              <div className="org-health-metrics-grid">
+                <div className="org-health-metric-box active">
+                  <div className="org-health-metric-label">
+                    <CheckCircle2 size={15} color="#16a34a" />
+                    <span>Active</span>
+                  </div>
+                  <strong className="org-health-metric-value">{formatCount(activeOrgs)}</strong>
+                </div>
+                <div className="org-health-metric-box inactive">
+                  <div className="org-health-metric-label">
+                    <XCircle size={15} color="#e11d48" />
+                    <span>Inactive</span>
+                  </div>
+                  <strong className="org-health-metric-value">{formatCount(inactiveOrgs)}</strong>
+                </div>
               </div>
             </div>
           </section>
 
           <section className="panel-grid">
-            <div className="chart-card">
-              <div className="card-title">Approvals Watchlist</div>
-              <div className="card-copy">Prioritise the queues that need attention first.</div>
-              <div style={{ marginTop: 18 }}>
-                <ProgressMeters
-                  items={[
-                    { label: 'Pending reviews', value: pendingApprovals, tone: 'orange' },
-                    { label: 'Processed approvals', value: Math.max(totalApprovals - pendingApprovals, 0), tone: 'teal' },
-                    { label: 'Member base', value: totalMembers, tone: 'blue' },
-                  ]}
-                />
+            {/* Approvals Watchlist Card */}
+            <div className="dashboard-card-lucrative">
+              <div className="dashboard-card-header" style={{ marginBottom: 18 }}>
+                <div className="dashboard-card-title-group">
+                  <div className="dashboard-card-icon-icon dashboard-card-icon-orange">
+                    <ClipboardCheck size={19} strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <h3 className="dashboard-card-title">Approvals Watchlist</h3>
+                    <p className="dashboard-card-subtitle">Prioritise the queues that need attention first</p>
+                  </div>
+                </div>
+                <span className="dashboard-card-badge-pill dashboard-card-badge-orange">
+                  {pendingApprovals > 0 ? `●${pendingApprovals} Pending` : '●Clear'}
+                </span>
               </div>
+
+              <ProgressMeters
+                items={[
+                  { label: 'Pending reviews', value: pendingApprovals, tone: 'orange' },
+                  { label: 'Processed approvals', value: Math.max(totalApprovals - pendingApprovals, 0), tone: 'teal' },
+                  { label: 'Member base', value: totalMembers, tone: 'blue' },
+                ]}
+              />
             </div>
 
-            <div className="chart-card">
-              <div className="card-title">Quick Actions</div>
-              <div className="card-copy">Jump straight into the parts of the platform your team uses most.</div>
-              <div className="page-actions" style={{ marginTop: 18 }}>
-                <a href="/super/orgs/new" className="btn btn-primary">New Organisation</a>
-                <a href="/super/orgs" className="btn btn-ghost">Manage Orgs</a>
-                <a href="/super/agents" className="btn btn-muted">Agent Ops</a>
-              </div>
-              <div className="info-grid" style={{ marginTop: 18 }}>
-                <div className="info-card">
-                  <h4>Organisation base</h4>
-                  <strong>{formatCount(totalOrgs)}</strong>
-                  <span>Businesses configured on the platform</span>
+            {/* Quick Actions Card */}
+            <div className="dashboard-card-lucrative">
+              <div>
+                <div className="dashboard-card-header" style={{ marginBottom: 14 }}>
+                  <div className="dashboard-card-title-group">
+                    <div className="dashboard-card-icon-icon dashboard-card-icon-blue">
+                      <Zap size={19} strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <h3 className="dashboard-card-title">Quick Actions</h3>
+                      <p className="dashboard-card-subtitle">Jump straight into high priority tasks</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="info-card">
-                  <h4>Open approvals</h4>
-                  <strong>{formatCount(pendingApprovals)}</strong>
-                  <span>Requests that still need action</span>
+
+                <div className="quick-actions-btns-wrap">
+                  <a href="/super/orgs/new" className="quick-action-btn-primary">
+                    <Plus size={15} strokeWidth={2.5} />
+                    New Organisation
+                  </a>
+
+                  <a href="/super/orgs" className="quick-action-btn-outline">
+                    <Building2 size={15} strokeWidth={2} />
+                    Manage Orgs
+                  </a>
+
+                  <a href="/super/agents" className="quick-action-btn-teal">
+                    <Users size={15} strokeWidth={2} />
+                    Agent Ops
+                  </a>
+                </div>
+              </div>
+
+              <div className="quick-actions-info-grid">
+                <div className="quick-action-info-box base">
+                  <div className="quick-action-info-head">
+                    <span className="quick-action-info-title">Organisation Base</span>
+                    <Building2 size={15} color="#3b82f6" />
+                  </div>
+                  <div className="quick-action-info-num">{formatCount(totalOrgs)}</div>
+                  <span className="quick-action-info-sub">Configured on platform</span>
+                </div>
+
+                <div className="quick-action-info-box approvals">
+                  <div className="quick-action-info-head">
+                    <span className="quick-action-info-title">Open Approvals</span>
+                    <Clock size={15} color="#ea580c" />
+                  </div>
+                  <div className="quick-action-info-num">{formatCount(pendingApprovals)}</div>
+                  <span className="quick-action-info-sub">Requests awaiting action</span>
                 </div>
               </div>
             </div>
           </section>
 
-          <section className="table-card">
-            <div className="table-header">
-              <div>
-                <div className="card-title">Explore Admin Areas</div>
-                <div className="card-copy">The most important sections of the super admin workspace.</div>
+          {/* ── Explore Admin Areas ── */}
+          <section className="explore-admin-section">
+            <div className="dashboard-card-header" style={{ marginBottom: 4 }}>
+              <div className="dashboard-card-title-group">
+                <div className="dashboard-card-icon-icon dashboard-card-icon-blue">
+                  <Compass size={20} strokeWidth={2.2} />
+                </div>
+                <div>
+                  <h3 className="dashboard-card-title">Explore Admin Areas</h3>
+                  <p className="dashboard-card-subtitle">The most important sections of the super admin workspace</p>
+                </div>
               </div>
+              <span className="dashboard-card-badge-pill">●4 Key Hubs</span>
             </div>
-            <div className="quick-link-grid">
+
+            <div className="explore-admin-grid">
               {[
-                { title: 'Organisations', desc: 'Create, edit, and manage company accounts across the platform.', href: '/super/orgs' },
-                { title: 'All Members', desc: 'Search users across every organisation and inspect access patterns.', href: '/super/users' },
-                { title: 'myPartner Agents', desc: 'Manage partner agents, wallet credits, and test credentials.', href: '/super/agents' },
-                { title: 'Fixed Departures', desc: 'Review fixed-flight inventory and keep schedules in check.', href: '/super/fixed-flights' },
+                {
+                  title: 'Organisations',
+                  desc: 'Create, edit, and manage company accounts across the platform.',
+                  href: '/super/orgs',
+                  Icon: Building2,
+                  badge: 'Company Base',
+                  tone: 'blue',
+                  accent: '#2563eb',
+                },
+                {
+                  title: 'All Members',
+                  desc: 'Search users across every organisation and inspect access patterns.',
+                  href: '/super/users',
+                  Icon: UserCheck,
+                  badge: 'User Access',
+                  tone: 'violet',
+                  accent: '#7c3aed',
+                },
+                {
+                  title: 'myPartner Agents',
+                  desc: 'Manage partner agents, wallet credits, and test credentials.',
+                  href: '/super/agents',
+                  Icon: ShieldCheck,
+                  badge: 'Partner Network',
+                  tone: 'teal',
+                  accent: '#0d9488',
+                },
+                {
+                  title: 'Fixed Departures',
+                  desc: 'Review fixed-flight inventory and keep schedules in check.',
+                  href: '/super/fixed-flights',
+                  Icon: Plane,
+                  badge: 'Charter Flights',
+                  tone: 'orange',
+                  accent: '#ea580c',
+                },
               ].map((item) => (
-                <a key={item.title} href={item.href} className="quick-link-card">
-                  <h4>{item.title}</h4>
-                  <p>{item.desc}</p>
+                <a key={item.title} href={item.href} className="explore-area-card">
+                  <div className="explore-area-accent" style={{ backgroundColor: item.accent }} />
+
+                  <div className="explore-area-head">
+                    <div className={`explore-area-icon-box explore-area-icon-${item.tone}`}>
+                      <item.Icon size={21} strokeWidth={2.2} />
+                    </div>
+                    <span className={`explore-area-badge explore-area-badge-${item.tone}`}>
+                      {item.badge}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="explore-area-title">{item.title}</h4>
+                    <p className="explore-area-desc">{item.desc}</p>
+                  </div>
+
+                  <div className="explore-area-footer" style={{ color: item.accent }}>
+                    <span>Open Module</span>
+                    <ArrowRight size={15} className="explore-area-arrow" />
+                  </div>
                 </a>
               ))}
             </div>
           </section>
 
           {/* ── API Health & Usage ── */}
-          <section className="table-card">
-            <div className="table-header">
-              <div>
-                <div className="card-title">API Health &amp; Usage</div>
-                <div className="card-copy">All booking APIs integrated on the platform — live booking counts and revenue.</div>
+          <section className="api-health-section">
+            <div className="dashboard-card-header" style={{ marginBottom: 4 }}>
+              <div className="dashboard-card-title-group">
+                <div className="dashboard-card-icon-icon dashboard-card-icon-teal">
+                  <Cpu size={20} strokeWidth={2.2} />
+                </div>
+                <div>
+                  <h3 className="dashboard-card-title">API Health &amp; Usage</h3>
+                  <p className="dashboard-card-subtitle">All booking APIs integrated on the platform — live booking counts and revenue</p>
+                </div>
               </div>
+              <span className="dashboard-card-badge-pill dashboard-card-badge-teal">●Live Integrations</span>
             </div>
 
             {!apiHealth ? (
               <div style={{ padding: '32px 0', textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>Loading API stats…</div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, marginTop: 20 }}>
+              <div className="api-health-grid">
                 {apiHealth.map(api => {
-                  const typeStyle = TYPE_STYLE[api.type] ?? { bg: '#F3F4F6', color: '#374151' }
+                  const typeStyle = TYPE_STYLE[api.type] ?? { bg: '#EFF6FF', color: '#1D4ED8' }
                   const totalSrc  = api.bySource ? api.bySource.consumer + api.bySource.mybiz + api.bySource.mypartner : 0
                   return (
-                    <div key={api.key} style={{ background: '#fff', border: '1.5px solid #E5E7EB', borderRadius: 16, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-
+                    <div key={api.key} className="api-health-card">
                       {/* Header row */}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                      <div className="api-health-card-head">
                         <div>
-                          <div style={{ fontSize: 16, fontWeight: 800, color: '#111827', marginBottom: 4 }}>{api.name}</div>
-                          <div style={{ fontSize: 12, color: '#6B7280' }}>{api.description}</div>
+                          <div className="api-health-name">{api.name}</div>
+                          <div className="api-health-desc">{api.description}</div>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: typeStyle.bg, color: typeStyle.color }}>{api.type}</span>
-                          <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: '#DCFCE7', color: '#166534' }}>● LIVE</span>
+                        <div className="api-health-badges">
+                          <span className="api-health-badge-type" style={{ background: typeStyle.bg, color: typeStyle.color }}>
+                            {api.type}
+                          </span>
+                          <span className="api-health-badge-live">●LIVE</span>
                         </div>
                       </div>
 
                       {/* Trade API wallet balance — only FlightSeva returns this today */}
                       {api.balance && (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 12, padding: '12px 14px' }}>
+                        <div className="api-wallet-box">
                           <div>
-                            <div style={{ fontSize: 10, color: '#92400E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Wallet Balance</div>
-                            <div style={{ fontSize: 18, fontWeight: 800, color: '#92400E', marginTop: 2 }}>{formatMoney(api.balance.effectiveBalance)}</div>
+                            <div className="api-wallet-title">Wallet Balance</div>
+                            <div className="api-wallet-amount">{formatMoney(api.balance.effectiveBalance)}</div>
                           </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, justifyContent: 'center', fontSize: 11, color: '#92400E' }}>
+                          <div className="api-wallet-details">
                             <div>Credit: {formatMoney(api.balance.creditBalance)}</div>
                             <div>Lien: {formatMoney(api.balance.lienBalance)}</div>
                             <div>OD: {formatMoney(api.balance.odAmount)}</div>
@@ -229,39 +418,49 @@ export default function SuperDashboard() {
                       )}
 
                       {/* Booking stats */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, background: '#F9FAFB', borderRadius: 12, padding: '12px 14px' }}>
-                        <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 20, fontWeight: 800, color: '#111827' }}>{formatCount(api.total)}</div>
-                          <div style={{ fontSize: 10, color: '#6B7280', fontWeight: 600, marginTop: 2 }}>Total</div>
+                      <div className="api-metrics-grid">
+                        <div className="api-metric-item">
+                          <div className="api-metric-val">{formatCount(api.total)}</div>
+                          <div className="api-metric-lbl">Total</div>
                         </div>
-                        <div style={{ textAlign: 'center', borderLeft: '1px solid #E5E7EB', borderRight: '1px solid #E5E7EB' }}>
-                          <div style={{ fontSize: 20, fontWeight: 800, color: api.last30 > 0 ? '#16A34A' : '#9CA3AF' }}>{formatCount(api.last30)}</div>
-                          <div style={{ fontSize: 10, color: '#6B7280', fontWeight: 600, marginTop: 2 }}>Last 30d</div>
+                        <div className="api-metric-item middle">
+                          <div className={`api-metric-val ${api.last30 > 0 ? 'green' : 'muted'}`}>{formatCount(api.last30)}</div>
+                          <div className="api-metric-lbl">Last 30d</div>
                         </div>
-                        <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 16, fontWeight: 800, color: '#F97316' }}>{formatMoney(api.revenue)}</div>
-                          <div style={{ fontSize: 10, color: '#6B7280', fontWeight: 600, marginTop: 2 }}>Revenue</div>
+                        <div className="api-metric-item">
+                          <div className="api-metric-val orange">{formatMoney(api.revenue)}</div>
+                          <div className="api-metric-lbl">Revenue</div>
                         </div>
                       </div>
 
                       {/* Source breakdown */}
                       {api.bySource ? (
                         <div>
-                          <div style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Bookings by channel</div>
-                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                            {[
-                              { label: 'Consumer', value: api.bySource.consumer, bg: '#EFF6FF', color: '#1D4ED8' },
-                              { label: 'MyBiz',    value: api.bySource.mybiz,    bg: '#F0FDF4', color: '#16A34A' },
-                              { label: 'Partner',  value: api.bySource.mypartner, bg: '#FFF7ED', color: '#C2410C' },
-                            ].map(s => (
-                              <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 5, background: s.bg, border: `1px solid ${s.color}22`, borderRadius: 8, padding: '4px 10px' }}>
-                                <span style={{ fontSize: 13, fontWeight: 800, color: s.color }}>{formatCount(s.value)}</span>
-                                <span style={{ fontSize: 11, color: s.color, fontWeight: 600 }}>{s.label}</span>
-                                {totalSrc > 0 && (
-                                  <span style={{ fontSize: 10, color: '#9CA3AF' }}>({Math.round(s.value / totalSrc * 100)}%)</span>
-                                )}
-                              </div>
-                            ))}
+                          <div className="api-channel-subhead">Bookings by channel</div>
+                          <div className="api-channel-pills">
+                            <div className="api-channel-pill consumer">
+                              <span className="api-channel-val">{formatCount(api.bySource.consumer)}</span>
+                              <span className="api-channel-lbl">Consumer</span>
+                              {totalSrc > 0 && (
+                                <span className="api-channel-pct">({Math.round(api.bySource.consumer / totalSrc * 100)}%)</span>
+                              )}
+                            </div>
+
+                            <div className="api-channel-pill mybiz">
+                              <span className="api-channel-val">{formatCount(api.bySource.mybiz)}</span>
+                              <span className="api-channel-lbl">MyBiz</span>
+                              {totalSrc > 0 && (
+                                <span className="api-channel-pct">({Math.round(api.bySource.mybiz / totalSrc * 100)}%)</span>
+                              )}
+                            </div>
+
+                            <div className="api-channel-pill partner">
+                              <span className="api-channel-val">{formatCount(api.bySource.mypartner)}</span>
+                              <span className="api-channel-lbl">Partner</span>
+                              {totalSrc > 0 && (
+                                <span className="api-channel-pct">({Math.round(api.bySource.mypartner / totalSrc * 100)}%)</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ) : (
@@ -269,9 +468,10 @@ export default function SuperDashboard() {
                       )}
 
                       {/* Last booking */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
-                        <span style={{ fontSize: 11, color: '#6B7280' }}>Last booking:</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: api.lastBooking ? '#374151' : '#9CA3AF' }}>
+                      <div className="api-card-footer">
+                        <Clock size={13} color="#64748b" />
+                        <span className="api-footer-lbl">Last booking:</span>
+                        <span className={`api-footer-val ${api.lastBooking ? '' : 'muted'}`}>
                           {formatDate(api.lastBooking)}
                         </span>
                       </div>

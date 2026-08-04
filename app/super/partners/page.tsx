@@ -1,7 +1,12 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { Pagination, usePagination } from '@/components/Pagination'
+import { StatCard } from '@/components/ui/StatCard'
+import { DataTable, ColumnDef } from '@/components/ui/DataTable'
+import { AppInput } from '@/components/ui/AppInput'
+import { AppPopup } from '@/components/ui/AppPopup'
+import { ShieldCheck, UserCheck, UserPlus, Search, Plus, Mail, Lock, Building2 } from 'lucide-react'
 
 interface Partner {
   id: string
@@ -65,44 +70,148 @@ export default function PartnersPage() {
         }),
       })
 
-      setPartners(prev => [...prev, {
-        id: result.adminId,
-        adminId: result.adminId,
-        agentId: form.agentId,
-        agentName: result.agentName,
-        agentCode: '',
-        contactName: '',
-        email: result.email,
-        tier: '',
-        status: 'active',
-        createdAt: new Date().toISOString(),
-      }])
+      setPartners((prev) => [
+        ...prev,
+        {
+          id: result.adminId,
+          adminId: result.adminId,
+          agentId: form.agentId,
+          agentName: result.agentName,
+          agentCode: '',
+          contactName: '',
+          email: result.email,
+          tier: '',
+          status: 'active',
+          createdAt: new Date().toISOString(),
+        },
+      ])
 
-      setCreateSuccess(`✅ Created admin account for ${result.agentName}`)
+      setCreateSuccess(`Created admin account for ${result.agentName}`)
       setForm({ email: '', password: '', agentId: '' })
       setTimeout(() => {
         setShowCreateForm(false)
         setCreateSuccess('')
-      }, 2000)
+      }, 1500)
     } catch (error: any) {
-      try { setCreateError(JSON.parse(error.message).error ?? error.message) }
-      catch { setCreateError(error.message) }
+      try {
+        setCreateError(JSON.parse(error.message).error ?? error.message)
+      } catch {
+        setCreateError(error.message)
+      }
     }
     setCreating(false)
   }
 
-  const filtered = partners.filter(p =>
-    !search ||
-    p.agentName?.toLowerCase().includes(search.toLowerCase()) ||
-    p.email?.toLowerCase().includes(search.toLowerCase()) ||
-    p.agentCode?.toLowerCase().includes(search.toLowerCase())
+  const filtered = partners.filter(
+    (p) =>
+      !search ||
+      p.agentName?.toLowerCase().includes(search.toLowerCase()) ||
+      p.email?.toLowerCase().includes(search.toLowerCase()) ||
+      p.agentCode?.toLowerCase().includes(search.toLowerCase())
   )
 
   const { slice: pagePartners, page, setPage, total } = usePagination(filtered, 20)
 
   // Agents not yet assigned a partner admin — compare by ID to avoid name-mismatch false positives
-  const assignedAgentIds = new Set(partners.map(p => p.agentId).filter(Boolean))
-  const availableAgents = agents.filter(a => !assignedAgentIds.has(a.id))
+  const assignedAgentIds = new Set(partners.map((p) => p.agentId).filter(Boolean))
+  const availableAgents = agents.filter((a) => !assignedAgentIds.has(a.id))
+
+  const statCards = useMemo(
+    () => [
+      {
+        label: 'Total Partners',
+        value: partners.length.toLocaleString('en-IN'),
+        sub: 'Senior agent admins configured',
+        badge: 'Admins',
+        Icon: ShieldCheck,
+      },
+      {
+        label: 'Active Partners',
+        value: partners.filter((p) => p.status === 'active').length.toLocaleString('en-IN'),
+        sub: 'Currently managing sub-agent teams',
+        badge: 'Active',
+        Icon: UserCheck,
+      },
+      {
+        label: 'Available Agents',
+        value: availableAgents.length.toLocaleString('en-IN'),
+        sub: 'Eligible for partner admin access',
+        badge: `${availableAgents.length} Eligible`,
+        Icon: UserPlus,
+      },
+    ],
+    [availableAgents.length, partners]
+  )
+
+  const columns: ColumnDef<Partner>[] = [
+    {
+      key: 'agentName',
+      header: 'Agent Name',
+      render: (p) => <span className="data-table-cell-bold">{p.agentName}</span>,
+    },
+    {
+      key: 'agentCode',
+      header: 'Agent Code',
+      render: (p) => <span className="data-table-code-pill">{p.agentCode || '--'}</span>,
+    },
+    {
+      key: 'contactName',
+      header: 'Contact',
+      render: (p) => <span className="data-table-muted-cell">{p.contactName || '--'}</span>,
+    },
+    {
+      key: 'email',
+      header: 'Admin Email',
+      render: (p) => <span className="data-table-muted-cell">{p.email}</span>,
+    },
+    {
+      key: 'tier',
+      header: 'Tier',
+      render: (p) => {
+        const tier = (p.tier || 'silver').toLowerCase()
+        const tierStyle =
+          tier === 'platinum'
+            ? { bg: '#fef08a', color: '#854d0e' }
+            : tier === 'gold'
+            ? { bg: '#dbeafe', color: '#1e40af' }
+            : { bg: '#f1f5f9', color: '#475569' }
+        return (
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 800,
+              padding: '3px 9px',
+              borderRadius: 99,
+              background: tierStyle.bg,
+              color: tierStyle.color,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}
+          >
+            {tier}
+          </span>
+        )
+      },
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (p) => (
+        <span className={`data-table-status-pill ${p.status === 'active' ? 'active' : 'inactive'}`}>
+          {p.status === 'active' ? '● Active' : '● Inactive'}
+        </span>
+      ),
+    },
+    {
+      key: 'createdAt',
+      header: 'Created',
+      render: (p) => (
+        <span className="data-table-muted-cell" style={{ fontSize: 12.5 }}>
+          {new Date(p.createdAt).toLocaleDateString('en-IN')}
+        </span>
+      ),
+    },
+  ]
 
   return (
     <div>
@@ -113,157 +222,125 @@ export default function PartnersPage() {
 
       <div className="admin-content">
         <div className="page-stack">
-
-          <section className="stat-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-            {[
-              { label: 'Total Partners',  value: partners.length.toLocaleString('en-IN'), sub: 'Senior agent admins',        icon: 'SA', tone: '' },
-              { label: 'Active Partners', value: partners.filter(p => p.status === 'active').length.toLocaleString('en-IN'), sub: 'Currently managing teams', icon: 'AC', tone: 'teal' },
-              { label: 'Available Agents',value: availableAgents.length.toLocaleString('en-IN'), sub: 'Can be made partners',    icon: 'AV', tone: 'orange' },
-            ].map(card => (
-              <div className={`stat-card ${card.tone}`.trim()} key={card.label}>
-                <div className="stat-head">
-                  <div className="stat-num">{card.value}</div>
-                  <span className="stat-icon">{card.icon}</span>
-                </div>
-                <div className="stat-label">{card.label}</div>
-                <div className="stat-sub">{card.sub}</div>
-              </div>
+          {/* Stat Cards */}
+          <section className="stat-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+            {statCards.map((card) => (
+              <StatCard key={card.label} {...card} />
             ))}
           </section>
 
-          <div className="table-card">
-            <div className="table-header">
-              <div>
-                <div className="card-title">Senior Agent Partners</div>
-                <div className="card-copy">Manage which agents have admin access to manage their sub-agents.</div>
-              </div>
-              <button
-                className="btn btn-primary"
-                onClick={() => setShowCreateForm(true)}
-                disabled={availableAgents.length === 0}
-              >
-                + Add Partner
-              </button>
-            </div>
-
-            {loading ? (
-              <p style={{ padding: 20, color: 'var(--muted)' }}>Loading…</p>
-            ) : (
-              <>
-                <div style={{ padding: '12px 20px', background: 'var(--surface-tint)', borderBottom: '1px solid var(--border)' }}>
-                  <input
-                    className="form-input"
-                    style={{ width: '100%', maxWidth: 340 }}
-                    placeholder="Search by agent name, email, or code…"
+          {/* DataTable Card */}
+          <DataTable
+            title="Senior Agent Partners"
+            subtitle="Manage which agents have admin access to manage their sub-agents."
+            headerAction={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 280 }}>
+                  <AppInput
+                    placeholder="Search name, email, code..."
                     value={search}
-                    onChange={e => setSearch(e.target.value)}
+                    onChange={(e) => setSearch(e.target.value)}
+                    icon={<Search size={15} />}
+                    wrapperClassName="m-0"
+                    style={{ padding: '8px 12px 8px 36px', fontSize: 13 }}
                   />
                 </div>
-
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Agent Name</th>
-                      <th>Agent Code</th>
-                      <th>Contact</th>
-                      <th>Admin Email</th>
-                      <th>Tier</th>
-                      <th>Status</th>
-                      <th>Created</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.length === 0 ? (
-                      <tr><td colSpan={7} className="empty-state">No partners found.</td></tr>
-                    ) : pagePartners.map(p => (
-                      <tr key={p.id}>
-                        <td style={{ fontWeight: 700 }}>{p.agentName}</td>
-                        <td><code style={{ fontSize: 12, background: 'var(--surface-tint)', padding: '2px 6px', borderRadius: 6 }}>{p.agentCode || '--'}</code></td>
-                        <td style={{ fontSize: 13, color: 'var(--muted)' }}>{p.contactName || '--'}</td>
-                        <td style={{ fontSize: 13, color: 'var(--muted)' }}>{p.email}</td>
-                        <td><span className={`badge ${p.tier === 'platinum' ? 'badge-yellow' : p.tier === 'gold' ? 'badge-blue' : 'badge-gray'}`}>{p.tier || '--'}</span></td>
-                        <td><span className={`badge ${p.status === 'active' ? 'badge-green' : 'badge-red'}`}>{p.status}</span></td>
-                        <td style={{ fontSize: 12, color: 'var(--muted)' }}>{new Date(p.createdAt).toLocaleDateString('en-IN')}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <Pagination total={total} page={page} perPage={20} onPage={setPage} />
-              </>
-            )}
-          </div>
-
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowCreateForm(true)}
+                  disabled={availableAgents.length === 0}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
+                >
+                  <Plus size={14} />
+                  <span>Add Partner</span>
+                </button>
+              </div>
+            }
+            columns={columns}
+            data={pagePartners}
+            loading={loading}
+            emptyMessage="No partner admins found matching your filter."
+            keyExtractor={(p) => p.id}
+            footer={<Pagination total={total} page={page} perPage={20} onPage={setPage} />}
+          />
         </div>
       </div>
 
-      {/* Create Partner Modal */}
-      {showCreateForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div className="form-card" style={{ width: 480, maxWidth: '90vw' }}>
-            <div className="card-header" style={{ marginBottom: 20 }}>
-              <h3 className="card-title">Create Partner Admin Account</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowCreateForm(false)}>✕</button>
-            </div>
-
-            {createSuccess && <div className="alert alert-success" style={{ marginBottom: 16 }}>✅ {createSuccess}</div>}
-            {createError && <div className="alert alert-error" style={{ marginBottom: 16 }}>{createError}</div>}
-
-            <form onSubmit={handleCreate}>
-              <div className="form-group">
-                <label className="form-label">Select Agent</label>
-                <select
-                  className="form-input"
-                  value={form.agentId}
-                  onChange={e => setForm(f => ({ ...f, agentId: e.target.value }))}
-                  required
-                >
-                  <option value="">Choose a senior agent…</option>
-                  {availableAgents.map(a => (
-                    <option key={a.id} value={a.id}>
-                      {a.agency_name} ({a.agent_code})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Admin Email</label>
-                <input
-                  type="email"
-                  className="form-input"
-                  value={form.email}
-                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  placeholder="admin@agency.com"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Password</label>
-                <input
-                  type="password"
-                  className="form-input"
-                  value={form.password}
-                  onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                  placeholder="Strong password"
-                  required
-                  minLength={8}
-                />
-                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Min 8 characters. Share securely with the agent.</div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setShowCreateForm(false)} style={{ flex: 1 }}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={creating} style={{ flex: 1 }}>
-                  {creating ? 'Creating…' : 'Create Account'}
-                </button>
-              </div>
-            </form>
+      {/* Create Partner AppPopup Modal */}
+      <AppPopup
+        isOpen={showCreateForm}
+        title="Create Partner Admin Account"
+        subtitle="Assign administrative credentials to an eligible senior agent"
+        icon={<Building2 size={22} strokeWidth={2.2} />}
+        iconTone="blue"
+        maxWidth={480}
+        onClose={() => setShowCreateForm(false)}
+      >
+        {createSuccess && (
+          <div style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 12, padding: '12px 14px', fontSize: 13, fontWeight: 700 }}>
+            ✅ {createSuccess}
           </div>
-        </div>
-      )}
+        )}
+        {createError && <div className="login-error">{createError}</div>}
+
+        <form onSubmit={handleCreate}>
+          <div className="app-input-group">
+            <label className="app-input-label">Select Agent *</label>
+            <select
+              className="app-input"
+              value={form.agentId}
+              onChange={(e) => setForm((f) => ({ ...f, agentId: e.target.value }))}
+              required
+            >
+              <option value="">Choose an eligible senior agent…</option>
+              {availableAgents.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.agency_name} ({a.agent_code})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <AppInput
+            label="Admin Work Email"
+            type="email"
+            required
+            value={form.email}
+            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            placeholder="admin@agency.com"
+            icon={<Mail size={16} />}
+          />
+
+          <AppInput
+            label="Password"
+            type="password"
+            required
+            minLength={8}
+            value={form.password}
+            onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+            placeholder="Min 8 characters"
+            helperText="Share securely with the agent administrator."
+            icon={<Lock size={16} />}
+          />
+
+          <div className="app-popup-footer">
+            <button
+              type="button"
+              className="confirm-modal-btn confirm-modal-btn-cancel"
+              onClick={() => setShowCreateForm(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="confirm-modal-btn confirm-modal-btn-success"
+              disabled={creating}
+            >
+              {creating ? 'Creating…' : 'Create Account'}
+            </button>
+          </div>
+        </form>
+      </AppPopup>
     </div>
   )
 }

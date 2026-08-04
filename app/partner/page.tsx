@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { DonutMeter, MiniBarChart, ProgressMeters } from '@/components/charts'
+import { StatCard } from '@/components/ui/StatCard'
+import { Users, Ticket, TrendingUp, Wallet, Clock } from 'lucide-react'
 
 function fmtCurrency(v: number) { return `₹${v.toLocaleString('en-IN')}` }
 function fmtCount(v?: number)   { return typeof v === 'number' ? v.toLocaleString('en-IN') : '--' }
@@ -32,6 +34,64 @@ export default function PartnerDashboard() {
     { label: 'Payouts',  value: pendingPayouts,              tone: 'rose'   as const },
   ], [activeAgents, pendingPayouts, subAgents, totalBookings])
 
+  const statCards = useMemo(() => [
+    {
+      label: 'Sub-Agents',
+      value: fmtCount(subAgents),
+      sub: `${fmtCount(activeAgents)} active sub-agents`,
+      badge: `${activeAgents} Active`,
+      Icon: Users,
+      iconBg: '#eff6ff',
+      iconColor: '#2563eb',
+      badgeBg: '#dbeafe',
+      badgeColor: '#1d4ed8',
+    },
+    {
+      label: 'Total Bookings',
+      value: fmtCount(totalBookings),
+      sub: 'Across your entire team',
+      badge: 'Team Volume',
+      Icon: Ticket,
+      iconBg: '#f0fdf4',
+      iconColor: '#0d9488',
+      badgeBg: '#ccfbf1',
+      badgeColor: '#0f766e',
+    },
+    {
+      label: 'Total Earnings',
+      value: fmtCurrency(totalEarnings),
+      sub: 'Commission earned all time',
+      badge: 'All Time',
+      Icon: TrendingUp,
+      iconBg: '#fff7ed',
+      iconColor: '#ea580c',
+      badgeBg: '#ffedd5',
+      badgeColor: '#c2410c',
+    },
+    {
+      label: 'Wallet Balance',
+      value: fmtCurrency(walletBalance),
+      sub: 'Available credit balance',
+      badge: 'Credit',
+      Icon: Wallet,
+      iconBg: '#fdf2f8',
+      iconColor: '#db2777',
+      badgeBg: '#fce7f3',
+      badgeColor: '#be185d',
+    },
+    {
+      label: 'Pending Payouts',
+      value: fmtCurrency(pendingPayouts),
+      sub: 'Commission awaiting payout',
+      badge: pendingPayouts > 0 ? 'Action Needed' : 'Cleared',
+      Icon: Clock,
+      iconBg: '#f5f3ff',
+      iconColor: '#7c3aed',
+      badgeBg: '#ede9fe',
+      badgeColor: '#6d28d9',
+    },
+  ], [activeAgents, pendingPayouts, subAgents, totalBookings, totalEarnings, walletBalance])
+
   return (
     <div>
       <div className="admin-topbar">
@@ -57,21 +117,8 @@ export default function PartnerDashboard() {
           </section>
 
           <section className="stat-grid">
-            {[
-              { label: 'Sub-Agents',      value: fmtCount(subAgents),      sub: `${fmtCount(activeAgents)} active`,            icon: 'AG',  tone: '' },
-              { label: 'Total Bookings',  value: fmtCount(totalBookings),  sub: 'Across your entire team',                     icon: 'BK',  tone: 'teal' },
-              { label: 'Total Earnings',  value: fmtCurrency(totalEarnings), sub: 'Commission earned all time',                icon: 'ER',  tone: 'orange' },
-              { label: 'Wallet Balance',  value: fmtCurrency(walletBalance), sub: 'Available credit',                          icon: 'WL',  tone: 'rose' },
-              { label: 'Pending Payouts', value: fmtCurrency(pendingPayouts), sub: 'Commission awaiting payout',              icon: 'PY',  tone: 'violet' },
-            ].map(card => (
-              <div className={`stat-card ${card.tone}`.trim()} key={card.label}>
-                <div className="stat-head">
-                  <div className="stat-num">{card.value}</div>
-                  <span className="stat-icon">{card.icon}</span>
-                </div>
-                <div className="stat-label">{card.label}</div>
-                <div className="stat-sub">{card.sub}</div>
-              </div>
+            {statCards.map((card) => (
+              <StatCard key={card.label} {...card} />
             ))}
           </section>
 

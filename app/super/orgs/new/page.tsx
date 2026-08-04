@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { adminFetch } from '@/lib/api'
+import { AppInput } from '@/components/ui/AppInput'
+import { Building2, Hash, Plane, Bed, FileText, Mail, Lock, ArrowLeft, Plus, CheckCircle2, ShieldCheck, Eye, EyeOff, Zap, UserCheck } from 'lucide-react'
 
 export default function NewOrgPage() {
   const router = useRouter()
@@ -16,14 +18,14 @@ export default function NewOrgPage() {
     adminPassword: '',
     adminConfirm:  '',
   })
-  const [error,   setError]   = useState('')
-  const [success, setSuccess] = useState('')
-  const [saving,  setSaving]  = useState(false)
-  const [showPwd, setShowPwd] = useState(false)
+  const [error,        setError]        = useState('')
+  const [success,      setSuccess]      = useState('')
+  const [saving,       setSaving]       = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   function set(key: string) {
     return (e: React.ChangeEvent<HTMLInputElement>) =>
-      setForm(f => ({ ...f, [key]: e.target.value }))
+      setForm((f) => ({ ...f, [key]: e.target.value }))
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -52,7 +54,7 @@ export default function NewOrgPage() {
         }),
       })
       setSuccess(data.message ?? 'Organisation created successfully')
-      setTimeout(() => router.push('/super/orgs'), 2000)
+      setTimeout(() => router.push('/super/orgs'), 1500)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -63,139 +65,219 @@ export default function NewOrgPage() {
   return (
     <div>
       <div className="admin-topbar">
-        <h2>New MyBiz Organisation</h2>
-        <a href="/super/orgs" className="btn btn-ghost btn-sm">← Back to Orgs</a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => router.replace('/super/orgs')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            <ArrowLeft size={14} />
+            <span>Back to Orgs</span>
+          </button>
+          <h2>New MyBiz Organisation</h2>
+        </div>
       </div>
 
       <div className="admin-content">
-        <form onSubmit={handleSubmit} style={{ maxWidth: 640 }}>
-
-          {error   && <div className="alert alert-error"   style={{ marginBottom: 20 }}>{error}</div>}
-          {success && <div className="alert alert-success" style={{ marginBottom: 20 }}>✅ {success}</div>}
-
-          {/* ── Organisation details ── */}
-          <div className="card" style={{ marginBottom: 24 }}>
-            <div className="card-header">
-              <h3 className="card-title">🏢 Organisation Details</h3>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Company Name *</label>
-              <input className="form-input" value={form.name} onChange={set('name')} placeholder="Acme Corporation" required />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                Org Code *
-                <span style={{ fontWeight: 400, color: '#94A3B8', marginLeft: 6, fontSize: 12 }}>
-                  Employees use this code to join the org
-                </span>
-              </label>
-              <input
-                className="form-input"
-                value={form.orgCode}
-                onChange={e => setForm(f => ({ ...f, orgCode: e.target.value.toUpperCase().replace(/\s/g, '') }))}
-                placeholder="ACME2024"
-                maxLength={12}
-                required
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div className="form-group">
-                <label className="form-label">Flight Cap (₹ per trip)</label>
-                <input className="form-input" type="number" value={form.flightCap} onChange={set('flightCap')} min={0} />
-                <span style={{ fontSize: 11, color: '#94A3B8', marginTop: 4, display: 'block' }}>Trips above this need approval</span>
+        <div className="dashboard-grid">
+          {/* Main Form Column */}
+          <form onSubmit={handleSubmit}>
+            {error && <div className="login-error" style={{ marginBottom: 20 }}>{error}</div>}
+            {success && (
+              <div style={{ background: '#DCFCE7', color: '#16A34A', border: '1px solid #BBF7D0', borderRadius: 12, padding: '12px 16px', fontSize: 13, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <CheckCircle2 size={16} />
+                <span>{success}</span>
               </div>
-              <div className="form-group">
-                <label className="form-label">Hotel Cap (₹ per night)</label>
-                <input className="form-input" type="number" value={form.hotelCap} onChange={set('hotelCap')} min={0} />
-                <span style={{ fontSize: 11, color: '#94A3B8', marginTop: 4, display: 'block' }}>Hotel rate limit per night</span>
-              </div>
-            </div>
+            )}
 
-            <div className="form-group">
-              <label className="form-label">
-                GST Number
-                <span style={{ fontWeight: 400, color: '#94A3B8', marginLeft: 6, fontSize: 12 }}>optional</span>
-              </label>
-              <input className="form-input" value={form.gstNumber} onChange={set('gstNumber')} placeholder="22AAAAA0000A1Z5" />
-            </div>
-          </div>
-
-          {/* ── Biz Admin account ── */}
-          <div className="card" style={{ marginBottom: 24, borderColor: '#BFDBFE' }}>
-            <div className="card-header">
-              <h3 className="card-title">🔑 Biz Admin Account</h3>
-              <span style={{ fontSize: 12, color: '#6B7280' }}>This person can log in at /login and manage the org</span>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Admin Email *</label>
-              <input
-                className="form-input"
-                type="email"
-                value={form.adminEmail}
-                onChange={set('adminEmail')}
-                placeholder="admin@acmecorp.com"
-                required
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div className="form-group">
-                <label className="form-label">Password *</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    className="form-input"
-                    type={showPwd ? 'text' : 'password'}
-                    value={form.adminPassword}
-                    onChange={set('adminPassword')}
-                    placeholder="Min 8 characters"
-                    minLength={8}
-                    required
-                    style={{ paddingRight: 40 }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPwd(v => !v)}
-                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 14 }}
-                  >
-                    {showPwd ? '🙈' : '👁️'}
-                  </button>
+            {/* Organisation details card */}
+            <div className="explore-admin-section" style={{ marginBottom: 24 }}>
+              <div className="dashboard-card-header" style={{ marginBottom: 20 }}>
+                <div className="dashboard-card-title-group">
+                  <div className="dashboard-card-icon-icon dashboard-card-icon-blue">
+                    <Building2 size={20} strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <h3 className="dashboard-card-title">Organisation Profile</h3>
+                    <p className="dashboard-card-subtitle">Set up company name, join code, and policy caps</p>
+                  </div>
                 </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Confirm Password *</label>
-                <input
-                  className="form-input"
-                  type={showPwd ? 'text' : 'password'}
+
+              <AppInput
+                label="Company Name"
+                required
+                value={form.name}
+                onChange={set('name')}
+                placeholder="e.g. Acme Corporation"
+                icon={<Building2 size={16} />}
+              />
+
+              <AppInput
+                label="Org Code"
+                required
+                value={form.orgCode}
+                onChange={(e) => setForm((f) => ({ ...f, orgCode: e.target.value.toUpperCase().replace(/\s/g, '') }))}
+                placeholder="ACME2026"
+                maxLength={12}
+                helperText="Employees use this unique code to join the organisation."
+                icon={<Hash size={16} />}
+              />
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+                <AppInput
+                  label="Flight Cap (₹ per trip)"
+                  type="number"
+                  min="0"
+                  value={form.flightCap}
+                  onChange={set('flightCap')}
+                  placeholder="10000"
+                  icon={<Plane size={15} />}
+                />
+                <AppInput
+                  label="Hotel Cap (₹ per night)"
+                  type="number"
+                  min="0"
+                  value={form.hotelCap}
+                  onChange={set('hotelCap')}
+                  placeholder="5000"
+                  icon={<Bed size={15} />}
+                />
+              </div>
+
+              <AppInput
+                label="GST Number"
+                value={form.gstNumber}
+                onChange={set('gstNumber')}
+                placeholder="22AAAAA0000A1Z5"
+                icon={<FileText size={16} />}
+              />
+            </div>
+
+            {/* Initial Admin credentials card */}
+            <div className="explore-admin-section" style={{ marginBottom: 24 }}>
+              <div className="dashboard-card-header" style={{ marginBottom: 20 }}>
+                <div className="dashboard-card-title-group">
+                  <div className="dashboard-card-icon-icon dashboard-card-icon-teal">
+                    <Mail size={20} strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <h3 className="dashboard-card-title">First Admin Account</h3>
+                    <p className="dashboard-card-subtitle">Credentials for the initial administrator user</p>
+                  </div>
+                </div>
+              </div>
+
+              <AppInput
+                label="Admin Work Email"
+                type="email"
+                required
+                value={form.adminEmail}
+                onChange={set('adminEmail')}
+                placeholder="admin@company.com"
+                icon={<Mail size={16} />}
+              />
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+                <AppInput
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={form.adminPassword}
+                  onChange={set('adminPassword')}
+                  placeholder="At least 8 characters"
+                  icon={<Lock size={16} />}
+                  rightIcon={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#64748b' }}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  }
+                />
+                <AppInput
+                  label="Confirm Password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
                   value={form.adminConfirm}
                   onChange={set('adminConfirm')}
                   placeholder="Re-enter password"
-                  required
-                  style={{ borderColor: form.adminConfirm && form.adminConfirm !== form.adminPassword ? '#DC2626' : undefined }}
+                  icon={<Lock size={16} />}
                 />
-                {form.adminConfirm && form.adminConfirm !== form.adminPassword && (
-                  <span style={{ fontSize: 11, color: '#DC2626', marginTop: 4, display: 'block' }}>Passwords do not match</span>
-                )}
               </div>
             </div>
 
-            <div style={{ background: '#EFF6FF', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#1D4ED8' }}>
-              ℹ️ After creation, the admin can log in at <strong>/login</strong> and will see only their organisation's data. They cannot access Super Admin.
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={saving}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '11px 24px' }}
+              >
+                <Plus size={16} />
+                <span>{saving ? 'Creating…' : 'Create Organisation'}</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => router.replace('/super/orgs')}
+                style={{ padding: '11px 20px' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+
+          {/* Right Summary Info Panel */}
+          <div>
+            <div className="explore-admin-section" style={{ padding: 24, position: 'sticky', top: 20 }}>
+              <div className="dashboard-card-header" style={{ marginBottom: 16 }}>
+                <div className="dashboard-card-title-group">
+                  <div className="dashboard-card-icon-icon dashboard-card-icon-orange">
+                    <Zap size={20} strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <h3 className="dashboard-card-title">Quick Highlights</h3>
+                    <p className="dashboard-card-subtitle">What happens when you create an org?</p>
+                  </div>
+                </div>
+              </div>
+
+              {[
+                {
+                  title: 'Instant Account Provisioning',
+                  desc: 'Creates both the corporate entity and seeds the initial Super Admin user.',
+                  icon: UserCheck,
+                  tone: '#2563eb',
+                },
+                {
+                  title: 'Default Booking Caps',
+                  desc: 'Flight & Hotel caps default to ₹10,000 and ₹5,000 per policy.',
+                  icon: ShieldCheck,
+                  tone: '#0d9488',
+                },
+                {
+                  title: 'Unique Join Code',
+                  desc: 'Generated code permits employee auto-joining under this organisation.',
+                  icon: Hash,
+                  tone: '#ea580c',
+                },
+              ].map((item) => (
+                <div key={item.title} style={{ display: 'flex', gap: 12, padding: '14px 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: `${item.tone}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: item.tone, flexShrink: 0 }}>
+                    <item.icon size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', marginBottom: 2 }}>{item.title}</div>
+                    <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.45 }}>{item.desc}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-
-          <button
-            className="btn btn-primary"
-            type="submit"
-            disabled={saving || (!!form.adminConfirm && form.adminConfirm !== form.adminPassword)}
-            style={{ width: '100%', justifyContent: 'center', padding: '14px 0', fontSize: 15 }}
-          >
-            {saving ? 'Creating organisation…' : '🏢 Create Organisation & Admin Account'}
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   )

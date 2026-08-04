@@ -1,11 +1,12 @@
 'use client'
 import Link from 'next/link'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/api'
 import {
   LayoutDashboard, Network, Ticket, Users, Layers,
   BarChart3, ArrowDownToLine, FileText, Shield, LogOut, Tag, Globe,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react'
 
 const NAV = [
@@ -26,6 +27,12 @@ export default function PartnerAdminLayout({ children }: { children: React.React
   const pathname = usePathname()
   const router   = useRouter()
   const checked  = useRef(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebar_collapsed')
+    if (saved === 'true') setIsCollapsed(true)
+  }, [])
 
   useEffect(() => {
     if (checked.current) return
@@ -55,28 +62,43 @@ export default function PartnerAdminLayout({ children }: { children: React.React
 
   return (
     <div className="admin-shell">
-      <aside className="sidebar partner-sidebar">
+      <aside className={`sidebar partner-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-logo">
-          <h1>myPartner</h1>
-          <span>Agent Admin</span>
+          <div className="sidebar-logo-text">
+            <h1>myPartner</h1>
+            <span>Agent Admin</span>
+          </div>
+          <button
+            className="sidebar-toggle-btn"
+            onClick={() => {
+              const next = !isCollapsed
+              setIsCollapsed(next)
+              localStorage.setItem('sidebar_collapsed', String(next))
+            }}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+          </button>
         </div>
         <nav className="sidebar-nav">
           <div className="nav-section">Manage</div>
           {NAV.map(item => (
             <Link key={item.href} href={item.href}
-              className={`nav-link ${pathname === item.href ? 'active' : ''}`}>
+              className={`nav-link ${pathname === item.href ? 'active' : ''}`}
+              data-tooltip={item.label}
+            >
               <span className="nav-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <item.Icon size={14} strokeWidth={2} />
               </span>
-              <span>{item.label}</span>
+              <span className="nav-link-text">{item.label}</span>
             </Link>
           ))}
           <div className="nav-section" style={{ marginTop: 16 }}>Account</div>
-          <button className="nav-link nav-link-plain" onClick={logout}>
+          <button className="nav-link nav-link-plain" onClick={logout} data-tooltip="Sign Out">
             <span className="nav-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <LogOut size={14} strokeWidth={2} />
             </span>
-            <span>Sign Out</span>
+            <span className="nav-link-text">Sign Out</span>
           </button>
         </nav>
       </aside>

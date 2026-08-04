@@ -1,0 +1,118 @@
+/* ── Reusable Component: AppInput (components/ui/AppInput.css) ────────── */
+
+.app-input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.app-input-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  letter-spacing: -0.01em;
+}
+
+.app-input-required {
+  color: #ef4444;
+  margin-left: 3px;
+}
+
+.app-input-box-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.app-input {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 10.5px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+  line-height: 1.4;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.app-input-with-left-icon {
+  padding-left: 40px;
+}
+
+.app-input-with-right-icon {
+  padding-right: 40px;
+}
+
+.app-input-left-icon {
+  position: absolute;
+  left: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.app-input-right-icon {
+  position: absolute;
+  right: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+
+.app-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.app-input:hover:not(:disabled) {
+  border-color: #94a3b8;
+}
+
+.app-input:focus:not(:disabled) {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.12);
+  background: #ffffff;
+}
+
+.app-input-error-state {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3.5px rgba(239, 68, 68, 0.12) !important;
+}
+
+.app-input:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.app-input-helper {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 5px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.app-input-error-msg {
+  font-size: 11.5px;
+  color: #dc2626;
+  margin-top: 5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
