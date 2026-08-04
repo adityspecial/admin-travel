@@ -4,6 +4,7 @@ import { adminFetch } from '@/lib/api'
 
 interface S {
   max_price: string
+  buffer: string
   require_approval: string   // 'none' | 'always' | 'above_cap'
   addon_flights: boolean
   addon_hotels: boolean
@@ -14,6 +15,7 @@ interface S {
 
 const DFLT: S = {
   max_price:        '3000',
+  buffer:           '0',
   require_approval: 'above_cap',
   addon_flights:    true,
   addon_hotels:     true,
@@ -69,7 +71,7 @@ export function InsurancePolicy() {
     adminFetch('/api/admin/biz/policy/travel?type=insurance')
       .then(d => {
         const r = d.settings ?? {}
-        setS({ ...DFLT, ...r, max_price: String(r.max_price ?? DFLT.max_price) })
+        setS({ ...DFLT, ...r, max_price: String(r.max_price ?? DFLT.max_price), buffer: String(r.buffer ?? DFLT.buffer) })
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -81,15 +83,15 @@ export function InsurancePolicy() {
       method: 'PATCH',
       body: JSON.stringify({
         type: 'insurance',
-        settings: { ...s, max_price: Number(s.max_price) || null },
+        settings: { ...s, max_price: Number(s.max_price) || null, buffer: Number(s.buffer) || 0 },
       }),
     }).catch(() => {})
 
-    // Also sync insurance_cap to biz_organizations so the mobile approval gate picks it up
+    // Also sync insurance_cap/insurance_cap_buffer to biz_organizations so the mobile approval gate picks it up
     if (s.max_price) {
       await adminFetch('/api/admin/biz/policy', {
         method: 'PATCH',
-        body: JSON.stringify({ insuranceCap: Number(s.max_price) || null }),
+        body: JSON.stringify({ insuranceCap: Number(s.max_price) || null, insuranceCapBuffer: Number(s.buffer) || 0 }),
       }).catch(() => {})
     }
 
@@ -120,6 +122,11 @@ export function InsurancePolicy() {
           <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Insurance Cap (₹ per policy)</div>
           <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 10 }}>Policies above this amount require manager approval. Leave blank for no cap.</div>
           <input type="number" value={s.max_price} onChange={e => setS(p => ({ ...p, max_price: e.target.value }))} placeholder="e.g. 3000" style={{ ...SEL, width: 200 }} />
+        </div>
+        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Approval Buffer</div>
+          <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 10 }}>A premium exceeding the cap above by up to this amount still books without approval.</div>
+          <input type="number" value={s.buffer} onChange={e => setS(p => ({ ...p, buffer: e.target.value }))} placeholder="0" style={{ ...SEL, width: 200 }} />
         </div>
         <div style={{ padding: '14px 24px' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 10 }}>Approval Requirement</div>

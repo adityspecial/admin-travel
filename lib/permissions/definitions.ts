@@ -61,6 +61,9 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
       { key: 'manage_members', label: 'Manage Members',     description: 'Add/remove/role-change org members', dangerous: true },
       { key: 'view_spend',     label: 'View Spend',         description: 'See org-level spend dashboard' },
       { key: 'view_approvals', label: 'View Approvals',     description: 'See all pending approval requests' },
+      { key: 'toggle_active',  label: 'Toggle Org Active',  description: "Flip an org's active/inactive kill-switch", dangerous: true },
+      { key: 'override_cap',   label: 'Override Cap',       description: "Directly override an org's cap/buffer as a logged emergency action", dangerous: true },
+      { key: 'view_policy_audit_log', label: 'View Policy Audit Log', description: 'See who changed which org cap/buffer, and when' },
     ],
   },
   {
@@ -132,6 +135,7 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
       { key: 'manage_settings',    label: 'Manage Settings',    description: 'Platform-wide configuration', dangerous: true },
       { key: 'view_audit_log',     label: 'View Audit Log',     description: 'Full admin action audit trail' },
       { key: 'manage_api_keys',    label: 'Manage API Keys',    description: 'TekTravels/TBO/Razorpay key management', dangerous: true },
+      { key: 'manage_admin_staff', label: 'Manage Admin Staff', description: 'Assign/remove which AirDunia staff manage which orgs', dangerous: true },
     ],
   },
 ]
@@ -142,10 +146,13 @@ export const BIZ_MODULES: ModuleDef[] = [
   {
     key: 'travel', label: 'Travel Module', icon: '✈️',
     permissions: [
-      { key: 'book_flight',         label: 'Book Flight',         description: 'Book flights within policy cap' },
+      { key: 'book_flight',         label: 'Book Flight',         description: 'Book flights within policy cap (oneway, roundtrip, or multicity)' },
       { key: 'book_hotel',          label: 'Book Hotel',          description: 'Book hotels within policy cap' },
       { key: 'book_bus',            label: 'Book Bus',            description: 'Book bus tickets' },
-      { key: 'book_fixed_flight',   label: 'Book Fixed Flight',   description: 'Book fixed departure flights' },
+      { key: 'book_cab',            label: 'Book Cab',            description: 'Book cabs within policy cap' },
+      { key: 'book_insurance',      label: 'Book Insurance',      description: 'Purchase travel insurance' },
+      { key: 'book_package',        label: 'Book Package',        description: 'Book holiday packages' },
+      { key: 'book_fixed_flight',   label: 'Book Fixed Flight',   description: 'Book fixed-departure/alt-source flights (Nexus, FareGuide, AirIQ, Kafila)' },
       { key: 'book_international',  label: 'Book International',  description: 'Book international flights' },
       { key: 'book_business_class', label: 'Book Business Class', description: 'Allowed to book business class seats' },
       { key: 'book_first_class',    label: 'Book First Class',    description: 'Allowed to book first class seats' },
@@ -176,17 +183,6 @@ export const BIZ_MODULES: ModuleDef[] = [
     ],
   },
   {
-    key: 'policy', label: 'Policy Module', icon: '📋',
-    permissions: [
-      { key: 'set_flight_cap',      label: 'Set Flight Cap',      description: 'Change max ₹ per flight booking' },
-      { key: 'set_hotel_cap',       label: 'Set Hotel Cap',       description: 'Change max ₹ per hotel night' },
-      { key: 'set_advance_days',    label: 'Set Advance Days',    description: 'Set how far in advance bookings allowed' },
-      { key: 'set_allowed_class',   label: 'Set Allowed Class',   description: 'Restrict allowed cabin classes' },
-      { key: 'require_purpose',     label: 'Require Purpose',     description: 'Force business purpose on all trips' },
-      { key: 'require_cost_center', label: 'Require Cost Center', description: 'Force cost center selection' },
-    ],
-  },
-  {
     key: 'report', label: 'Report Module', icon: '📊',
     permissions: [
       { key: 'view_own_trips',    label: 'View Own Trips',    description: 'See own booking history only' },
@@ -205,6 +201,28 @@ export const BIZ_MODULES: ModuleDef[] = [
       { key: 'view_wallet',      label: 'View Wallet',      description: 'See org prepaid wallet balance' },
     ],
   },
+  {
+    // Governs an AirDunia staff member assigned to manage ONE org via
+    // admin/biz/* (targetType 'admin_staff') — distinct from the modules
+    // above, which govern the org's OWN employees (targetType 'biz_member').
+    // withBizAdmin previously granted unrestricted access to everything
+    // under admin/biz/* once you were assigned to an org; this is the first
+    // real granularity on top of that.
+    key: 'org_admin', label: 'Org Admin Module', icon: '🛠️',
+    permissions: [
+      { key: 'edit_caps',           label: 'Edit Caps',            description: 'Edit flight/hotel/cab/visa/package/insurance caps + buffers' },
+      { key: 'edit_travel_policy',  label: 'Edit Travel Policy',   description: 'Edit approval tiers, colleague-booking rule, cabin/addon restrictions' },
+      { key: 'manage_members',      label: 'Manage Members',       description: "Invite/remove/change role of the org's employees", dangerous: true },
+      { key: 'view_wallet',         label: 'View Wallet',          description: 'See org wallet balance/transactions' },
+      { key: 'topup_wallet',        label: 'Top Up Wallet',        description: 'Add funds to the org wallet', dangerous: true },
+      { key: 'view_approvals',      label: 'View Approvals',       description: "See the org's approval queue" },
+      { key: 'decide_approvals',    label: 'Decide Approvals',     description: "Approve/reject on the org's behalf", dangerous: true },
+      { key: 'edit_company',        label: 'Edit Company',         description: 'Edit org name/GST/logo/org_code' },
+      { key: 'manage_promos',       label: 'Manage Promos',        description: 'Create/edit org-scoped promo codes' },
+      { key: 'manage_cost_centers', label: 'Manage Cost Centers',  description: 'Create/edit cost centers and trip tags' },
+      { key: 'respond_support',     label: 'Respond to Support',   description: "Respond to the org's support requests" },
+    ],
+  },
 ]
 
 // ── PARTNER modules ───────────────────────────────────────────────
@@ -216,6 +234,7 @@ export const PARTNER_MODULES: ModuleDef[] = [
       { key: 'book_flight',        label: 'Book Flight',        description: 'Book flights for customers' },
       { key: 'book_hotel',         label: 'Book Hotel',         description: 'Book hotels for customers' },
       { key: 'book_bus',           label: 'Book Bus',           description: 'Book bus tickets' },
+      { key: 'book_cab',           label: 'Book Cab',           description: 'Book cabs for customers' },
       { key: 'book_fixed_flight',  label: 'Book Fixed Flight',  description: 'Book Nexus/FareGuide fixed flights' },
       { key: 'book_international', label: 'Book International', description: 'Book international flights' },
       { key: 'cancel_booking',     label: 'Cancel Booking',     description: 'Cancel a customer booking', dangerous: true },
@@ -261,6 +280,28 @@ export const PARTNER_MODULES: ModuleDef[] = [
       { key: 'view_team_bookings',   label: 'View Team Bookings',  description: "All sub-agents' bookings" },
       { key: 'view_earnings_report', label: 'Earnings Report',     description: 'Commission and earnings analytics' },
       { key: 'export_csv',           label: 'Export CSV',          description: 'Download reports as CSV' },
+    ],
+  },
+  {
+    // Governs an AirDunia/agency staffer assigned to manage ONE partner
+    // agency via admin/partner/* (targetType 'agent_admin', linked through
+    // partner_agent_admins) — distinct from the modules above, which govern
+    // the agency's own self-service capabilities (targetType 'partner_agent').
+    // withPartnerAdmin previously granted unrestricted access to everything
+    // under admin/partner/* once assigned to an agency; this is the first
+    // real granularity on top of that.
+    key: 'agent_admin', label: 'Partner Admin Module', icon: '🛠️',
+    permissions: [
+      { key: 'manage_sub_agents',      label: 'Manage Sub-Agents',      description: "Edit a sub-agent's tier, commission, credit limit, or status" },
+      { key: 'view_wallet',            label: 'View Wallet',            description: 'See the agency wallet balance/transactions' },
+      { key: 'view_payouts',           label: 'View Payouts',           description: 'See payout requests' },
+      { key: 'decide_payouts',         label: 'Decide Payouts',         description: 'Approve, reject, or mark a payout as paid', dangerous: true },
+      { key: 'view_customers',         label: 'View Customers',         description: "See the agency's customer list" },
+      { key: 'manage_markups',         label: 'Manage Markups',         description: 'Edit markup rates for this agency' },
+      { key: 'manage_promo_cash',      label: 'Manage Promo Cash',      description: 'Credit promotional funds to the agency wallet', dangerous: true },
+      { key: 'manage_promos',          label: 'Manage Promos',          description: "Create/edit the agency's promo codes" },
+      { key: 'respond_visa_enquiries', label: 'Respond to Visa Enquiries', description: 'Update status on visa enquiries from this agency and its sub-agents' },
+      { key: 'view_bookings',          label: 'View Bookings',          description: 'See all bookings from this agency and its sub-agents' },
     ],
   },
 ]

@@ -10,9 +10,13 @@ interface S {
   in_policy_approval: string
   out_policy_approval: string
   approval_tiers?: ApprovalTier[]
+  // A fare exceeding tiers[0].maxAmount by up to this amount still counts as
+  // in-policy — avoids kicking a booking to approval for exceeding the cap
+  // by a trivial amount.
+  buffer: string
 }
 
-const DFLT: S = { colleague_booking: 'all', in_policy_approval: 'none', out_policy_approval: 'manager' }
+const DFLT: S = { colleague_booking: 'all', in_policy_approval: 'none', out_policy_approval: 'manager', buffer: '0' }
 
 function Sec({ t }: { t: string }) {
   return <div style={{ fontSize: 11, fontWeight: 800, color: '#6B7280', letterSpacing: '0.08em', padding: '12px 24px', background: '#F9FAFB', borderBottom: '1px solid #F3F4F6' }}>{t}</div>
@@ -33,13 +37,14 @@ export function EligibilityPolicy({ type, title }: { type: string; title: string
       .then(([d, p]) => {
         const r = d.settings ?? {}
         const cap = Number(type === 'hotel' ? p.policy?.hotel_cap : p.policy?.cab_cap) || 0
+        const bufferFromOrg = Number(type === 'hotel' ? p.policy?.hotel_cap_buffer : p.policy?.cab_cap_buffer) || 0
         const tiers: ApprovalTier[] = Array.isArray(r.approval_tiers) && r.approval_tiers.length
           ? r.approval_tiers
           : [
               { maxAmount: cap, approval: r.in_policy_approval  ?? DFLT.in_policy_approval },
               { maxAmount: null, approval: r.out_policy_approval ?? DFLT.out_policy_approval },
             ]
-        setS({ ...DFLT, ...r, approval_tiers: tiers })
+        setS({ ...DFLT, ...r, approval_tiers: tiers, buffer: String(r.buffer ?? bufferFromOrg) })
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -57,6 +62,12 @@ export function EligibilityPolicy({ type, title }: { type: string; title: string
           approval_tiers: tiers,
           in_policy_approval:  tiers[0]?.approval ?? s.in_policy_approval,
           out_policy_approval: tiers[tiers.length - 1]?.approval ?? s.out_policy_approval,
+          // tiers[0].maxAmount IS the cap this screen edits — sending it as
+          // max_price is what lets the backend sync route actually update
+          // hotel_cap/cab_cap (previously never sent, silently nulling the
+          // cap on every save).
+          max_price: tiers[0]?.maxAmount ?? null,
+          buffer: Number(s.buffer) || 0,
         },
       }),
     }).catch(() => {})
@@ -103,6 +114,11 @@ export function EligibilityPolicy({ type, title }: { type: string; title: string
           <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Route approval by total booking amount</div>
           <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>Add tiers for auto-approve, manager, and HOD thresholds.</div>
           <ApprovalTiersEditor tiers={s.approval_tiers ?? []} onChange={tiers => setS(p => ({ ...p, approval_tiers: tiers }))} />
+        </div>
+        <div style={{ padding: '14px 24px', borderTop: '1px solid #F9FAFB' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Approval Buffer</div>
+          <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 10 }}>A fare exceeding the first threshold above by up to this amount still books without approval.</div>
+          <input type="number" value={s.buffer} onChange={e => setS(p => ({ ...p, buffer: e.target.value }))} placeholder="0" style={{ width: 200, padding: '9px 12px', borderRadius: 8, border: '1.5px solid #E5E7EB', fontSize: 13, outline: 'none' }} />
         </div>
       </div>
     </div>

@@ -17,12 +17,16 @@ interface S {
   in_policy_approval: string; out_policy_approval: string
   approval_tiers?: ApprovalTier[]
   wallet_for: string; auto_booking: boolean
+  // A fare exceeding max_price (or tiers[0].maxAmount) by up to this amount
+  // still counts as in-policy — avoids kicking a booking to approval for
+  // exceeding the cap by a trivial amount.
+  buffer: string
 }
 
 const DFLT: S = {
   require_request_form: false, colleague_booking: 'all',
   allow_personal: false, show_personal_reports: false,
-  max_price: '500000', dynamic_pricing: 'no_restriction', dynamic_range: '10',
+  max_price: '500000', buffer: '0', dynamic_pricing: 'no_restriction', dynamic_range: '10',
   cabin_economy: true, cabin_premium: false, cabin_business: false, cabin_first: false,
   addon_meals: true, addon_seats: true, addon_baggage: true,
   addon_fast_forward: false, addon_cabs: false, addon_insurance: false,
@@ -79,7 +83,7 @@ export function FlightPolicy({ type }: { type: string }) {
               { maxAmount: maxPrice, approval: r.in_policy_approval  ?? DFLT.in_policy_approval },
               { maxAmount: null,     approval: r.out_policy_approval ?? DFLT.out_policy_approval },
             ]
-        setS({ ...DFLT, ...r, max_price: String(r.max_price ?? DFLT.max_price), dynamic_range: String(r.dynamic_range ?? DFLT.dynamic_range), approval_tiers: tiers })
+        setS({ ...DFLT, ...r, max_price: String(r.max_price ?? DFLT.max_price), buffer: String(r.buffer ?? DFLT.buffer), dynamic_range: String(r.dynamic_range ?? DFLT.dynamic_range), approval_tiers: tiers })
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -95,6 +99,7 @@ export function FlightPolicy({ type }: { type: string }) {
         settings: {
           ...s,
           max_price: Number(s.max_price) || null,
+          buffer: Number(s.buffer) || 0,
           dynamic_range: Number(s.dynamic_range),
           approval_tiers: tiers,
           // Kept in sync for any reader still checking the old flat fields directly.
@@ -151,6 +156,11 @@ export function FlightPolicy({ type }: { type: string }) {
           <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Maximum Price per Person per Segment</div>
           <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 10 }}>Amount beyond this limit will be out of policy. Leave blank for no limit.</div>
           <input type="number" value={s.max_price} onChange={e => setS(p => ({ ...p, max_price: e.target.value }))} placeholder="e.g. 10000" style={{ ...SEL, width: 200 }} />
+        </div>
+        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Approval Buffer</div>
+          <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 10 }}>A fare exceeding the max price above by up to this amount still books without approval.</div>
+          <input type="number" value={s.buffer} onChange={e => setS(p => ({ ...p, buffer: e.target.value }))} placeholder="0" style={{ ...SEL, width: 200 }} />
         </div>
         <div style={{ padding: '14px 24px' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 10 }}>Policy Basis Dynamic Pricing</div>

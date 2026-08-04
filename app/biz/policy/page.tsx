@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { FlightPolicy } from './FlightPolicy'
 import { InsurancePolicy } from './InsurancePolicy'
 import { EligibilityPolicy } from './EligibilityPolicy'
+import { SimpleCapPolicy } from './SimpleCapPolicy'
 
 const TYPES = [
   { key: 'domestic_flight',      label: 'Flights',                icon: '✈️' },
@@ -14,6 +15,7 @@ const TYPES = [
   { key: 'travel_request_form',  label: 'Travel Request Form',   icon: '📋' },
   { key: 'gift_cards',           label: 'Gift Cards',            icon: '🎁' },
   { key: 'visa',                 label: 'Visa',                  icon: '🪪' },
+  { key: 'package',              label: 'Packages',              icon: '📦' },
   { key: 'insurance',            label: 'Insurance',             icon: '🛡️' },
 ]
 
@@ -59,6 +61,10 @@ export default function PolicyPage() {
           <EligibilityPolicy key={sel} type="hotel" title="Hotel" />
         ) : sel === 'cab' ? (
           <EligibilityPolicy key={sel} type="cab" title="Cab" />
+        ) : sel === 'visa' ? (
+          <SimpleCapPolicy key={sel} capField="visaCap" bufferField="visaCapBuffer" title="Visa" unit="per application" />
+        ) : sel === 'package' ? (
+          <SimpleCapPolicy key={sel} capField="packageCap" bufferField="packageCapBuffer" title="Package" unit="per booking" />
         ) : LIVE.has(sel) ? (
           <FlightPolicy key={sel} type={sel} />
         ) : (

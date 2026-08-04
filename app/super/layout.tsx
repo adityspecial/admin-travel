@@ -19,6 +19,7 @@ const NAV = [
   { href: '/super/payments',     label: 'Razorpay Payments',     icon: '💳' },
   { href: '/super/consumer',     label: 'Fee Settings',          icon: '₹'  },
   { href: '/super/permissions',  label: 'Permissions',           icon: '🔐' },
+  { href: '/super/audit-log',    label: 'Audit Log',             icon: '📜' },
 ]
 
 export default function SuperLayout({ children }: { children: React.ReactNode }) {

@@ -103,7 +103,6 @@ export default function BizPermissionsPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
               {BIZ_MODULES.map(mod => (
                 <ModuleCard key={mod.key} module={mod} matrix={localMatrix[mod.key] ?? {}}
-                  highlight={mod.key === 'policy'}
                   saving={saving?.startsWith(mod.key + '.') ? saving.split('.')[1] : null}
                   onChange={(perm, enabled) => handleToggle(mod.key, perm, enabled)} />
               ))}
