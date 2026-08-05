@@ -242,7 +242,7 @@ export default function FareGuidePage() {
                   badgeColor="#c2410c"
                 />
                 <StatCard
-                  label="myBiz & Partner"
+                  label="Corporate & Partner"
                   value={stats.by_source.mybiz + stats.by_source.mypartner}
                   sub="Bookings via B2B partners"
                   badge="B2B"

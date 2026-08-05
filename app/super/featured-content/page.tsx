@@ -34,9 +34,9 @@ interface Item {
 const PLACEMENTS = [
   { value: 'home_consumer', label: "Home — Consumer (What's New banners)" },
   { value: 'home_collection', label: 'Home — Collections' },
-  { value: 'home_biz', label: 'Home — MyBiz (mobile)' },
-  { value: 'home_biz_web', label: 'Home — MyBiz (biz-portal offers rail)' },
-  { value: 'home_biz_benefits', label: 'Home — MyBiz (biz-portal corporate benefits)' },
+  { value: 'home_biz', label: 'Home — Corporate (mobile)' },
+  { value: 'home_biz_web', label: 'Home — Corporate (biz-portal offers rail)' },
+  { value: 'home_biz_benefits', label: 'Home — Corporate (biz-portal corporate benefits)' },
   { value: 'destination_suggestion', label: 'Destination Suggestions' },
   { value: 'nearby_getaway', label: 'Nearby Getaways' },
   { value: 'popular_destination', label: 'Popular Destinations' },

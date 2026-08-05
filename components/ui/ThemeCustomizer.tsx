@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { Palette, X, RotateCcw, Check, Sparkles, Type, Sliders } from 'lucide-react';
 
 interface PrimarySwatch {
@@ -23,8 +24,16 @@ interface SidebarOption {
   text: string;
 }
 
+interface HeaderOption {
+  name: string;
+  bg: string;
+  text: string;
+}
+
 export function ThemeCustomizer() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname() || '';
+  const isBiz = pathname.startsWith('/biz');
 
   const drawerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -37,14 +46,17 @@ export function ThemeCustomizer() {
   const [backgroundColor, setBackgroundColor] = useState<string>("#ffffff");
 
   // Accent, Presets & Glass states
-  const [primaryColor, setPrimaryColor] = useState<string>('#3b82f6');
+  const [primaryColor, setPrimaryColor] = useState<string>('#E31E24');
   const [bgPreset, setBgPreset] = useState<string>('aero');
   const [sidebarBg, setSidebarBg] = useState<string>('#0f172a');
+  const [headerBg, setHeaderBg] = useState<string>('rgba(255, 255, 255, 0.88)');
+  const [headerText, setHeaderText] = useState<string>('#111827');
   const [glassBlur, setGlassBlur] = useState<number>(24);
   const [glassOpacity, setGlassOpacity] = useState<number>(0.75);
 
   // Color Swatches
   const primarySwatches: PrimarySwatch[] = [
+    { name: 'Corporate Red', hex: '#E31E24', grad: 'linear-gradient(135deg, #ef4444 0%, #E31E24 50%, #b91c1c 100%)' },
     { name: 'Aero Blue', hex: '#3b82f6', grad: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%)' },
     { name: 'Emerald', hex: '#10b981', grad: 'linear-gradient(135deg, #34d399 0%, #10b981 50%, #059669 100%)' },
     { name: 'Purple Neon', hex: '#8b5cf6', grad: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 50%, #7c3aed 100%)' },
@@ -67,6 +79,15 @@ export function ThemeCustomizer() {
     { name: 'Royal Sapphire', bg: '#1e1b4b', text: '#ffffff' },
     { name: 'Forest Emerald', bg: '#064e3b', text: '#ffffff' },
     { name: 'Pure Glass White', bg: 'rgba(255, 255, 255, 0.85)', text: '#1e293b' }
+  ];
+
+  const headerOptions: HeaderOption[] = [
+    { name: 'Pure White Glass', bg: 'rgba(255, 255, 255, 0.88)', text: '#111827' },
+    { name: 'Light Aero Blue', bg: 'rgba(240, 249, 255, 0.95)', text: '#0369a1' },
+    { name: 'Dark Midnight', bg: '#0f172a', text: '#ffffff' },
+    { name: 'Deep Charcoal', bg: '#18181b', text: '#ffffff' },
+    { name: 'Royal Sapphire', bg: '#1e1b4b', text: '#ffffff' },
+    { name: 'Warm Cream Sunset', bg: 'rgba(255, 247, 237, 0.95)', text: '#9a3412' }
   ];
 
   const fontWeights = [
@@ -122,6 +143,8 @@ export function ThemeCustomizer() {
         if (parsed.primaryColor) setPrimaryColor(parsed.primaryColor);
         if (parsed.bgPreset) setBgPreset(parsed.bgPreset);
         if (parsed.sidebarBg) setSidebarBg(parsed.sidebarBg);
+        if (parsed.headerBg) setHeaderBg(parsed.headerBg);
+        if (parsed.headerText) setHeaderText(parsed.headerText);
         if (parsed.glassBlur !== undefined) setGlassBlur(parsed.glassBlur);
         if (parsed.glassOpacity !== undefined) setGlassOpacity(parsed.glassOpacity);
       } catch (e) {
@@ -165,9 +188,12 @@ export function ThemeCustomizer() {
 
     // Apply primary color & gradient
     const selectedPrimary = primarySwatches.find((s) => s.hex === primaryColor) || primarySwatches[0];
+    root.style.setProperty('--primary-color', selectedPrimary.hex);
+    root.style.setProperty('--primary-red', selectedPrimary.hex);
     root.style.setProperty('--primary-blue', selectedPrimary.hex);
     root.style.setProperty('--primary-gradient', selectedPrimary.grad);
     root.style.setProperty('--accent', selectedPrimary.hex);
+    root.style.setProperty('--nav-brand', selectedPrimary.hex);
 
     // Background styling
     if (bgPreset === 'custom') {
@@ -187,6 +213,10 @@ export function ThemeCustomizer() {
     root.style.setProperty('--sidebar-bg', selectedSidebar.bg);
     root.style.setProperty('--sidebar-text', selectedSidebar.text);
 
+    // Apply header background & text color
+    root.style.setProperty('--header-bg', headerBg);
+    root.style.setProperty('--header-text', headerText);
+
     // Apply glass opacity and blur
     root.style.setProperty('--glass-blur', `${glassBlur}px`);
     root.style.setProperty('--glass-bg-opacity', `${glassOpacity}`);
@@ -203,11 +233,13 @@ export function ThemeCustomizer() {
         primaryColor,
         bgPreset,
         sidebarBg,
+        headerBg,
+        headerText,
         glassBlur,
         glassOpacity
       })
     );
-  }, [fontSize, fontFamily, fontWeight, fontColor, backgroundColor, primaryColor, bgPreset, sidebarBg, glassBlur, glassOpacity]);
+  }, [fontSize, fontFamily, fontWeight, fontColor, backgroundColor, primaryColor, bgPreset, sidebarBg, headerBg, headerText, glassBlur, glassOpacity]);
 
   const handleReset = () => {
     setFontSize(16);
@@ -215,9 +247,11 @@ export function ThemeCustomizer() {
     setFontWeight("400");
     setFontColor("#222222");
     setBackgroundColor("#ffffff");
-    setPrimaryColor('#3b82f6');
+    setPrimaryColor('#E31E24');
     setBgPreset('aero');
     setSidebarBg('#0f172a');
+    setHeaderBg('rgba(255, 255, 255, 0.88)');
+    setHeaderText('#111827');
     setGlassBlur(24);
     setGlassOpacity(0.75);
     localStorage.removeItem('app-theme-settings');
@@ -504,37 +538,66 @@ export function ThemeCustomizer() {
             </div>
           </div>
 
-          {/* SECTION 5: Sidebar Panel Theme Options */}
+          {/* SECTION 5: Header or Sidebar Panel Theme Options */}
           <div style={{ marginBottom: '24px' }}>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '10px' }}>
-              Sidebar Panel Background
+              {isBiz ? 'Header Background' : 'Sidebar Panel Background'}
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {sidebarOptions.map((opt, idx) => {
-                const isSelected = sidebarBg === opt.bg;
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => setSidebarBg(opt.bg)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '10px 14px',
-                      borderRadius: '10px',
-                      backgroundColor: opt.bg,
-                      border: isSelected ? `2px solid ${primaryColor}` : '1px solid #cbd5e1',
-                      color: opt.text,
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      fontWeight: 600
-                    }}
-                  >
-                    <span>{opt.name}</span>
-                    {isSelected && <Check size={16} color={opt.text} />}
-                  </button>
-                );
-              })}
+              {isBiz
+                ? headerOptions.map((opt, idx) => {
+                    const isSelected = headerBg === opt.bg;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setHeaderBg(opt.bg);
+                          setHeaderText(opt.text);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '10px 14px',
+                          borderRadius: '10px',
+                          backgroundColor: opt.bg,
+                          border: isSelected ? `2px solid ${primaryColor}` : '1px solid #cbd5e1',
+                          color: opt.text,
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: 600
+                        }}
+                      >
+                        <span>{opt.name}</span>
+                        {isSelected && <Check size={16} color={opt.text} />}
+                      </button>
+                    );
+                  })
+                : sidebarOptions.map((opt, idx) => {
+                    const isSelected = sidebarBg === opt.bg;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => setSidebarBg(opt.bg)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '10px 14px',
+                          borderRadius: '10px',
+                          backgroundColor: opt.bg,
+                          border: isSelected ? `2px solid ${primaryColor}` : '1px solid #cbd5e1',
+                          color: opt.text,
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: 600
+                        }}
+                      >
+                        <span>{opt.name}</span>
+                        {isSelected && <Check size={16} color={opt.text} />}
+                      </button>
+                    );
+                  })}
             </div>
           </div>
 

@@ -309,7 +309,7 @@ export default function FixedFlightsPage() {
                   badgeColor="#c2410c"
                 />
                 <StatCard
-                  label="myBiz Corporate"
+                  label="Corporate"
                   value={nexusStats.by_source.mybiz}
                   sub="Bookings via corporate team"
                   badge="B2B"
