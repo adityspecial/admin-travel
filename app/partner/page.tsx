@@ -3,7 +3,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { DonutMeter, MiniBarChart, ProgressMeters } from '@/components/charts'
 import { StatCard } from '@/components/ui/StatCard'
-import { Users, Ticket, TrendingUp, Wallet, Clock } from 'lucide-react'
+import {
+  Users, Ticket, TrendingUp, Wallet, Clock, BarChart3, Activity,
+  CheckCircle2, XCircle, Zap, Compass, ShieldCheck, ArrowRight,
+} from 'lucide-react'
 
 function fmtCurrency(v: number) { return `₹${v.toLocaleString('en-IN')}` }
 function fmtCount(v?: number)   { return typeof v === 'number' ? v.toLocaleString('en-IN') : '--' }
@@ -26,6 +29,7 @@ export default function PartnerDashboard() {
   const agentName      = data?.agentName      ?? 'Your Agency'
 
   const activeRate = subAgents > 0 ? Math.round((activeAgents / subAgents) * 100) : 0
+  const inactiveAgents = Math.max(subAgents - activeAgents, 0)
 
   const agentMix = useMemo(() => [
     { label: 'Active',   value: activeAgents,               tone: 'teal'   as const },
@@ -123,54 +127,221 @@ export default function PartnerDashboard() {
           </section>
 
           <section className="dashboard-grid">
-            <div className="chart-card">
-              <div className="card-title">Team Activity Mix</div>
-              <div className="card-copy">An overview of your sub-agents and booking volume.</div>
+            {/* Team Activity Mix Card */}
+            <div className="dashboard-card-lucrative">
+              <div className="dashboard-card-header">
+                <div className="dashboard-card-title-group">
+                  <div className="dashboard-card-icon-icon dashboard-card-icon-orange">
+                    <BarChart3 size={19} strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <h3 className="dashboard-card-title">Team Activity Mix</h3>
+                    <p className="dashboard-card-subtitle">An overview of your sub-agents and booking volume</p>
+                  </div>
+                </div>
+                <span className="dashboard-card-badge-pill dashboard-card-badge-orange">Realtime</span>
+              </div>
+
               <MiniBarChart data={agentMix} />
             </div>
-            <div className="chart-card">
-              <div className="card-title">Agent Activation Rate</div>
-              <div className="card-copy">How much of your team is currently active.</div>
-              <DonutMeter value={activeRate} label="Active" tone="orange" />
-              <div className="metric-list" style={{ marginTop: 18 }}>
-                <div className="metric-row-head"><span>Active sub-agents</span><span>{fmtCount(activeAgents)}</span></div>
-                <div className="metric-row-head"><span>Total sub-agents</span><span>{fmtCount(subAgents)}</span></div>
+
+            {/* Agent Activation Rate Card */}
+            <div className="dashboard-card-lucrative">
+              <div className="dashboard-card-header">
+                <div className="dashboard-card-title-group">
+                  <div className="dashboard-card-icon-icon dashboard-card-icon-teal">
+                    <Activity size={19} strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <h3 className="dashboard-card-title">Agent Activation Rate</h3>
+                    <p className="dashboard-card-subtitle">How much of your team is currently active</p>
+                  </div>
+                </div>
+                <span className="dashboard-card-badge-pill dashboard-card-badge-teal">
+                  {activeRate >= 80 ? '●Optimal' : '●Monitoring'}
+                </span>
+              </div>
+
+              <DonutMeter value={activeRate} label="Active Rate" tone="teal" />
+
+              <div className="org-health-metrics-grid">
+                <div className="org-health-metric-box active">
+                  <div className="org-health-metric-label">
+                    <CheckCircle2 size={15} color="#16a34a" />
+                    <span>Active</span>
+                  </div>
+                  <strong className="org-health-metric-value">{fmtCount(activeAgents)}</strong>
+                </div>
+                <div className="org-health-metric-box inactive">
+                  <div className="org-health-metric-label">
+                    <XCircle size={15} color="#e11d48" />
+                    <span>Inactive</span>
+                  </div>
+                  <strong className="org-health-metric-value">{fmtCount(inactiveAgents)}</strong>
+                </div>
               </div>
             </div>
           </section>
 
           <section className="panel-grid">
-            <div className="chart-card">
-              <div className="card-title">Earnings Overview</div>
-              <div className="card-copy">A quick read on your team's financial performance.</div>
-              <div style={{ marginTop: 18 }}>
-                <ProgressMeters items={[
-                  { label: 'Total earnings',   value: totalEarnings,  tone: 'orange' },
-                  { label: 'Wallet balance',   value: walletBalance,  tone: 'teal' },
-                  { label: 'Pending payouts',  value: pendingPayouts, tone: 'rose' },
-                ]} />
+            {/* Earnings Overview Card */}
+            <div className="dashboard-card-lucrative">
+              <div className="dashboard-card-header" style={{ marginBottom: 18 }}>
+                <div className="dashboard-card-title-group">
+                  <div className="dashboard-card-icon-icon dashboard-card-icon-orange">
+                    <TrendingUp size={19} strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <h3 className="dashboard-card-title">Earnings Overview</h3>
+                    <p className="dashboard-card-subtitle">A quick read on your team's financial performance</p>
+                  </div>
+                </div>
+                <span className="dashboard-card-badge-pill dashboard-card-badge-orange">
+                  {pendingPayouts > 0 ? '●Payouts Due' : '●Cleared'}
+                </span>
+              </div>
+
+              <ProgressMeters
+                items={[
+                  { label: 'Total earnings',  value: totalEarnings,  tone: 'orange' },
+                  { label: 'Wallet balance',  value: walletBalance,  tone: 'teal' },
+                  { label: 'Pending payouts', value: pendingPayouts, tone: 'rose' },
+                ]}
+              />
+            </div>
+
+            {/* Quick Actions Card */}
+            <div className="dashboard-card-lucrative">
+              <div>
+                <div className="dashboard-card-header" style={{ marginBottom: 14 }}>
+                  <div className="dashboard-card-title-group">
+                    <div className="dashboard-card-icon-icon dashboard-card-icon-blue">
+                      <Zap size={19} strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <h3 className="dashboard-card-title">Quick Actions</h3>
+                      <p className="dashboard-card-subtitle">Jump to the sections your team needs most</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="quick-actions-btns-wrap">
+                  <a href="/partner/sub-agents" className="quick-action-btn-primary">
+                    <Users size={15} strokeWidth={2} />
+                    Manage Sub-Agents
+                  </a>
+
+                  <a href="/partner/bookings" className="quick-action-btn-outline">
+                    <Ticket size={15} strokeWidth={2} />
+                    View Bookings
+                  </a>
+
+                  <a href="/partner/permissions" className="quick-action-btn-teal">
+                    <ShieldCheck size={15} strokeWidth={2} />
+                    Permissions
+                  </a>
+                </div>
+              </div>
+
+              <div className="quick-actions-info-grid">
+                <div className="quick-action-info-box base">
+                  <div className="quick-action-info-head">
+                    <span className="quick-action-info-title">Sub-Agents</span>
+                    <Users size={15} color="#3b82f6" />
+                  </div>
+                  <div className="quick-action-info-num">{fmtCount(subAgents)}</div>
+                  <span className="quick-action-info-sub">In your network</span>
+                </div>
+
+                <div className="quick-action-info-box approvals">
+                  <div className="quick-action-info-head">
+                    <span className="quick-action-info-title">Pending Payouts</span>
+                    <Clock size={15} color="#ea580c" />
+                  </div>
+                  <div className="quick-action-info-num">{fmtCurrency(pendingPayouts)}</div>
+                  <span className="quick-action-info-sub">Commission to be paid out</span>
+                </div>
               </div>
             </div>
-            <div className="chart-card">
-              <div className="card-title">Quick Actions</div>
-              <div className="card-copy">Jump to the sections your team needs most.</div>
-              <div className="page-actions" style={{ marginTop: 18 }}>
-                <a href="/partner/sub-agents" className="btn btn-primary">Manage Sub-Agents</a>
-                <a href="/partner/bookings"   className="btn btn-ghost">View Bookings</a>
-                <a href="/partner/permissions" className="btn btn-muted">Permissions</a>
-              </div>
-              <div className="info-grid" style={{ marginTop: 18 }}>
-                <div className="info-card">
-                  <h4>Sub-Agents</h4>
-                  <strong>{fmtCount(subAgents)}</strong>
-                  <span>In your network</span>
+          </section>
+
+          {/* ── Explore Partner Areas ── */}
+          <section className="explore-admin-section">
+            <div className="dashboard-card-header" style={{ marginBottom: 4 }}>
+              <div className="dashboard-card-title-group">
+                <div className="dashboard-card-icon-icon dashboard-card-icon-blue">
+                  <Compass size={20} strokeWidth={2.2} />
                 </div>
-                <div className="info-card">
-                  <h4>Pending Payouts</h4>
-                  <strong>{fmtCurrency(pendingPayouts)}</strong>
-                  <span>Commission to be paid out</span>
+                <div>
+                  <h3 className="dashboard-card-title">Explore Partner Areas</h3>
+                  <p className="dashboard-card-subtitle">The most important sections of your partner workspace</p>
                 </div>
               </div>
+              <span className="dashboard-card-badge-pill">●4 Key Hubs</span>
+            </div>
+
+            <div className="explore-admin-grid">
+              {[
+                {
+                  title: 'Sub-Agents',
+                  desc: 'Manage your sub-agent network, roles, and wallet credits.',
+                  href: '/partner/sub-agents',
+                  Icon: Users,
+                  badge: 'Team Network',
+                  tone: 'blue',
+                  accent: '#2563eb',
+                },
+                {
+                  title: 'Bookings',
+                  desc: "Review every booking made across your team's accounts.",
+                  href: '/partner/bookings',
+                  Icon: Ticket,
+                  badge: 'Trip Volume',
+                  tone: 'violet',
+                  accent: '#7c3aed',
+                },
+                {
+                  title: 'Earnings & Payouts',
+                  desc: 'Track commission earned and manage pending payouts.',
+                  href: '/partner/earnings',
+                  Icon: TrendingUp,
+                  badge: 'Commission',
+                  tone: 'teal',
+                  accent: '#0d9488',
+                },
+                {
+                  title: 'Permissions',
+                  desc: 'Control what your sub-agents can see and do.',
+                  href: '/partner/permissions',
+                  Icon: ShieldCheck,
+                  badge: 'Access Control',
+                  tone: 'orange',
+                  accent: '#ea580c',
+                },
+              ].map((item) => (
+                <a key={item.title} href={item.href} className="explore-area-card">
+                  <div className="explore-area-accent" style={{ backgroundColor: item.accent }} />
+
+                  <div className="explore-area-head">
+                    <div className={`explore-area-icon-box explore-area-icon-${item.tone}`}>
+                      <item.Icon size={21} strokeWidth={2.2} />
+                    </div>
+                    <span className={`explore-area-badge explore-area-badge-${item.tone}`}>
+                      {item.badge}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="explore-area-title">{item.title}</h4>
+                    <p className="explore-area-desc">{item.desc}</p>
+                  </div>
+
+                  <div className="explore-area-footer" style={{ color: item.accent }}>
+                    <span>Open Module</span>
+                    <ArrowRight size={15} className="explore-area-arrow" />
+                  </div>
+                </a>
+              ))}
             </div>
           </section>
 

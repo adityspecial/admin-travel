@@ -1,9 +1,12 @@
 'use client'
+
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { adminFetch } from '@/lib/api'
 import { SpendAndBookingsRow, AdvanceAndHotelsRow, AirlinesAndTravellersRow } from './_components/DashboardCharts'
 import { ApprovalStatsRow, PolicyGaugeRow } from './_components/DashboardCharts2'
+import DashboardMetricsBar from './_components/DashboardMetricsBar'
+import HeroSection from './_components/HeroSection'
 
 function fmtFull(n: number) { return '₹' + n.toLocaleString('en-IN') }
 
@@ -71,7 +74,7 @@ export default function BizDashboard() {
   const byType     = reports?.byType ?? []
   const travellers = (reports?.byEmployee ?? []).slice(0, 5)
 
-  const topAirlines = (reports?.byAirline ?? []).slice(0, 5) as { airline: string; count: number }[]
+  const topAirlines = (reports?.byAirline ?? []).slice(0, 5) as { airline: string; code: string; count: number }[]
 
   const approvalStats = useMemo(() => {
     const total      = approvals.length
@@ -127,68 +130,39 @@ export default function BizDashboard() {
   }, [approvals])
 
   return (
-    <div style={{ background: '#F5F6FA', minHeight: 'calc(100vh - 54px)' }}>
+    <div style={{ background: '#F5F6FA', minHeight: 'calc(100vh - 54px)', width: '100%', overflowX: 'hidden' }}>
+      <style>{`
+        .biz-content-container {
+          padding: 0 32px 40px;
+        }
+        @media (max-width: 1024px) {
+          .biz-content-container {
+            padding: 0 20px 32px;
+          }
+        }
+        @media (max-width: 640px) {
+          .biz-content-container {
+            padding: 0 12px 24px;
+          }
+        }
+      `}</style>
 
-      {/* Hero banner */}
-      <div style={{ background: 'linear-gradient(135deg, #E8D5F5 0%, #F9C8C8 50%, #FDE8D0 100%)', padding: '32px 32px 0' }}>
-        <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>
-          Admin &rsaquo; <span style={{ color: '#E31E24' }}>Performance Dashboard</span>
-        </div>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1a1a2e', marginBottom: 6 }}>Hello {policy?.name ?? 'Admin'},</h1>
-        <p style={{ fontSize: 14, color: '#374151', marginBottom: 28 }}>
-          Welcome to myBiz Admin Console. An admin account manages all the below features.
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, paddingBottom: 24 }}>
-          {[
-            { icon: '👥', title: 'Workforce Management', sub: 'Add employees and set policy for increased savings', cta: 'INVITE', href: '/biz/members' },
-            { icon: '📋', title: 'Policy Management', sub: 'Set up travel policies as per your company needs', cta: 'SETUP', href: '/biz/policy' },
-            { icon: '💳', title: 'myBiz Wallet', sub: 'Recharge wallet for seamless booking', cta: 'RECHARGE WALLET', href: '/biz/wallet' },
-          ].map(card => (
-            <div key={card.cta} style={{ background: '#fff', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-              <div style={{ fontSize: 22, marginBottom: 8 }}>{card.icon}</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a2e', marginBottom: 6, lineHeight: 1.3 }}>{card.title}</div>
-              <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 14, lineHeight: 1.5 }}>{card.sub}</div>
-              <Link href={card.href} style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', textDecoration: 'none' }}>{card.cta}</Link>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Lucrative Hero Section Component */}
+      <HeroSection companyName={policy?.name} walletBalance={walletBal} />
 
-      <div style={{ padding: '0 32px 40px' }}>
+      <div className="biz-content-container">
 
-        {/* Period filter + stats */}
-        <div style={{ background: '#fff', borderRadius: 12, marginTop: 20, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #F3F4F6' }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#1a1a2e' }}>
-              Dashboard <span style={{ fontSize: 13, fontWeight: 500, color: '#9CA3AF', marginLeft: 8 }}>({range.label})</span>
-            </div>
-            <div style={{ display: 'flex', gap: 4 }}>
-              {PERIODS.map(p => (
-                <button key={p.key} onClick={() => setPeriod(p.key)} style={{
-                  padding: '8px 14px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                  fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', transition: 'all 0.15s',
-                  background: period === p.key ? '#E31E24' : 'transparent',
-                  color: period === p.key ? '#fff' : '#6B7280',
-                }}>
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
-            {[
-              { label: 'Total Bookings',        value: loading ? '…' : String(s?.totalBookings ?? 0) },
-              { label: 'Total Spend',            value: loading ? '…' : fmtFull(s?.totalSpend ?? 0) },
-              { label: 'Total Savings',          value: '₹0' },
-              { label: 'Current Wallet Balance', value: loading ? '…' : fmtFull(walletBal) },
-            ].map((stat, i) => (
-              <div key={stat.label} style={{ padding: '20px 28px', borderRight: i < 3 ? '1px solid #F3F4F6' : 'none' }}>
-                <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>{stat.label}</div>
-                <div style={{ fontSize: 22, fontWeight: 900, color: '#1a1a2e' }}>{stat.value}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Lucrative Dashboard Overview & Metrics Bar */}
+        <DashboardMetricsBar
+          period={period}
+          setPeriod={setPeriod}
+          rangeLabel={range.label}
+          loading={loading}
+          totalBookings={s?.totalBookings ?? 0}
+          totalSpend={fmtFull(s?.totalSpend ?? 0)}
+          totalSavings="₹0"
+          walletBalance={fmtFull(walletBal)}
+        />
 
         {/* Approval + gauge charts */}
         <ApprovalStatsRow {...approvalStats} />

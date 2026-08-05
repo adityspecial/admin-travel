@@ -141,7 +141,7 @@ export default function AllUsersPage() {
               Icon={Users}
               label="Total Members"
               value={members.length}
-              sub="Across all MyBiz organisations"
+              sub="Across all corporate organisations"
               badge="Directory"
             />
             <StatCard

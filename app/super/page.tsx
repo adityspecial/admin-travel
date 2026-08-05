@@ -121,7 +121,7 @@ export default function SuperDashboard() {
     <div>
       <div className="admin-topbar">
         <h2>Platform Overview</h2>
-        <span className="topbar-meta">AirDunia myBiz | Super control center</span>
+        <span className="topbar-meta">AirDunia Corporate | Super control center</span>
       </div>
       <div className="admin-content">
         <div className="page-stack">
@@ -448,7 +448,7 @@ export default function SuperDashboard() {
 
                             <div className="api-channel-pill mybiz">
                               <span className="api-channel-val">{formatCount(api.bySource.mybiz)}</span>
-                              <span className="api-channel-lbl">MyBiz</span>
+                              <span className="api-channel-lbl">Corporate</span>
                               {totalSrc > 0 && (
                                 <span className="api-channel-pct">({Math.round(api.bySource.mybiz / totalSrc * 100)}%)</span>
                               )}

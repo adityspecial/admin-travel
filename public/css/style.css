@@ -24,7 +24,7 @@
 
 .mini-bar-badge {
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   padding: 3px 8px;
   border-radius: 6px;
   margin-bottom: 8px;
@@ -92,7 +92,7 @@
 
 .donut-meter-percent {
   font-size: 26px;
-  font-weight: 900;
+  font-weight: 700;
   color: #0f172a;
   letter-spacing: -0.03em;
   line-height: 1;
@@ -100,7 +100,7 @@
 
 .donut-meter-sublabel {
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-top: 4px;
@@ -134,7 +134,7 @@
 
 .progress-meter-badge {
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   padding: 3px 10px;
   border-radius: 8px;
 }
@@ -211,7 +211,7 @@
 
 .dashboard-card-title {
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--ink, #0f172a);
   margin: 0;
   letter-spacing: -0.02em;
@@ -286,7 +286,7 @@
 
 .org-health-metric-value {
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .org-health-metric-box.active .org-health-metric-value {
@@ -394,7 +394,7 @@
 
 .quick-action-info-title {
   font-size: 10.5px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -409,7 +409,7 @@
 
 .quick-action-info-num {
   font-size: 22px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .quick-action-info-box.base .quick-action-info-num {
@@ -528,14 +528,29 @@
   letter-spacing: 0.02em;
 }
 
-.explore-area-badge-blue { background: #dbeafe; color: #1d4ed8; }
-.explore-area-badge-violet { background: #ede9fe; color: #6d28d9; }
-.explore-area-badge-teal { background: #ccfbf1; color: #0f766e; }
-.explore-area-badge-orange { background: #ffedd5; color: #c2410c; }
+.explore-area-badge-blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.explore-area-badge-violet {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.explore-area-badge-teal {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.explore-area-badge-orange {
+  background: #ffedd5;
+  color: #c2410c;
+}
 
 .explore-area-title {
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
   color: #0f172a;
   margin: 0 0 6px 0;
   letter-spacing: -0.02em;
@@ -617,7 +632,7 @@
 
 .api-health-name {
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
   color: #0f172a;
   margin-bottom: 3px;
   letter-spacing: -0.02em;
@@ -669,7 +684,7 @@
 
 .api-wallet-title {
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 600;
   color: #92400e;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -677,7 +692,7 @@
 
 .api-wallet-amount {
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 600;
   color: #92400e;
   margin-top: 2px;
 }
@@ -714,7 +729,7 @@
 
 .api-metric-val {
   font-size: 20px;
-  font-weight: 900;
+  font-weight: 700;
   color: #0f172a;
 }
 
@@ -744,7 +759,7 @@
 .api-channel-subhead {
   font-size: 10px;
   color: #64748b;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 6px;
@@ -782,21 +797,37 @@
 
 .api-channel-val {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
-.api-channel-pill.consumer .api-channel-val { color: #1d4ed8; }
-.api-channel-pill.mybiz .api-channel-val { color: #0f766e; }
-.api-channel-pill.partner .api-channel-val { color: #c2410c; }
+.api-channel-pill.consumer .api-channel-val {
+  color: #1d4ed8;
+}
+
+.api-channel-pill.mybiz .api-channel-val {
+  color: #0f766e;
+}
+
+.api-channel-pill.partner .api-channel-val {
+  color: #c2410c;
+}
 
 .api-channel-lbl {
   font-size: 11px;
   font-weight: 700;
 }
 
-.api-channel-pill.consumer .api-channel-lbl { color: #1d4ed8; }
-.api-channel-pill.mybiz .api-channel-lbl { color: #0f766e; }
-.api-channel-pill.partner .api-channel-lbl { color: #c2410c; }
+.api-channel-pill.consumer .api-channel-lbl {
+  color: #1d4ed8;
+}
+
+.api-channel-pill.mybiz .api-channel-lbl {
+  color: #0f766e;
+}
+
+.api-channel-pill.partner .api-channel-lbl {
+  color: #c2410c;
+}
 
 .api-channel-pct {
   font-size: 10px;
@@ -835,6 +866,7 @@
 
 /* ── Large Desktop & Laptops (1200px and below) ─────────────────────── */
 @media (max-width: 1200px) {
+
   .dashboard-grid,
   .panel-grid {
     grid-template-columns: minmax(0, 1.2fr) minmax(280px, 1fr);
@@ -848,6 +880,7 @@
 
 /* ── Tablets & Small Laptops (1024px and below) ─────────────────────── */
 @media (max-width: 1024px) {
+
   .dashboard-grid,
   .panel-grid {
     grid-template-columns: 1fr;
@@ -861,6 +894,7 @@
 
 /* ── Mobile Devices & Small Tablets (768px and below) ───────────────── */
 @media (max-width: 768px) {
+
   .explore-admin-section,
   .api-health-section,
   .dashboard-card-lucrative {
@@ -944,6 +978,3 @@
     grid-template-columns: 1fr;
   }
 }
-
-
-

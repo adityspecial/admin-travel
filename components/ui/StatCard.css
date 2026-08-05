@@ -73,7 +73,7 @@
 
 .stat-card-value {
   font-size: 30px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--ink, #0f172a);
   letter-spacing: -0.035em;
   line-height: 1.1;

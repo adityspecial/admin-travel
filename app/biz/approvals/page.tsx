@@ -1,264 +1,695 @@
 'use client'
-import { useEffect, useState, useMemo } from 'react'
+
+import React, { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { adminFetch } from '@/lib/api'
+import { FilterSidebar, FilterSidebarBlock } from '../_components/FilterSidebar'
+import {
+  CheckSquare,
+  Plane,
+  Hotel,
+  Search,
+  Check,
+  X,
+  Eye,
+  Clock,
+  ShieldAlert,
+  ShieldCheck,
+  UserCheck,
+  User,
+  Calendar,
+  Sparkles,
+  ChevronRight,
+  Filter,
+  RotateCcw,
+  SlidersHorizontal,
+} from 'lucide-react'
 
 type Tab = 'pending' | 'expired' | 'all'
 
 function ageLabel(createdAt: string) {
   const diff = Date.now() - new Date(createdAt).getTime()
   const h = diff / 3600000
-  if (h < 3)  return '<3h'
+  if (h < 3) return '<3h'
   if (h < 12) return '3-12h'
   return '>12h'
 }
 
 function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export default function ApprovalsPage() {
   const [approvals, setApprovals] = useState<any[]>([])
-  const [loading,   setLoading]   = useState(true)
-  const [tab,       setTab]       = useState<Tab>('pending')
-  const [search,    setSearch]    = useState('')
+  const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<Tab>('pending')
+  const [search, setSearch] = useState('')
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
 
   // Sidebar filter state
-  const [filterPolicy,    setFilterPolicy]   = useState<string[]>([])
-  const [filterApprover,  setFilterApprover] = useState('')
-  const [filterTraveller, setFilterTraveller]= useState('')
-  const [filterDateReq,   setFilterDateReq]  = useState('')
-  const [filterAge,       setFilterAge]      = useState('')
-  const [filterDateTravel,setFilterDateTravel]=useState('')
+  const [filterPolicy, setFilterPolicy] = useState<string[]>([])
+  const [filterApprover, setFilterApprover] = useState('')
+  const [filterTraveller, setFilterTraveller] = useState('')
+  const [filterDateReq, setFilterDateReq] = useState('')
+  const [filterAge, setFilterAge] = useState('')
+  const [filterDateTravel, setFilterDateTravel] = useState('')
 
   useEffect(() => {
     adminFetch('/api/admin/biz/approvals?status=all')
-      .then(d => setApprovals(d.approvals ?? []))
+      .then((d) => setApprovals(d.approvals ?? []))
       .finally(() => setLoading(false))
   }, [])
 
   async function doAction(id: string, act: 'approve' | 'reject') {
-    await adminFetch(`/api/admin/biz/approvals/${id}`, {
-      method: 'PATCH', body: JSON.stringify({ action: act }),
-    })
-    setApprovals(prev => prev.map(a => a.id === id ? { ...a, status: act === 'approve' ? 'approved' : 'rejected' } : a))
+    try {
+      await adminFetch(`/api/admin/biz/approvals/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ action: act }),
+      })
+      setApprovals((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status: act === 'approve' ? 'approved' : 'rejected' } : a))
+      )
+    } catch (err: any) {
+      alert(err.message || 'Failed to update request status')
+    }
   }
 
   const now = new Date()
   function isExpired(a: any) {
     return a.expires_at && new Date(a.expires_at) < now
   }
+
   function matchesDateReq(a: any) {
     if (!filterDateReq) return true
     const d = new Date(a.created_at)
-    const today = new Date(); today.setHours(0,0,0,0)
-    const yesterday = new Date(today); yesterday.setDate(today.getDate()-1)
-    if (filterDateReq === 'today')     return d >= today
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const yesterday = new Date(today)
+    yesterday.setDate(today.getDate() - 1)
+    if (filterDateReq === 'today') return d >= today
     if (filterDateReq === 'yesterday') return d >= yesterday && d < today
-    if (filterDateReq === 'last7')     { const w = new Date(today); w.setDate(today.getDate()-7); return d >= w }
+    if (filterDateReq === 'last7') {
+      const w = new Date(today)
+      w.setDate(today.getDate() - 7)
+      return d >= w
+    }
     return true
   }
 
   const filtered = useMemo(() => {
     let list = approvals
-    if (tab === 'pending')  list = list.filter(a => a.status === 'pending' && !isExpired(a))
-    if (tab === 'expired')  list = list.filter(a => isExpired(a))
-    if (tab === 'all')      list = [...list]
-    if (search)             list = list.filter(a => a.id.includes(search) || (a.requester?.work_email ?? '').includes(search))
-    if (filterApprover)     list = list.filter(a => (a.reviewer?.work_email ?? '').toLowerCase().includes(filterApprover.toLowerCase()))
-    if (filterTraveller)    list = list.filter(a => (a.requester?.work_email ?? '').toLowerCase().includes(filterTraveller.toLowerCase()))
-    if (filterAge)          list = list.filter(a => ageLabel(a.created_at) === filterAge)
+    if (tab === 'pending') list = list.filter((a) => a.status === 'pending' && !isExpired(a))
+    if (tab === 'expired') list = list.filter((a) => isExpired(a))
+    if (tab === 'all') list = [...list]
+    if (search) list = list.filter((a) => a.id.includes(search) || (a.requester?.work_email ?? '').includes(search))
+    if (filterApprover) list = list.filter((a) => (a.reviewer?.work_email ?? '').toLowerCase().includes(filterApprover.toLowerCase()))
+    if (filterTraveller) list = list.filter((a) => (a.requester?.work_email ?? '').toLowerCase().includes(filterTraveller.toLowerCase()))
+    if (filterAge) list = list.filter((a) => ageLabel(a.created_at) === filterAge)
     list = list.filter(matchesDateReq)
     return list
   }, [approvals, tab, search, filterApprover, filterTraveller, filterAge, filterDateReq])
 
   const counts = {
-    pending: approvals.filter(a => a.status === 'pending' && !isExpired(a)).length,
-    expired: approvals.filter(a => isExpired(a)).length,
-    all:     approvals.length,
+    pending: approvals.filter((a) => a.status === 'pending' && !isExpired(a)).length,
+    expired: approvals.filter((a) => isExpired(a)).length,
+    all: approvals.length,
   }
 
-  const SIDEBAR_SECTION = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ fontSize: 12, fontWeight: 800, color: '#374151', marginBottom: 12 }}>{title}</div>
-      {children}
-    </div>
-  )
+  function resetFilters() {
+    setFilterPolicy([])
+    setFilterApprover('')
+    setFilterTraveller('')
+    setFilterDateReq('')
+    setFilterAge('')
+    setFilterDateTravel('')
+    setSearch('')
+  }
 
-  const RadioItem = ({ label, value, group, current, onChange }: { label: string; value: string; group: string; current: string; onChange: (v: string) => void }) => (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}>
-      <input type="radio" name={group} checked={current === value} onChange={() => onChange(value === current ? '' : value)} style={{ accentColor: '#E31E24' }} />
-      <span style={{ fontSize: 13, color: '#374151' }}>{label}</span>
-    </label>
-  )
-
-  const CheckItem = ({ label, value, arr, setArr }: { label: string; value: string; arr: string[]; setArr: (v: string[]) => void }) => (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}>
-      <input type="checkbox" checked={arr.includes(value)} onChange={e => setArr(e.target.checked ? [...arr, value] : arr.filter(x => x !== value))} style={{ accentColor: '#E31E24' }} />
-      <span style={{ fontSize: 13, color: '#374151' }}>{label}</span>
-    </label>
-  )
+  const activeFiltersCount =
+    filterPolicy.length +
+    (filterApprover ? 1 : 0) +
+    (filterTraveller ? 1 : 0) +
+    (filterDateReq ? 1 : 0) +
+    (filterAge ? 1 : 0) +
+    (filterDateTravel ? 1 : 0)
 
   return (
-    <div style={{ display: 'flex', minHeight: 'calc(100vh - 54px)', background: '#F5F6FA' }}>
+    <div style={{ minHeight: 'calc(100vh - 54px)', background: '#F5F6FA', width: '100%', overflowX: 'hidden' }}>
+      <style>{`
+        .approvals-wrapper {
+          display: flex;
+          min-height: calc(100vh - 54px);
+        }
+        .filter-sidebar {
+          width: 270px;
+          flex-shrink: 0;
+          background: linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%);
+          border-right: 1px solid #E5E7EB;
+        }
+        .filter-sidebar__scroll::-webkit-scrollbar { width: 5px; }
+        .filter-sidebar__scroll::-webkit-scrollbar-track { background: transparent; }
+        .filter-sidebar__scroll::-webkit-scrollbar-thumb {
+          background: rgba(209,213,219,0.85);
+          border-radius: 99px;
+        }
+        .filter-sidebar__scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(156,163,175,1);
+        }
+        .approvals-main {
+          flex: 1;
+          padding: 32px 32px 48px;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+          min-width: 0;
+        }
+        .hero-banner-box {
+          background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+          border-radius: 24px;
+          padding: 32px;
+          color: #ffffff;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 16px 36px -10px rgba(49, 46, 129, 0.25);
+        }
+        .card-shell {
+          background: #ffffff;
+          border: 1px solid #E5E7EB;
+          border-radius: 20px;
+          padding: 26px;
+          box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.03), 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+        .filter-card-block {
+          background: #ffffff;
+          border: 1px solid #E5E7EB;
+          border-radius: 14px;
+          padding: 16px;
+          margin-bottom: 16px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+        .input-field {
+          padding: 10px 14px;
+          border-radius: 10px;
+          border: 1.5px solid #E5E7EB;
+          font-size: 12.5px;
+          outline: none;
+          box-sizing: border-box;
+          transition: all 0.2s ease;
+          width: 100%;
+        }
+        .input-field:focus {
+          border-color: var(--accent, #E31E24);
+          box-shadow: 0 0 0 3px rgba(227, 30, 36, 0.1);
+        }
+        .btn-primary {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 20px;
+          background: linear-gradient(135deg, var(--accent, #E31E24) 0%, #B91C1C 100%);
+          color: #ffffff;
+          border: none;
+          border-radius: 12px;
+          font-weight: 600;
+          font-size: 13px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
+          white-space: nowrap;
+        }
+        .btn-primary:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 18px var(--accent, rgba(227, 30, 36, 0.35));
+        }
+        .btn-secondary {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 16px;
+          background: #F3F4F6;
+          color: #374151;
+          border: 1px solid #E5E7EB;
+          border-radius: 10px;
+          font-weight: 700;
+          font-size: 12.5px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .btn-secondary:hover {
+          background: #E5E7EB;
+        }
+        .tab-btn {
+          padding: 10px 20px;
+          border-radius: 12px;
+          border: none;
+          background: transparent;
+          font-size: 13px;
+          font-weight: 700;
+          color: #6B7280;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .tab-btn.active {
+          background: var(--accent, #E31E24);
+          color: #ffffff;
+          box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
+        }
+        .mobile-filter-toggle {
+          display: none;
+        }
+        @media (max-width: 1024px) {
+          .approvals-wrapper {
+            flex-direction: column;
+          }
+          .filter-sidebar {
+            width: 100%;
+            position: relative;
+            top: 0;
+            height: auto;
+            border-right: none;
+            border-bottom: 1px solid #E5E7EB;
+            display: ${showMobileFilters ? 'block' : 'none'};
+          }
+          .mobile-filter-toggle {
+            display: inline-flex;
+          }
+          .approvals-main {
+            padding: 20px 16px 36px;
+          }
+          .hero-banner-box {
+            padding: 24px;
+            border-radius: 20px;
+          }
+        }
+        @media (max-width: 640px) {
+          .approvals-main {
+            padding: 14px 10px 28px;
+          }
+          .card-shell {
+            padding: 18px 14px;
+            border-radius: 16px;
+          }
+        }
+      `}</style>
 
-      {/* ── Left sidebar ── */}
-      <aside style={{ width: 230, flexShrink: 0, background: '#fff', borderRight: '1px solid #E5E7EB', padding: '24px 20px', overflowY: 'auto', position: 'sticky', top: 54, height: 'calc(100vh - 54px)' }}>
+      <div className="approvals-wrapper">
+        {/* Left Filter Sidebar */}
+        <FilterSidebar
+          title="Approval Filters"
+          icon={<SlidersHorizontal size={16} />}
+          activeCount={activeFiltersCount}
+          onReset={resetFilters}
+          showMobile={showMobileFilters}
+          activeTags={[
+            ...filterPolicy.map((p) => ({ id: `pol-${p}`, label: `Policy: ${p}`, onRemove: () => setFilterPolicy((prev) => prev.filter((x) => x !== p)) })),
+            ...(filterApprover ? [{ id: 'appr', label: `Approver: ${filterApprover}`, onRemove: () => setFilterApprover('') }] : []),
+            ...(filterTraveller ? [{ id: 'trav', label: `Traveller: ${filterTraveller}`, onRemove: () => setFilterTraveller('') }] : []),
+            ...(filterDateReq ? [{ id: 'dateReq', label: `Req: ${filterDateReq}`, onRemove: () => setFilterDateReq('') }] : []),
+            ...(filterAge ? [{ id: 'age', label: `SLA: ${filterAge}`, onRemove: () => setFilterAge('') }] : []),
+          ]}
+        >
+          {/* Filter 1: Policy Compliance */}
+          <FilterSidebarBlock title="Policy Compliance" icon={<ShieldCheck size={15} color="#2563EB" />}>
+            {[
+              ['In Policy', 'in'],
+              ['Out of Policy (Requires Approval)', 'out'],
+            ].map(([lbl, val]) => (
+              <label key={val} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={filterPolicy.includes(val)}
+                  onChange={(e) =>
+                    setFilterPolicy((prev) => (e.target.checked ? [...prev, val] : prev.filter((x) => x !== val)))
+                  }
+                  style={{ accentColor: 'var(--accent, #E31E24)', width: '15px', height: '15px' }}
+                />
+                <span style={{ fontSize: '12px', color: '#374151', fontWeight: 500 }}>{lbl}</span>
+              </label>
+            ))}
+          </FilterSidebarBlock>
 
-        <SIDEBAR_SECTION title="Policy Type">
-          <CheckItem label="In Policy"     value="in"  arr={filterPolicy}    setArr={setFilterPolicy} />
-          <CheckItem label="Out of Policy" value="out" arr={filterPolicy}    setArr={setFilterPolicy} />
-        </SIDEBAR_SECTION>
+          {/* Filter 2: Approver Email */}
+          <FilterSidebarBlock title="Approver Email" icon={<UserCheck size={15} color="#16A34A" />}>
+            <input
+              value={filterApprover}
+              onChange={(e) => setFilterApprover(e.target.value)}
+              placeholder="Search approver..."
+              className="input-field"
+            />
+          </FilterSidebarBlock>
 
-        <SIDEBAR_SECTION title="Approver">
-          <input value={filterApprover} onChange={e => setFilterApprover(e.target.value)}
-            placeholder="Search by Approver Email ID"
-            style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 12, outline: 'none', boxSizing: 'border-box' }} />
-        </SIDEBAR_SECTION>
+          {/* Filter 3: Traveller Email */}
+          <FilterSidebarBlock title="Traveller Email" icon={<User size={15} color="#EA580C" />}>
+            <input
+              value={filterTraveller}
+              onChange={(e) => setFilterTraveller(e.target.value)}
+              placeholder="Search traveller..."
+              className="input-field"
+            />
+          </FilterSidebarBlock>
 
-        <SIDEBAR_SECTION title="Traveller">
-          <input value={filterTraveller} onChange={e => setFilterTraveller(e.target.value)}
-            placeholder="Search by Traveller Email ID"
-            style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 12, outline: 'none', boxSizing: 'border-box' }} />
-        </SIDEBAR_SECTION>
+          {/* Filter 4: Date of Request */}
+          <FilterSidebarBlock title="Request Date" icon={<Calendar size={15} color="#7C3AED" />}>
+            {[
+              ['today', 'Today'],
+              ['yesterday', 'Yesterday'],
+              ['last7', 'Last 7 Days'],
+            ].map(([v, l]) => (
+              <label key={v} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="dateReq"
+                  checked={filterDateReq === v}
+                  onChange={() => setFilterDateReq(filterDateReq === v ? '' : v)}
+                  style={{ accentColor: 'var(--accent, #E31E24)', width: '15px', height: '15px' }}
+                />
+                <span style={{ fontSize: '12px', color: '#374151', fontWeight: 500 }}>{l}</span>
+              </label>
+            ))}
+          </FilterSidebarBlock>
 
-        <SIDEBAR_SECTION title="Date of Request">
-          {[['today','Today'],['yesterday','Yesterday'],['last7','Last 7 days']].map(([v,l]) => (
-            <RadioItem key={v} label={l} value={v} group="dateReq" current={filterDateReq} onChange={setFilterDateReq} />
-          ))}
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-            <input type="radio" name="dateReq" checked={filterDateReq === 'custom'} onChange={() => setFilterDateReq('custom')} style={{ accentColor: '#E31E24' }} />
-            <span style={{ fontSize: 13, color: '#374151' }}>Your Dates</span>
-          </label>
-        </SIDEBAR_SECTION>
+          {/* Filter 5: SLA Age */}
+          <FilterSidebarBlock title="SLA Request Age" icon={<Clock size={15} color="#DC2626" />}>
+            {[
+              ['<3h', 'Less than 3 hours (<3h)'],
+              ['3-12h', '3 - 12 hours'],
+              ['>12h', 'Greater than 12 hours (>12h)'],
+            ].map(([v, l]) => (
+              <label key={v} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="age"
+                  checked={filterAge === v}
+                  onChange={() => setFilterAge(filterAge === v ? '' : v)}
+                  style={{ accentColor: 'var(--accent, #E31E24)', width: '15px', height: '15px' }}
+                />
+                <span style={{ fontSize: '12px', color: '#374151', fontWeight: 500 }}>{l}</span>
+              </label>
+            ))}
+          </FilterSidebarBlock>
+        </FilterSidebar>
 
-        <SIDEBAR_SECTION title="Age of Request">
-          {[['<3h','Less than 3 hours'],['3-12h','3- 12 hours'],['>12h','Greater than 12 hours']].map(([v,l]) => (
-            <RadioItem key={v} label={l} value={v} group="age" current={filterAge} onChange={setFilterAge} />
-          ))}
-        </SIDEBAR_SECTION>
+        {/* Main Content Workspace */}
+        <main className="approvals-main">
+          {/* Breadcrumb Navigation & Mobile Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>
+              <span>Admin</span>
+              <ChevronRight size={13} color="#9CA3AF" />
+              <span style={{ color: 'var(--accent, #E31E24)', fontWeight: 700 }}>Travel Approvals & Bookings</span>
+            </div>
 
-        <SIDEBAR_SECTION title="Date of Travel">
-          {[['today','Today'],['tomorrow','Tomorrow'],['next7','Next Seven Days']].map(([v,l]) => (
-            <RadioItem key={v} label={l} value={v} group="dateTravel" current={filterDateTravel} onChange={setFilterDateTravel} />
-          ))}
-        </SIDEBAR_SECTION>
-
-        {(filterApprover || filterTraveller || filterDateReq || filterAge || filterDateTravel || filterPolicy.length > 0) && (
-          <button onClick={() => { setFilterPolicy([]); setFilterApprover(''); setFilterTraveller(''); setFilterDateReq(''); setFilterAge(''); setFilterDateTravel('') }}
-            style={{ fontSize: 12, color: '#E31E24', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            Clear All Filters
-          </button>
-        )}
-      </aside>
-
-      {/* ── Main ── */}
-      <div style={{ flex: 1, padding: '28px 28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1a1a2e', margin: 0 }}>Manage Requests &amp; Bookings</h1>
-          <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search by Request ID"
-            style={{ padding: '9px 14px 9px 36px', borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 13, outline: 'none', width: 240, background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 10px center` }} />
-        </div>
-
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #E5E7EB', marginBottom: 20 }}>
-          {([['pending','PENDING REQUESTS'],['expired','EXPIRED REQUESTS'],['all','ALL BOOKINGS']] as const).map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)} style={{
-              padding: '12px 20px', border: 'none', background: 'none', cursor: 'pointer',
-              fontSize: 13, fontWeight: 800, letterSpacing: '0.03em',
-              color: tab === key ? '#E31E24' : '#6B7280',
-              borderBottom: tab === key ? '2px solid #E31E24' : '2px solid transparent',
-              marginBottom: -2,
-            }}>
-              {label}
-              <span style={{ fontSize: 11, marginLeft: 6, color: tab === key ? '#E31E24' : '#9CA3AF' }}>({counts[key]})</span>
+            <button onClick={() => setShowMobileFilters((v) => !v)} className="btn-secondary mobile-filter-toggle">
+              <Filter size={14} /> {showMobileFilters ? 'Hide Filters' : 'Show Filters'}
             </button>
-          ))}
-        </div>
+          </div>
 
-        {/* Table */}
-        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #F3F4F6' }}>
-                {['TRIP DETAILS','TRAVELLER','APPROVER','DATE OF TRAVEL ↑','AGE OF REQUEST','↑ EXPENSE ↑','ACTIONS'].map(h => (
-                  <th key={h} style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#9CA3AF' }}>Loading…</td></tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={7} style={{ padding: '60px 20px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 36, marginBottom: 10 }}>📭</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a2e', marginBottom: 4 }}>No Requests Found.</div>
-                    <div style={{ fontSize: 13, color: '#9CA3AF' }}>Try removing some filters to see results.</div>
-                  </td>
-                </tr>
-              ) : filtered.map(a => {
-                const fd = a.flight_data
-                const hd = a.hotel_data
-                const travelDate = fd?.date || fd?.departure_date || hd?.check_in || hd?.checkIn || ''
-                return (
-                  <tr key={a.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                    <td style={{ padding: '14px 16px' }}>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: '#1a1a2e' }}>
-                        {a.booking_type === 'flight' && fd ? `${fd.from || fd.origin} → ${fd.to || fd.destination}` :
-                         a.booking_type === 'hotel'  && hd ? (hd.hotelName || hd.hotel_name || 'Hotel') : '--'}
-                      </div>
-                      <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>
-                        <span style={{ padding: '1px 6px', borderRadius: 3, background: a.booking_type === 'flight' ? '#EFF6FF' : '#F0FDF4', color: a.booking_type === 'flight' ? '#1D4ED8' : '#15803D', fontWeight: 700 }}>
-                          {a.booking_type}
-                        </span>
-                        {fd?.airline && <span style={{ marginLeft: 6 }}>{fd.airline}</span>}
-                      </div>
-                    </td>
-                    <td style={{ padding: '14px 16px', fontSize: 12 }}>
-                      <div style={{ fontWeight: 600, color: '#374151' }}>{a.requester?.work_email ?? '—'}</div>
-                      {a.dept && <div style={{ fontSize: 11, color: '#9CA3AF' }}>{a.dept}</div>}
-                    </td>
-                    <td style={{ padding: '14px 16px', fontSize: 12, color: '#6B7280' }}>
-                      {a.reviewer?.work_email ?? <span style={{ color: '#D1D5DB' }}>Auto-assign</span>}
-                    </td>
-                    <td style={{ padding: '14px 16px', fontSize: 12, color: '#374151' }}>
-                      {travelDate ? fmtDate(travelDate) : '—'}
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <span style={{
-                        fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 99,
-                        background: ageLabel(a.created_at) === '<3h' ? '#F0FDF4' : ageLabel(a.created_at) === '3-12h' ? '#FFFBEB' : '#FEF2F2',
-                        color:      ageLabel(a.created_at) === '<3h' ? '#15803D' : ageLabel(a.created_at) === '3-12h' ? '#B45309' : '#DC2626',
-                      }}>{ageLabel(a.created_at)}</span>
-                    </td>
-                    <td style={{ padding: '14px 16px', fontSize: 13, fontWeight: 800 }}>
-                      ₹{(a.amount ?? 0).toLocaleString('en-IN')}
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        {a.status === 'pending' && (
-                          <>
-                            <button onClick={() => doAction(a.id, 'approve')} style={{
-                              padding: '6px 12px', fontSize: 12, fontWeight: 700, borderRadius: 6,
-                              background: '#F0FDF4', color: '#15803D', border: '1px solid #BBF7D0', cursor: 'pointer',
-                            }}>Approve</button>
-                            <button onClick={() => doAction(a.id, 'reject')} style={{
-                              padding: '6px 12px', fontSize: 12, fontWeight: 700, borderRadius: 6,
-                              background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', cursor: 'pointer',
-                            }}>Reject</button>
-                          </>
-                        )}
-                        <Link href={`/biz/approvals/${a.id}`} style={{ fontSize: 12, color: '#2563EB', fontWeight: 600, textDecoration: 'none' }}>View</Link>
-                      </div>
-                    </td>
+          {/* Hero Header Banner */}
+          <div className="hero-banner-box">
+            {/* Ambient Background Glow */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '-40px',
+                right: '-40px',
+                width: '240px',
+                height: '240px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(227, 30, 36, 0.25) 0%, rgba(0, 0, 0, 0) 70%)',
+                pointerEvents: 'none',
+              }}
+            />
+
+            <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+                <div
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '18px',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    backdropFilter: 'blur(16px)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ffffff',
+                    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)',
+                  }}
+                >
+                  <CheckSquare size={28} />
+                </div>
+                <div>
+                  <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    Corporate Approvals Governance <Sparkles size={18} color="#F59E0B" />
+                  </h1>
+                  <p style={{ fontSize: '13.5px', color: 'rgba(255, 255, 255, 0.85)', marginTop: '4px', margin: 0, fontWeight: 500 }}>
+                    Review employee flight & hotel requests against company policy caps, SLA timelines, and manager sign-offs.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Metrics Bar inside Hero */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px', marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.15)' }}>
+              <div>
+                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Pending Review</div>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: '#FBBF24', marginTop: '2px' }}>{counts.pending} Requests</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Expired / Lapsed</div>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: '#F87171', marginTop: '2px' }}>{counts.expired} Lapsed</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Total Booking Volume</div>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: '#60A5FA', marginTop: '2px' }}>{counts.all} Recorded</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation Segmented Tabs & Search */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ffffff', padding: '6px', borderRadius: '16px', border: '1px solid #E5E7EB', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+              {(
+                [
+                  ['pending', 'PENDING REQUESTS', counts.pending],
+                  ['expired', 'EXPIRED REQUESTS', counts.expired],
+                  ['all', 'ALL BOOKINGS', counts.all],
+                ] as const
+              ).map(([key, label, count]) => (
+                <button
+                  key={key}
+                  onClick={() => setTab(key)}
+                  className={`tab-btn ${tab === key ? 'active' : ''}`}
+                >
+                  <span>{label}</span>
+                  <span style={{ fontSize: '11px', background: tab === key ? 'rgba(255,255,255,0.25)' : '#F3F4F6', padding: '2px 8px', borderRadius: '99px', fontWeight: 800 }}>
+                    {count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Search Input */}
+            <div style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
+              <Search size={15} color="#9CA3AF" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search Request ID or email..."
+                className="input-field"
+                style={{ paddingLeft: '36px' }}
+              />
+            </div>
+          </div>
+
+          {/* Table Container */}
+          <div className="card-shell" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                    {['TRIP DETAILS', 'TRAVELLER', 'APPROVER', 'DATE OF TRAVEL', 'SLA AGE', 'EXPENSE (₹)', 'ACTIONS'].map((h) => (
+                      <th key={h} style={{ textAlign: 'left', padding: '14px 18px', fontSize: '11px', fontWeight: 700, color: '#6B7280', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '48px', textAlign: 'center', color: '#9CA3AF', fontSize: '13.5px', fontWeight: 600 }}>
+                        Loading travel requests…
+                      </td>
+                    </tr>
+                  ) : filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '60px 20px', textAlign: 'center' }}>
+                        <CheckSquare size={36} color="#9CA3AF" style={{ margin: '0 auto 10px' }} />
+                        <div style={{ fontSize: '15px', fontWeight: 800, color: '#111827', marginBottom: '4px' }}>No Travel Requests Found</div>
+                        <div style={{ fontSize: '13px', color: '#9CA3AF' }}>Try clearing active filters or searching another keyword.</div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((a) => {
+                      const fd = a.flight_data
+                      const hd = a.hotel_data
+                      const travelDate = fd?.date || fd?.departure_date || hd?.check_in || hd?.checkIn || ''
+                      const isFlight = a.booking_type === 'flight'
+
+                      return (
+                        <tr key={a.id} style={{ borderTop: '1px solid #F3F4F6', transition: 'background 0.15s ease' }}>
+                          {/* Trip Details */}
+                          <td style={{ padding: '14px 18px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div
+                                style={{
+                                  width: '34px',
+                                  height: '34px',
+                                  borderRadius: '10px',
+                                  background: isFlight ? '#EFF6FF' : '#ECFDF5',
+                                  color: isFlight ? '#2563EB' : '#047857',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {isFlight ? <Plane size={16} /> : <Hotel size={16} />}
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#111827' }}>
+                                  {isFlight && fd
+                                    ? `${fd.from || fd.origin || 'Origin'} → ${fd.to || fd.destination || 'Destination'}`
+                                    : hd
+                                      ? hd.hotelName || hd.hotel_name || 'Hotel Stay'
+                                      : 'Corporate Booking'}
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={{ textTransform: 'uppercase', fontWeight: 800 }}>{a.booking_type}</span>
+                                  {fd?.airline && <span>· {fd.airline}</span>}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Traveller */}
+                          <td style={{ padding: '14px 18px' }}>
+                            <div style={{ fontSize: '13px', fontWeight: 700, color: '#111827' }}>{a.requester?.work_email ?? '—'}</div>
+                            {a.dept && <div style={{ fontSize: '11px', color: '#6B7280' }}>{a.dept}</div>}
+                          </td>
+
+                          {/* Approver */}
+                          <td style={{ padding: '14px 18px', fontSize: '12.5px', color: '#4B5563', fontWeight: 500 }}>
+                            {a.reviewer?.work_email ? (
+                              a.reviewer.work_email
+                            ) : (
+                              <span style={{ fontSize: '11px', color: '#10B981', background: '#ECFDF5', padding: '2px 8px', borderRadius: '99px', fontWeight: 700 }}>
+                                Auto-Approved Rule
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Date of Travel */}
+                          <td style={{ padding: '14px 18px', fontSize: '12.5px', color: '#374151', fontWeight: 600 }}>
+                            {travelDate ? fmtDate(travelDate) : '—'}
+                          </td>
+
+                          {/* SLA Age */}
+                          <td style={{ padding: '14px 18px' }}>
+                            <span
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                padding: '3px 9px',
+                                borderRadius: '99px',
+                                background: ageLabel(a.created_at) === '<3h' ? '#ECFDF5' : ageLabel(a.created_at) === '3-12h' ? '#FFFBEB' : '#FEF2F2',
+                                color: ageLabel(a.created_at) === '<3h' ? '#047857' : ageLabel(a.created_at) === '3-12h' ? '#B45309' : '#DC2626',
+                                border: ageLabel(a.created_at) === '<3h' ? '1px solid #6EE7B7' : ageLabel(a.created_at) === '3-12h' ? '1px solid #FDE68A' : '1px solid #FCA5A5',
+                              }}
+                            >
+                              {ageLabel(a.created_at)}
+                            </span>
+                          </td>
+
+                          {/* Expense */}
+                          <td style={{ padding: '14px 18px', fontSize: '14px', fontWeight: 900, color: '#111827' }}>
+                            ₹{(a.amount ?? 0).toLocaleString('en-IN')}
+                          </td>
+
+                          {/* Actions */}
+                          <td style={{ padding: '14px 18px' }}>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              {a.status === 'pending' && (
+                                <>
+                                  <button
+                                    onClick={() => doAction(a.id, 'approve')}
+                                    style={{
+                                      padding: '6px 12px',
+                                      fontSize: '12px',
+                                      fontWeight: 800,
+                                      borderRadius: '8px',
+                                      background: '#ECFDF5',
+                                      color: '#047857',
+                                      border: '1px solid #6EE7B7',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                    }}
+                                  >
+                                    <Check size={13} /> Approve
+                                  </button>
+                                  <button
+                                    onClick={() => doAction(a.id, 'reject')}
+                                    style={{
+                                      padding: '6px 12px',
+                                      fontSize: '12px',
+                                      fontWeight: 800,
+                                      borderRadius: '8px',
+                                      background: '#FEF2F2',
+                                      color: '#DC2626',
+                                      border: '1px solid #FCA5A5',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                    }}
+                                  >
+                                    <X size={13} /> Reject
+                                  </button>
+                                </>
+                              )}
+
+                              <Link
+                                href={`/biz/approvals/${a.id}`}
+                                style={{
+                                  fontSize: '12px',
+                                  color: '#2563EB',
+                                  fontWeight: 700,
+                                  textDecoration: 'none',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                              >
+                                <Eye size={13} /> View
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   )

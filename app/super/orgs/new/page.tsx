@@ -74,7 +74,7 @@ export default function NewOrgPage() {
             <ArrowLeft size={14} />
             <span>Back to Orgs</span>
           </button>
-          <h2>New MyBiz Organisation</h2>
+          <h2>New Corporate Organisation</h2>
         </div>
       </div>
 

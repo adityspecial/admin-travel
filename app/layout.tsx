@@ -14,7 +14,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'AirDunia Admin',
-  description: 'AirDunia myBiz Administration',
+  description: 'AirDunia Corporate Administration',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

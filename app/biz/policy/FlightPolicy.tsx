@@ -153,7 +153,7 @@ export function FlightPolicy({ type }: { type: string }) {
           {RadioRow('colleague_booking', 'colleagues_only', 'Employee can book for Colleagues but not Guests')}
           {RadioRow('colleague_booking', 'self_only', 'Employee can only book for self')}
         </div>
-        <TRow label="Allow Personal (Non-Official) Bookings" desc="Employees can use myBiz for leisure travel." v={s.allow_personal} set={upd('allow_personal')} />
+        <TRow label="Allow Personal (Non-Official) Bookings" desc="Employees can use corporate portal for leisure travel." v={s.allow_personal} set={upd('allow_personal')} />
         {s.allow_personal && <TRow label="Show Personal Bookings in Reports" v={s.show_personal_reports} set={upd('show_personal_reports')} />}
       </div>
 
