@@ -79,21 +79,21 @@ export function InsurancePolicy() {
 
   async function save() {
     setSaving(true)
+    // max_price/buffer are edited here but never stored in travel_policies —
+    // enforce.ts's checkPolicyApproval() only reads a travel_policies row for
+    // flight/hotel/cab, so an insurance copy of these fields would just be
+    // dead storage nothing ever reads. The org's insurance_cap/buffer
+    // (synced below) is the only place that actually matters.
+    const { max_price, buffer, ...rest } = s
     await adminFetch('/api/admin/biz/policy/travel', {
       method: 'PATCH',
-      body: JSON.stringify({
-        type: 'insurance',
-        settings: { ...s, max_price: Number(s.max_price) || null, buffer: Number(s.buffer) || 0 },
-      }),
+      body: JSON.stringify({ type: 'insurance', settings: rest }),
     }).catch(() => {})
 
-    // Also sync insurance_cap/insurance_cap_buffer to biz_organizations so the mobile approval gate picks it up
-    if (s.max_price) {
-      await adminFetch('/api/admin/biz/policy', {
-        method: 'PATCH',
-        body: JSON.stringify({ insuranceCap: Number(s.max_price) || null, insuranceCapBuffer: Number(s.buffer) || 0 }),
-      }).catch(() => {})
-    }
+    await adminFetch('/api/admin/biz/policy', {
+      method: 'PATCH',
+      body: JSON.stringify({ insuranceCap: Number(s.max_price) || null, insuranceCapBuffer: Number(s.buffer) || 0 }),
+    }).catch(() => {})
 
     setSaving(false); setSaved(true)
     setTimeout(() => setSaved(false), 2500)

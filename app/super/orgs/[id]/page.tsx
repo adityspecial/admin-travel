@@ -5,7 +5,7 @@ import { adminFetch } from '@/lib/api'
 import { AppInput } from '@/components/ui/AppInput'
 import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
-import { Building2, Hash, Globe, Plane, Bed, ShieldCheck, FileText, ArrowLeft, Trash2, Save, Check, Users, Calendar, Activity, UserX } from 'lucide-react'
+import { Building2, Hash, Globe, Plane, Bed, ShieldCheck, FileText, ArrowLeft, Trash2, Save, Check, Users, Calendar, Activity, UserX, Car, Stamp, Package } from 'lucide-react'
 
 const ROLES = ['employee', 'manager', 'admin']
 
@@ -29,9 +29,18 @@ export default function EditOrgPage() {
     name:          '',
     org_code:      '',
     domain:        '',
-    flight_cap:    '',
-    hotel_cap:     '',
-    insurance_cap: '',
+    flight_cap:           '',
+    hotel_cap:            '',
+    insurance_cap:        '',
+    cab_cap:              '',
+    visa_cap:             '',
+    package_cap:          '',
+    flight_cap_buffer:    '',
+    hotel_cap_buffer:     '',
+    insurance_cap_buffer: '',
+    cab_cap_buffer:       '',
+    visa_cap_buffer:      '',
+    package_cap_buffer:   '',
     gst_number:    '',
     is_active:     true,
   })
@@ -45,9 +54,18 @@ export default function EditOrgPage() {
           name:          d.org.name ?? '',
           org_code:      d.org.org_code ?? '',
           domain:        d.org.domain ?? '',
-          flight_cap:    String(d.org.flight_cap    ?? 10000),
-          hotel_cap:     String(d.org.hotel_cap     ?? 5000),
-          insurance_cap: String(d.org.insurance_cap ?? 3000),
+          flight_cap:           String(d.org.flight_cap           ?? 10000),
+          hotel_cap:            String(d.org.hotel_cap            ?? 5000),
+          insurance_cap:        String(d.org.insurance_cap        ?? 3000),
+          cab_cap:              String(d.org.cab_cap              ?? 3000),
+          visa_cap:             String(d.org.visa_cap             ?? 8000),
+          package_cap:          String(d.org.package_cap          ?? 25000),
+          flight_cap_buffer:    String(d.org.flight_cap_buffer    ?? 0),
+          hotel_cap_buffer:     String(d.org.hotel_cap_buffer     ?? 0),
+          insurance_cap_buffer: String(d.org.insurance_cap_buffer ?? 0),
+          cab_cap_buffer:       String(d.org.cab_cap_buffer       ?? 0),
+          visa_cap_buffer:      String(d.org.visa_cap_buffer      ?? 0),
+          package_cap_buffer:   String(d.org.package_cap_buffer   ?? 0),
           gst_number:    d.org.gst_number ?? '',
           is_active:     d.org.is_active  ?? true,
         })
@@ -69,6 +87,15 @@ export default function EditOrgPage() {
           flightCap:    Number(form.flight_cap),
           hotelCap:     Number(form.hotel_cap),
           insuranceCap: Number(form.insurance_cap),
+          cabCap:       Number(form.cab_cap),
+          visaCap:      Number(form.visa_cap),
+          packageCap:   Number(form.package_cap),
+          flightCapBuffer:    Number(form.flight_cap_buffer),
+          hotelCapBuffer:     Number(form.hotel_cap_buffer),
+          insuranceCapBuffer: Number(form.insurance_cap_buffer),
+          cabCapBuffer:       Number(form.cab_cap_buffer),
+          visaCapBuffer:      Number(form.visa_cap_buffer),
+          packageCapBuffer:   Number(form.package_cap_buffer),
           gstNumber:    form.gst_number || null,
           isActive:     form.is_active,
         }),
@@ -290,6 +317,95 @@ export default function EditOrgPage() {
                 placeholder="3000"
                 icon={<ShieldCheck size={15} />}
               />
+              <AppInput
+                label="Cab Cap (₹ per trip)"
+                type="number"
+                min="0"
+                value={form.cab_cap}
+                onChange={e => setForm(f => ({ ...f, cab_cap: e.target.value }))}
+                placeholder="3000"
+                icon={<Car size={15} />}
+              />
+              <AppInput
+                label="Visa Cap (₹ per application)"
+                type="number"
+                min="0"
+                value={form.visa_cap}
+                onChange={e => setForm(f => ({ ...f, visa_cap: e.target.value }))}
+                placeholder="8000"
+                icon={<Stamp size={15} />}
+              />
+              <AppInput
+                label="Package Cap (₹ per booking)"
+                type="number"
+                min="0"
+                value={form.package_cap}
+                onChange={e => setForm(f => ({ ...f, package_cap: e.target.value }))}
+                placeholder="25000"
+                icon={<Package size={15} />}
+              />
+            </div>
+
+            <div style={{ marginTop: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', margin: '12px 0 8px' }}>
+                Approval buffers — a booking exceeding its cap by up to this amount still books without approval.
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+                <AppInput
+                  label="Flight Buffer (₹)"
+                  type="number"
+                  min="0"
+                  value={form.flight_cap_buffer}
+                  onChange={e => setForm(f => ({ ...f, flight_cap_buffer: e.target.value }))}
+                  placeholder="0"
+                  icon={<Plane size={15} />}
+                />
+                <AppInput
+                  label="Hotel Buffer (₹)"
+                  type="number"
+                  min="0"
+                  value={form.hotel_cap_buffer}
+                  onChange={e => setForm(f => ({ ...f, hotel_cap_buffer: e.target.value }))}
+                  placeholder="0"
+                  icon={<Bed size={15} />}
+                />
+                <AppInput
+                  label="Insurance Buffer (₹)"
+                  type="number"
+                  min="0"
+                  value={form.insurance_cap_buffer}
+                  onChange={e => setForm(f => ({ ...f, insurance_cap_buffer: e.target.value }))}
+                  placeholder="0"
+                  icon={<ShieldCheck size={15} />}
+                />
+                <AppInput
+                  label="Cab Buffer (₹)"
+                  type="number"
+                  min="0"
+                  value={form.cab_cap_buffer}
+                  onChange={e => setForm(f => ({ ...f, cab_cap_buffer: e.target.value }))}
+                  placeholder="0"
+                  icon={<Car size={15} />}
+                />
+                <AppInput
+                  label="Visa Buffer (₹)"
+                  type="number"
+                  min="0"
+                  value={form.visa_cap_buffer}
+                  onChange={e => setForm(f => ({ ...f, visa_cap_buffer: e.target.value }))}
+                  placeholder="0"
+                  icon={<Stamp size={15} />}
+                />
+                <AppInput
+                  label="Package Buffer (₹)"
+                  type="number"
+                  min="0"
+                  value={form.package_cap_buffer}
+                  onChange={e => setForm(f => ({ ...f, package_cap_buffer: e.target.value }))}
+                  placeholder="0"
+                  icon={<Package size={15} />}
+                />
+              </div>
             </div>
 
             <AppInput

@@ -5,8 +5,8 @@ import { ApprovalTiersEditor, type ApprovalTier } from './ApprovalTiers'
 
 interface S {
   require_request_form: boolean; colleague_booking: string
+  dynamic_pricing: string; dynamic_range: string
   allow_personal: boolean; show_personal_reports: boolean
-  max_price: string; dynamic_pricing: string; dynamic_range: string
   cabin_economy: boolean; cabin_premium: boolean; cabin_business: boolean; cabin_first: boolean
   addon_meals: boolean; addon_seats: boolean; addon_baggage: boolean
   addon_fast_forward: boolean; addon_cabs: boolean; addon_insurance: boolean
@@ -17,16 +17,12 @@ interface S {
   in_policy_approval: string; out_policy_approval: string
   approval_tiers?: ApprovalTier[]
   wallet_for: string; auto_booking: boolean
-  // A fare exceeding max_price (or tiers[0].maxAmount) by up to this amount
-  // still counts as in-policy — avoids kicking a booking to approval for
-  // exceeding the cap by a trivial amount.
-  buffer: string
 }
 
 const DFLT: S = {
   require_request_form: false, colleague_booking: 'all',
   allow_personal: false, show_personal_reports: false,
-  max_price: '500000', buffer: '0', dynamic_pricing: 'no_restriction', dynamic_range: '10',
+  dynamic_pricing: 'no_restriction', dynamic_range: '10',
   cabin_economy: true, cabin_premium: false, cabin_business: false, cabin_first: false,
   addon_meals: true, addon_seats: true, addon_baggage: true,
   addon_fast_forward: false, addon_cabs: false, addon_insurance: false,
@@ -64,6 +60,8 @@ function TRow({ label, desc, v, set }: { label: string; desc?: string; v: boolea
 
 export function FlightPolicy({ type }: { type: string }) {
   const [s, setS] = useState<S>(DFLT)
+  const [orgCap, setOrgCap] = useState<number | null>(null)
+  const [orgCapBuffer, setOrgCapBuffer] = useState(0)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -71,19 +69,31 @@ export function FlightPolicy({ type }: { type: string }) {
 
   useEffect(() => {
     setLoading(true)
-    adminFetch(`/api/admin/biz/policy/travel?type=${type}`)
-      .then(d => {
+    Promise.all([
+      adminFetch(`/api/admin/biz/policy/travel?type=${type}`),
+      adminFetch('/api/admin/biz/policy'),
+    ])
+      .then(([d, p]) => {
         const r = d.settings ?? {}
-        const maxPrice = Number(r.max_price ?? DFLT.max_price) || 0
+        // The org's own flight cap+buffer (edited on the Caps page) is the
+        // single source of truth for tier[0]'s boundary — this used to be a
+        // separately-stored max_price/buffer here that could silently
+        // diverge from the real cap (e.g. a superadmin raising the cap via
+        // admin/super/orgs never touched this). resolveApproval() already
+        // ignores whatever's stored in tier[0].maxAmount in favor of the
+        // live cap, so there's no reason to store or edit it here at all.
+        const cap = p.policy?.flight_cap != null ? Number(p.policy.flight_cap) : null
+        setOrgCap(cap)
+        setOrgCapBuffer(Number(p.policy?.flight_cap_buffer ?? 0))
         // No tiers saved yet — seed 2 tiers from the existing flat in/out-of-policy
         // settings so nothing changes behaviourally until an admin edits the tiers.
         const tiers: ApprovalTier[] = Array.isArray(r.approval_tiers) && r.approval_tiers.length
           ? r.approval_tiers
           : [
-              { maxAmount: maxPrice, approval: r.in_policy_approval  ?? DFLT.in_policy_approval },
-              { maxAmount: null,     approval: r.out_policy_approval ?? DFLT.out_policy_approval },
+              { maxAmount: cap, approval: r.in_policy_approval  ?? DFLT.in_policy_approval },
+              { maxAmount: null, approval: r.out_policy_approval ?? DFLT.out_policy_approval },
             ]
-        setS({ ...DFLT, ...r, max_price: String(r.max_price ?? DFLT.max_price), buffer: String(r.buffer ?? DFLT.buffer), dynamic_range: String(r.dynamic_range ?? DFLT.dynamic_range), approval_tiers: tiers })
+        setS({ ...DFLT, ...r, dynamic_range: String(r.dynamic_range ?? DFLT.dynamic_range), approval_tiers: tiers })
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -98,8 +108,6 @@ export function FlightPolicy({ type }: { type: string }) {
         type,
         settings: {
           ...s,
-          max_price: Number(s.max_price) || null,
-          buffer: Number(s.buffer) || 0,
           dynamic_range: Number(s.dynamic_range),
           approval_tiers: tiers,
           // Kept in sync for any reader still checking the old flat fields directly.
@@ -152,15 +160,15 @@ export function FlightPolicy({ type }: { type: string }) {
       {/* BUDGET AND PAYMENT */}
       <div style={card}>
         <Sec t="BUDGET AND PAYMENT" />
-        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Maximum Price per Person per Segment</div>
-          <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 10 }}>Amount beyond this limit will be out of policy. Leave blank for no limit.</div>
-          <input type="number" value={s.max_price} onChange={e => setS(p => ({ ...p, max_price: e.target.value }))} placeholder="e.g. 10000" style={{ ...SEL, width: 200 }} />
-        </div>
-        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Approval Buffer</div>
-          <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 10 }}>A fare exceeding the max price above by up to this amount still books without approval.</div>
-          <input type="number" value={s.buffer} onChange={e => setS(p => ({ ...p, buffer: e.target.value }))} placeholder="0" style={{ ...SEL, width: 200 }} />
+        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Maximum Price per Person per Segment</div>
+            <div style={{ fontSize: 12, color: '#6B7280' }}>Set on the <strong>Caps</strong> page — the same value used for the flat cap and the approval tiers below.</div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#111827' }}>{orgCap != null ? `₹${orgCap.toLocaleString('en-IN')}` : 'No limit'}</div>
+            {orgCapBuffer > 0 && <div style={{ fontSize: 11, color: '#9CA3AF' }}>+ ₹{orgCapBuffer.toLocaleString('en-IN')} buffer</div>}
+          </div>
         </div>
         <div style={{ padding: '14px 24px' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 10 }}>Policy Basis Dynamic Pricing</div>
@@ -231,7 +239,7 @@ export function FlightPolicy({ type }: { type: string }) {
         <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Booking and Approval</div>
           <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>Route approval by total booking amount — add tiers for auto-approve, manager, and HOD thresholds.</div>
-          <ApprovalTiersEditor tiers={s.approval_tiers ?? []} onChange={tiers => setS(p => ({ ...p, approval_tiers: tiers }))} />
+          <ApprovalTiersEditor tiers={s.approval_tiers ?? []} onChange={tiers => setS(p => ({ ...p, approval_tiers: tiers }))} baseCap={orgCap} />
         </div>
         <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 6 }}>Wallet Allowed For</div>
