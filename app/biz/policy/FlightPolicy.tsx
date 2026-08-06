@@ -17,6 +17,11 @@ interface S {
   in_policy_approval: string; out_policy_approval: string
   approval_tiers?: ApprovalTier[]
   wallet_for: string; auto_booking: boolean
+  // Comma-separated IATA airline codes (e.g. "AI,6E,UK"). Empty = no
+  // restriction. Hotels are NOT covered — there's no stable, curatable ID
+  // list an admin could realistically maintain against a dynamic hotel
+  // catalog the way there is for the ~30 airline codes that actually exist.
+  preferred_airlines: string
 }
 
 const DFLT: S = {
@@ -29,6 +34,7 @@ const DFLT: S = {
   date_change: true, date_change_approval: false, date_change_skip: false,
   in_policy_approval: 'none', out_policy_approval: 'none',
   wallet_for: 'none', auto_booking: false,
+  preferred_airlines: '',
 }
 
 const TITLES: Record<string, string> = { domestic_flight: 'Flight' }
@@ -198,6 +204,18 @@ export function FlightPolicy({ type }: { type: string }) {
             ))}
           </div>
           <div style={{ fontSize: 12, color: '#6B7280', marginTop: 8 }}>Flights of selected classes will only be bookable.</div>
+        </div>
+        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 6 }}>Preferred Airlines</div>
+          <input
+            value={s.preferred_airlines}
+            onChange={e => setS(p => ({ ...p, preferred_airlines: e.target.value }))}
+            placeholder="e.g. AI,6E,UK (IATA codes, comma-separated)"
+            style={SEL}
+          />
+          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 8 }}>
+            Not yet enforced at booking time — saved here for a future search-results filter. Hotels aren't covered by this setting.
+          </div>
         </div>
         <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 14 }}>Airline Add-ons</div>

@@ -15,6 +15,9 @@ interface SubAgent {
   commission_pct: number
   credit_limit: number
   created_at: string
+  kyc_verified: boolean
+  pan_number: string | null
+  gst_number: string | null
   wallet?: { balance: number }
 }
 
@@ -30,9 +33,10 @@ export default function SubAgentsPage() {
   const [saving,  setSaving]  = useState(false)
   const [error,   setError]   = useState('')
   const [success, setSuccess] = useState('')
+  const [commissionHistory, setCommissionHistory] = useState<{ id: string; old_value: number | null; new_value: number; changed_by_type: string; changed_by_label: string | null; created_at: string }[]>([])
 
   useEffect(() => {
-    const agentId = typeof window !== 'undefined' ? sessionStorage.getItem('partner_agent_id') : null
+    const agentId = typeof window !== 'undefined' ? (sessionStorage.getItem('partner_agent_id') ?? undefined) : undefined
     if (!agentId) return
     adminFetch('/api/admin/partner/sub-agents', { agentId })
       .then((d: any) => setAgents(d.agents ?? []))
@@ -44,6 +48,11 @@ export default function SubAgentsPage() {
     setEdit(a)
     setForm({ tier: a.tier, commission_pct: String(a.commission_pct), credit_limit: String(a.credit_limit), status: a.status })
     setError(''); setSuccess('')
+    setCommissionHistory([])
+    const agentId = typeof window !== 'undefined' ? (sessionStorage.getItem('partner_agent_id') ?? undefined) : undefined
+    adminFetch(`/api/admin/partner/sub-agents/${a.id}/commission-history`, { agentId })
+      .then((d: any) => setCommissionHistory(d.history ?? []))
+      .catch(() => {})
   }
 
   async function saveEdit() {
@@ -56,6 +65,10 @@ export default function SubAgentsPage() {
       })
       setAgents(prev => prev.map(a => a.id === edit.id ? { ...a, ...updated.agent } : a))
       setSuccess('Saved successfully')
+      const agentId = typeof window !== 'undefined' ? (sessionStorage.getItem('partner_agent_id') ?? undefined) : undefined
+      adminFetch(`/api/admin/partner/sub-agents/${edit.id}/commission-history`, { agentId })
+        .then((d: any) => setCommissionHistory(d.history ?? []))
+        .catch(() => {})
       setTimeout(() => { setEdit(null); setSuccess('') }, 1500)
     } catch (e: any) { setError(e.message) }
     setSaving(false)
@@ -103,13 +116,14 @@ export default function SubAgentsPage() {
                     <th>Tier</th>
                     <th>Commission</th>
                     <th>Wallet</th>
+                    <th>KYC</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
-                    <tr><td colSpan={7} className="empty-state">No sub-agents found.</td></tr>
+                    <tr><td colSpan={8} className="empty-state">No sub-agents found.</td></tr>
                   ) : pageAgents.map(a => (
                     <tr key={a.id}>
                       <td>
@@ -120,6 +134,11 @@ export default function SubAgentsPage() {
                       <td><span className={`badge ${a.tier === 'elite' ? 'badge-violet' : a.tier === 'premium' ? 'badge-yellow' : 'badge-gray'}`}>{a.tier}</span></td>
                       <td style={{ fontWeight: 700 }}>{a.commission_pct}%</td>
                       <td>₹{(a.wallet?.balance ?? 0).toLocaleString('en-IN')}</td>
+                      <td>
+                        <span className={`badge ${a.kyc_verified ? 'badge-green' : 'badge-yellow'}`} title={[a.pan_number ? `PAN: ${a.pan_number}` : '', a.gst_number ? `GST: ${a.gst_number}` : ''].filter(Boolean).join(' · ') || 'No PAN/GST on file'}>
+                          {a.kyc_verified ? 'Verified' : 'Unverified'}
+                        </span>
+                      </td>
                       <td>
                         <span className={`badge ${a.status === 'active' ? 'badge-green' : a.status === 'suspended' ? 'badge-red' : 'badge-gray'}`}>
                           {a.status}
@@ -161,6 +180,16 @@ export default function SubAgentsPage() {
               <label className="form-label">Commission %</label>
               <input className="form-input" type="number" step="0.1" min="0" max="20"
                 value={form.commission_pct} onChange={e => setForm(f => ({ ...f, commission_pct: e.target.value }))} />
+              {commissionHistory.length > 0 && (
+                <div style={{ marginTop: 8, maxHeight: 120, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', marginBottom: 4 }}>Change History</div>
+                  {commissionHistory.map(h => (
+                    <div key={h.id} style={{ fontSize: 12, color: 'var(--text)', padding: '3px 0', borderBottom: '1px solid var(--border)' }}>
+                      {h.old_value ?? '--'}% → {h.new_value}% by {h.changed_by_label ?? h.changed_by_type} · {new Date(h.created_at).toLocaleDateString('en-IN')}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="form-group">
