@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase, adminFetch } from '@/lib/api'
 import Navbar from '@/components/Navbar'
+import { RouteLoader } from '@/components/ui/RouteLoader'
 
 export default function BizAdminLayout({ children }: { children: React.ReactNode }) {
   const router   = useRouter()
@@ -81,7 +82,12 @@ export default function BizAdminLayout({ children }: { children: React.ReactNode
       />
 
       {/* Page body */}
-      <main>{children}</main>
+      <main>
+        {/* Navbar is position:fixed at 72px tall — offset so the bar sticks
+            just below it instead of being hidden underneath. */}
+        <RouteLoader topOffset={72} />
+        {children}
+      </main>
 
       {/* Toast notification */}
       {toast && (

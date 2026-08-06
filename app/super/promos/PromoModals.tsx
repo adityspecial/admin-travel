@@ -1,6 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import { AppInput } from '@/components/ui/AppInput'
+import { AppPopup } from '@/components/ui/AppPopup'
+import { DataTable, ColumnDef } from '@/components/ui/DataTable'
+import '@/components/ui/ConfirmModal.css'
+import { Tag, PencilLine, History } from 'lucide-react'
 import type { Promo } from './page'
 
 interface UsageRecord {
@@ -65,111 +70,65 @@ export function CreatePromoModal({
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="form-card modal-card" style={{ maxWidth: 560 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h3 style={{ fontWeight: 800 }}>Create Promo Code</h3>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>Close</button>
+    <AppPopup
+      isOpen
+      title="Create Promo Code"
+      icon={<Tag size={22} strokeWidth={2.2} />}
+      iconTone="blue"
+      maxWidth={560}
+      onClose={onClose}
+    >
+      {error && <div className="login-error">{error}</div>}
+      <form onSubmit={submit}>
+        <div className="agents-edit-grid">
+          <div style={{ gridColumn: '1 / -1' }}>
+            <AppInput label="Coupon Code" required value={form.code} onChange={e => set('code', e.target.value.toUpperCase())} placeholder="SUMMER20" />
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <AppInput label="Description" value={form.description} onChange={e => set('description', e.target.value)} placeholder="Summer sale — 20% off all flights" />
+          </div>
+
+          <div className="app-input-group">
+            <label className="app-input-label">Discount Type</label>
+            <select className="app-input" value={form.discount_type} onChange={e => set('discount_type', e.target.value)}>
+              <option value="percentage">Percentage (%)</option>
+              <option value="fixed">Fixed Amount (Rs)</option>
+            </select>
+          </div>
+          <AppInput
+            label="Discount Value" type="number" min="0.01" step="any" required
+            value={form.discount_value} onChange={e => set('discount_value', e.target.value)}
+            placeholder={form.discount_type === 'percentage' ? '20' : '500'}
+          />
+
+          <AppInput label="Min Booking Amount (Rs)" type="number" min="0" value={form.min_booking_amount} onChange={e => set('min_booking_amount', e.target.value)} placeholder="Optional" />
+          <AppInput label="Max Discount Cap (Rs)" type="number" min="0" value={form.max_discount_amount} onChange={e => set('max_discount_amount', e.target.value)} placeholder="Optional" />
+
+          <AppInput label="Total Uses Limit" type="number" min="1" value={form.max_uses} onChange={e => set('max_uses', e.target.value)} placeholder="Unlimited" />
+          <AppInput label="Uses Per User" type="number" min="1" value={form.uses_per_user} onChange={e => set('uses_per_user', e.target.value)} />
+
+          <div className="app-input-group">
+            <label className="app-input-label">Applicable To</label>
+            <select className="app-input" value={form.applicable_to} onChange={e => set('applicable_to', e.target.value)}>
+              <option value="all">All bookings</option>
+              <option value="flights">Flights only</option>
+              <option value="hotels">Hotels only</option>
+            </select>
+          </div>
+          <div />
+
+          <AppInput label="Valid From" type="date" required value={form.valid_from} onChange={e => set('valid_from', e.target.value)} />
+          <AppInput label="Valid Until" type="date" required value={form.valid_until} onChange={e => set('valid_until', e.target.value)} />
         </div>
-        {error && <div className="login-error" style={{ marginBottom: 12 }}>{error}</div>}
-        <form onSubmit={submit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label>Coupon Code *</label>
-              <input
-                value={form.code}
-                onChange={e => set('code', e.target.value.toUpperCase())}
-                placeholder="SUMMER20"
-                required
-              />
-            </div>
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label>Description</label>
-              <input
-                value={form.description}
-                onChange={e => set('description', e.target.value)}
-                placeholder="Summer sale — 20% off all flights"
-              />
-            </div>
-            <div className="form-group">
-              <label>Discount Type *</label>
-              <select value={form.discount_type} onChange={e => set('discount_type', e.target.value)}>
-                <option value="percentage">Percentage (%)</option>
-                <option value="fixed">Fixed Amount (Rs)</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Discount Value *</label>
-              <input
-                type="number" min="0.01" step="any"
-                value={form.discount_value}
-                onChange={e => set('discount_value', e.target.value)}
-                placeholder={form.discount_type === 'percentage' ? '20' : '500'}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Min Booking Amount (Rs)</label>
-              <input
-                type="number" min="0"
-                value={form.min_booking_amount}
-                onChange={e => set('min_booking_amount', e.target.value)}
-                placeholder="Optional"
-              />
-            </div>
-            <div className="form-group">
-              <label>Max Discount Cap (Rs)</label>
-              <input
-                type="number" min="0"
-                value={form.max_discount_amount}
-                onChange={e => set('max_discount_amount', e.target.value)}
-                placeholder="Optional"
-              />
-            </div>
-            <div className="form-group">
-              <label>Total Uses Limit</label>
-              <input
-                type="number" min="1"
-                value={form.max_uses}
-                onChange={e => set('max_uses', e.target.value)}
-                placeholder="Unlimited"
-              />
-            </div>
-            <div className="form-group">
-              <label>Uses Per User</label>
-              <input
-                type="number" min="1"
-                value={form.uses_per_user}
-                onChange={e => set('uses_per_user', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Applicable To</label>
-              <select value={form.applicable_to} onChange={e => set('applicable_to', e.target.value)}>
-                <option value="all">All bookings</option>
-                <option value="flights">Flights only</option>
-                <option value="hotels">Hotels only</option>
-              </select>
-            </div>
-            <div className="form-group" />
-            <div className="form-group">
-              <label>Valid From *</label>
-              <input type="date" value={form.valid_from} onChange={e => set('valid_from', e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label>Valid Until *</label>
-              <input type="date" value={form.valid_until} onChange={e => set('valid_until', e.target.value)} required />
-            </div>
-          </div>
-          <div className="page-actions" style={{ marginTop: 16 }}>
-            <button type="button" className="btn btn-ghost" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={saving}>
-              {saving ? 'Creating...' : 'Create Promo'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+
+        <div className="app-popup-footer">
+          <button type="button" className="confirm-modal-btn confirm-modal-btn-cancel" onClick={onClose}>Cancel</button>
+          <button type="submit" className="confirm-modal-btn confirm-modal-btn-success" disabled={saving}>
+            {saving ? 'Creating…' : 'Create Promo'}
+          </button>
+        </div>
+      </form>
+    </AppPopup>
   )
 }
 
@@ -225,99 +184,63 @@ export function EditPromoModal({
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="form-card modal-card" style={{ maxWidth: 520 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h3 style={{ fontWeight: 800 }}>Edit Promo | <code>{promo.code}</code></h3>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>Close</button>
+    <AppPopup
+      isOpen
+      title="Edit Promo"
+      subtitle={promo.code}
+      icon={<PencilLine size={22} strokeWidth={2.2} />}
+      iconTone="orange"
+      maxWidth={560}
+      onClose={onClose}
+    >
+      {error && <div className="login-error">{error}</div>}
+      <form onSubmit={submit}>
+        <div className="agents-edit-grid">
+          <div style={{ gridColumn: '1 / -1' }}>
+            <AppInput label="Description" value={form.description} onChange={e => set('description', e.target.value)} />
+          </div>
+
+          <AppInput
+            label={`Discount Value (${promo.discount_type === 'percentage' ? '%' : 'Rs'})`}
+            type="number" min="0.01" step="any" required
+            value={form.discount_value} onChange={e => set('discount_value', e.target.value)}
+          />
+          <AppInput label="Max Discount Cap (Rs)" type="number" min="0" value={form.max_discount_amount} onChange={e => set('max_discount_amount', e.target.value)} placeholder="None" />
+
+          <AppInput label="Min Booking Amount (Rs)" type="number" min="0" value={form.min_booking_amount} onChange={e => set('min_booking_amount', e.target.value)} placeholder="None" />
+          <AppInput label="Total Uses Limit" type="number" min="1" value={form.max_uses} onChange={e => set('max_uses', e.target.value)} placeholder="Unlimited" />
+
+          <AppInput label="Uses Per User" type="number" min="1" value={form.uses_per_user} onChange={e => set('uses_per_user', e.target.value)} />
+          <div className="app-input-group">
+            <label className="app-input-label">Applicable To</label>
+            <select className="app-input" value={form.applicable_to} onChange={e => set('applicable_to', e.target.value)}>
+              <option value="all">All bookings</option>
+              <option value="flights">Flights only</option>
+              <option value="hotels">Hotels only</option>
+            </select>
+          </div>
+
+          <div className="app-input-group">
+            <label className="app-input-label">Status</label>
+            <select className="app-input" value={form.is_active ? 'active' : 'inactive'} onChange={e => set('is_active', e.target.value === 'active')}>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div />
+
+          <AppInput label="Valid From" type="date" required value={form.valid_from} onChange={e => set('valid_from', e.target.value)} />
+          <AppInput label="Valid Until" type="date" required value={form.valid_until} onChange={e => set('valid_until', e.target.value)} />
         </div>
-        {error && <div className="login-error" style={{ marginBottom: 12 }}>{error}</div>}
-        <form onSubmit={submit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label>Description</label>
-              <input value={form.description} onChange={e => set('description', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label>Discount Value ({promo.discount_type === 'percentage' ? '%' : 'Rs'})</label>
-              <input
-                type="number" min="0.01" step="any"
-                value={form.discount_value}
-                onChange={e => set('discount_value', e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Max Discount Cap (Rs)</label>
-              <input
-                type="number" min="0"
-                value={form.max_discount_amount}
-                onChange={e => set('max_discount_amount', e.target.value)}
-                placeholder="None"
-              />
-            </div>
-            <div className="form-group">
-              <label>Min Booking Amount (Rs)</label>
-              <input
-                type="number" min="0"
-                value={form.min_booking_amount}
-                onChange={e => set('min_booking_amount', e.target.value)}
-                placeholder="None"
-              />
-            </div>
-            <div className="form-group">
-              <label>Total Uses Limit</label>
-              <input
-                type="number" min="1"
-                value={form.max_uses}
-                onChange={e => set('max_uses', e.target.value)}
-                placeholder="Unlimited"
-              />
-            </div>
-            <div className="form-group">
-              <label>Uses Per User</label>
-              <input
-                type="number" min="1"
-                value={form.uses_per_user}
-                onChange={e => set('uses_per_user', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label>Applicable To</label>
-              <select value={form.applicable_to} onChange={e => set('applicable_to', e.target.value)}>
-                <option value="all">All bookings</option>
-                <option value="flights">Flights only</option>
-                <option value="hotels">Hotels only</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Status</label>
-              <select
-                value={form.is_active ? 'active' : 'inactive'}
-                onChange={e => set('is_active', e.target.value === 'active')}
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Valid From</label>
-              <input type="date" value={form.valid_from} onChange={e => set('valid_from', e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label>Valid Until</label>
-              <input type="date" value={form.valid_until} onChange={e => set('valid_until', e.target.value)} required />
-            </div>
-          </div>
-          <div className="page-actions" style={{ marginTop: 16 }}>
-            <button type="button" className="btn btn-ghost" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+
+        <div className="app-popup-footer">
+          <button type="button" className="confirm-modal-btn confirm-modal-btn-cancel" onClick={onClose}>Cancel</button>
+          <button type="submit" className="confirm-modal-btn confirm-modal-btn-success" disabled={saving}>
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </div>
+      </form>
+    </AppPopup>
   )
 }
 
@@ -335,51 +258,35 @@ export function UsageModal({ promo, onClose }: { promo: Promo; onClose: () => vo
 
   const totalDiscount = usage.reduce((s, u) => s + (u.discount_amount ?? 0), 0)
 
+  const columns: ColumnDef<UsageRecord>[] = [
+    { key: 'profile_id', header: 'User', render: (u) => <span className="data-table-code-pill">{u.profile_id.slice(0, 14)}…</span> },
+    { key: 'booking_type', header: 'Booking Type', render: (u) => <span className="badge badge-blue">{u.booking_type}</span> },
+    { key: 'booking_id', header: 'Booking ID', render: (u) => <span className="data-table-muted-cell">{u.booking_id ? `${u.booking_id.slice(0, 12)}…` : '--'}</span> },
+    { key: 'discount_amount', header: 'Discount', render: (u) => <span className="data-table-cell-bold">Rs {u.discount_amount.toLocaleString('en-IN')}</span> },
+    {
+      key: 'used_at',
+      header: 'Used At',
+      render: (u) => <span className="data-table-muted-cell">{new Date(u.used_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>,
+    },
+  ]
+
   return (
-    <div className="modal-overlay">
-      <div className="form-card modal-card" style={{ maxWidth: 660 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-          <div>
-            <h3 style={{ fontWeight: 800 }}>Usage — <code>{promo.code}</code></h3>
-            <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
-              {promo.current_uses} redemptions · Rs {totalDiscount.toLocaleString('en-IN')} total discount given
-            </div>
-          </div>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>Close</button>
-        </div>
-        {loading ? (
-          <div className="empty-state">Loading usage records...</div>
-        ) : usage.length === 0 ? (
-          <div className="empty-state">No usage records yet for this promo.</div>
-        ) : (
-          <div className="table-card" style={{ margin: 0 }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Booking Type</th>
-                  <th>Booking ID</th>
-                  <th>Discount</th>
-                  <th>Used At</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usage.map(u => (
-                  <tr key={u.id}>
-                    <td style={{ fontSize: 12 }}><code>{u.profile_id.slice(0, 14)}…</code></td>
-                    <td><span className="badge badge-blue">{u.booking_type}</span></td>
-                    <td style={{ fontSize: 12 }}><code>{u.booking_id?.slice(0, 12) ?? '—'}…</code></td>
-                    <td style={{ fontWeight: 700 }}>Rs {u.discount_amount.toLocaleString('en-IN')}</td>
-                    <td style={{ color: '#64748B', fontSize: 12 }}>
-                      {new Date(u.used_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
+    <AppPopup
+      isOpen
+      title="Usage"
+      subtitle={`${promo.code} — ${promo.current_uses} redemptions · Rs ${totalDiscount.toLocaleString('en-IN')} total discount given`}
+      icon={<History size={22} strokeWidth={2.2} />}
+      iconTone="teal"
+      maxWidth={760}
+      onClose={onClose}
+    >
+      <DataTable
+        columns={columns}
+        data={usage}
+        loading={loading}
+        emptyMessage="No usage records yet for this promo."
+        keyExtractor={(u) => u.id}
+      />
+    </AppPopup>
   )
 }

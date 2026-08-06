@@ -100,7 +100,7 @@ export default function OrgsPage() {
     <div>
       <div className="admin-topbar">
         <h2>Organisations</h2>
-        <a href="/super/orgs/new" className="btn btn-primary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        <a href="/super/orgs/new" className="btn btn-primary btn-sm orgs-btn-icon-gap">
           <Plus size={14} />
           <span>New Org</span>
         </a>

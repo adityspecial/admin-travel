@@ -2,6 +2,10 @@
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { downloadExcel } from '@/lib/excel'
+import { StatCard } from '@/components/ui/StatCard'
+import { DataTable, ColumnDef } from '@/components/ui/DataTable'
+import { IndianRupee, TrendingUp, XCircle, BarChart3 } from 'lucide-react'
+import './reports.css'
 
 interface ReportData {
   summary: { totalGmv: number; totalCommission: number; totalBookings: number; cancelledCount: number; commissionRate: string }
@@ -11,7 +15,10 @@ interface ReportData {
 }
 
 const fmt = (n: number) => n >= 100000 ? `₹${(n / 100000).toFixed(1)}L` : n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n.toLocaleString('en-IN')}`
-const TYPE_COLORS: Record<string, string> = { flight: '#1663eb', hotel: '#6d4aff', bus: '#16a34a' }
+
+// Same mapping used on /partner/bookings — the real badge system only ships
+// green/red/yellow/blue/gray.
+const TYPE_TONE: Record<string, string> = { flight: 'badge-blue', hotel: 'badge-green', bus: 'badge-gray' }
 
 export default function PartnerReportsPage() {
   const [agentId] = useState(() => typeof window !== 'undefined' ? sessionStorage.getItem('partner_agent_id') ?? '' : '')
@@ -43,25 +50,36 @@ export default function PartnerReportsPage() {
 
   const s = data?.summary
 
+  const typeColumns: ColumnDef<ReportData['byType'][number]>[] = [
+    {
+      key: 'booking_type',
+      header: 'Type',
+      render: (t) => <span className={`badge ${TYPE_TONE[t.booking_type] ?? 'badge-gray'}`}>{t.booking_type}</span>,
+    },
+    { key: 'count', header: 'Bookings', render: (t) => t.count },
+    { key: 'gmv', header: 'GMV', render: (t) => fmt(t.gmv) },
+    { key: 'commission', header: 'Commission', render: (t) => <span className="preport-commission-cell">{fmt(t.commission)}</span> },
+  ]
+
   return (
     <div>
       <div className="admin-topbar">
         <h2>Reports</h2>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <input type="date" className="toolbar-search" style={{ width: 'auto' }} value={from} onChange={e => setFrom(e.target.value)} />
-          <span style={{ fontSize: 13, color: 'var(--ink-3)' }}>to</span>
-          <input type="date" className="toolbar-search" style={{ width: 'auto' }} value={to} onChange={e => setTo(e.target.value)} />
+        <div className="preport-date-range">
+          <input type="date" className="toolbar-search preport-date-input" value={from} onChange={e => setFrom(e.target.value)} />
+          <span className="preport-to-label">to</span>
+          <input type="date" className="toolbar-search preport-date-input" value={to} onChange={e => setTo(e.target.value)} />
           {data && <button className="btn btn-primary btn-sm" onClick={handleExcel}>⬇ Excel</button>}
         </div>
       </div>
+
       <div className="admin-content">
         <div className="page-stack">
-
           {s && (
-            <div className="stat-grid">
-              <div className="stat-card"><div className="stat-num">{fmt(s.totalGmv)}</div><div className="stat-label">Total GMV</div><div className="stat-sub">{s.totalBookings} bookings</div></div>
-              <div className="stat-card teal"><div className="stat-num">{fmt(s.totalCommission)}</div><div className="stat-label">Commission Earned</div><div className="stat-sub">{s.commissionRate}% rate</div></div>
-              <div className="stat-card orange"><div className="stat-num">{s.cancelledCount}</div><div className="stat-label">Cancelled</div><div className="stat-sub">this period</div></div>
+            <div className="stat-grid preport-stat-grid">
+              <StatCard Icon={IndianRupee} label="Total GMV" value={fmt(s.totalGmv)} sub={`${s.totalBookings} bookings`} badge="Volume" />
+              <StatCard Icon={TrendingUp} label="Commission Earned" value={fmt(s.totalCommission)} sub={`${s.commissionRate}% rate`} badge="Earnings" iconBg="#f0fdf4" iconColor="#0d9488" badgeBg="#ccfbf1" badgeColor="#0f766e" />
+              <StatCard Icon={XCircle} label="Cancelled" value={s.cancelledCount} sub="This period" badge="This Period" iconBg="#fff7ed" iconColor="#ea580c" badgeBg="#ffedd5" badgeColor="#c2410c" />
             </div>
           )}
 
@@ -69,9 +87,20 @@ export default function PartnerReportsPage() {
 
           {!loading && data && (
             <div className="dashboard-grid">
-              <div className="chart-card">
-                <div className="card-title">Monthly Trend</div>
-                <div className="mini-chart" style={{ marginTop: 16 }}>
+              <div className="dashboard-card-lucrative">
+                <div className="dashboard-card-header">
+                  <div className="dashboard-card-title-group">
+                    <div className="dashboard-card-icon-icon dashboard-card-icon-blue">
+                      <BarChart3 size={19} strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <h3 className="dashboard-card-title">Monthly Trend</h3>
+                      <p className="dashboard-card-subtitle">Commission earned per month</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mini-chart">
                   {data.monthly.length === 0 ? <div className="empty-state">No data.</div> : data.monthly.map((m, i) => {
                     const max = Math.max(...data.monthly.map(x => x.commission))
                     const h   = max > 0 ? Math.round((m.commission / max) * 140) : 4
@@ -86,27 +115,15 @@ export default function PartnerReportsPage() {
                 </div>
               </div>
 
-              <div className="table-card">
-                <div className="table-header"><div className="card-title">By Booking Type</div></div>
-                <table>
-                  <thead><tr><th>Type</th><th>Bookings</th><th>GMV</th><th>Commission</th></tr></thead>
-                  <tbody>
-                    {data.byType.length === 0 ? (
-                      <tr><td colSpan={4} className="empty-state">No data.</td></tr>
-                    ) : data.byType.map((t, i) => (
-                      <tr key={i}>
-                        <td><span className="badge" style={{ background: `${TYPE_COLORS[t.booking_type] ?? '#888'}20`, color: TYPE_COLORS[t.booking_type] ?? '#888' }}>{t.booking_type}</span></td>
-                        <td>{t.count}</td>
-                        <td>{fmt(t.gmv)}</td>
-                        <td style={{ fontWeight: 700, color: 'var(--success)' }}>{fmt(t.commission)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable
+                title="By Booking Type"
+                columns={typeColumns}
+                data={data.byType}
+                emptyMessage="No data."
+                keyExtractor={(t) => t.booking_type}
+              />
             </div>
           )}
-
         </div>
       </div>
     </div>

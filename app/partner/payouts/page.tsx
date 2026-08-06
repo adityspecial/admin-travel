@@ -2,6 +2,10 @@
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { Pagination, usePagination } from '@/components/Pagination'
+import { StatCard } from '@/components/ui/StatCard'
+import { DataTable, ColumnDef } from '@/components/ui/DataTable'
+import { Clock, Wallet, CheckCircle2 } from 'lucide-react'
+import './payout.css'
 
 interface Payout { id: string; amount: number; status: string; bank_name?: string; account_no?: string; upi_id?: string; notes?: string; created_at: string; processed_at?: string }
 
@@ -32,9 +36,66 @@ export default function PartnerPayoutsPage() {
     setSaving(null)
   }
 
-  const pending    = payouts.filter(p => p.status === 'pending')
-  const totalPaid  = payouts.filter(p => p.status === 'paid').reduce((s, p) => s + p.amount, 0)
+  const pending      = payouts.filter(p => p.status === 'pending')
+  const pendingAmount = pending.reduce((s, p) => s + p.amount, 0)
+  const totalPaid    = payouts.filter(p => p.status === 'paid').reduce((s, p) => s + p.amount, 0)
   const { slice: pagePayouts, page, setPage, total } = usePagination(payouts, 20)
+
+  const columns: ColumnDef<Payout>[] = [
+    {
+      key: 'created_at',
+      header: 'Date',
+      render: (p) => <span className="data-table-muted-cell">{fmtDate(p.created_at)}</span>,
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      render: (p) => <span className="data-table-cell-bold">{fmt(p.amount)}</span>,
+    },
+    {
+      key: 'to',
+      header: 'To',
+      render: (p) => (
+        <span className="data-table-muted-cell">
+          {p.upi_id ? `UPI: ${p.upi_id}` : p.account_no ? `****${p.account_no.slice(-4)} · ${p.bank_name ?? ''}` : '--'}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (p) => <span className={`badge ${STATUS_BADGE[p.status] ?? 'badge-gray'}`}>{p.status}</span>,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (p) => {
+        if (p.status === 'pending') {
+          return (
+            <div className="data-table-actions">
+              <button type="button" className="data-table-btn data-table-btn-edit" disabled={!!saving} onClick={() => handleAction(p.id, 'processing')}>
+                Mark Processing
+              </button>
+              <button type="button" className="data-table-btn data-table-btn-success" disabled={!!saving} onClick={() => handleAction(p.id, 'paid')}>
+                {saving === p.id ? '…' : 'Mark Paid'}
+              </button>
+              <button type="button" className="data-table-btn data-table-btn-danger" disabled={!!saving} onClick={() => handleAction(p.id, 'rejected')}>
+                Reject
+              </button>
+            </div>
+          )
+        }
+        if (p.status === 'processing') {
+          return (
+            <button type="button" className="data-table-btn data-table-btn-success" disabled={!!saving} onClick={() => handleAction(p.id, 'paid')}>
+              {saving === p.id ? '…' : 'Mark Paid'}
+            </button>
+          )
+        }
+        return <span className="data-table-muted-cell">{p.processed_at ? fmtDate(p.processed_at) : '--'}</span>
+      },
+    },
+  ]
 
   return (
     <div>
@@ -42,54 +103,24 @@ export default function PartnerPayoutsPage() {
         <h2>Payouts</h2>
         {pending.length > 0 && <span className="badge badge-yellow">{pending.length} pending</span>}
       </div>
+
       <div className="admin-content">
         <div className="page-stack">
-
-          <div className="stat-grid">
-            <div className="stat-card"><div className="stat-num">{pending.length}</div><div className="stat-label">Pending requests</div></div>
-            <div className="stat-card teal"><div className="stat-num">{fmt(totalPaid)}</div><div className="stat-label">Total paid out</div></div>
-            <div className="stat-card"><div className="stat-num">{fmt(pending.reduce((s, p) => s + p.amount, 0))}</div><div className="stat-label">Pending amount</div></div>
+          <div className="stat-grid payout-stat-grid">
+            <StatCard Icon={Clock} label="Pending Requests" value={pending.length} sub="Awaiting action" badge="Review" iconBg="#fff7ed" iconColor="#ea580c" badgeBg="#ffedd5" badgeColor="#c2410c" />
+            <StatCard Icon={Wallet} label="Pending Amount" value={fmt(pendingAmount)} sub="Requested, not yet paid" badge="Queued" />
+            <StatCard Icon={CheckCircle2} label="Total Paid Out" value={fmt(totalPaid)} sub="Settled payouts" badge="Complete" iconBg="#f0fdf4" iconColor="#0d9488" badgeBg="#ccfbf1" badgeColor="#0f766e" />
           </div>
 
-          <div className="table-card">
-            <div className="table-header"><div className="card-title">Payout Requests</div></div>
-            <table>
-              <thead><tr><th>Date</th><th>Amount</th><th>To</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={5} className="empty-state">Loading…</td></tr>
-                ) : payouts.length === 0 ? (
-                  <tr><td colSpan={5} className="empty-state">No payout requests.</td></tr>
-                ) : pagePayouts.map(p => (
-                  <tr key={p.id}>
-                    <td style={{ color: 'var(--ink-3)' }}>{fmtDate(p.created_at)}</td>
-                    <td style={{ fontWeight: 800 }}>{fmt(p.amount)}</td>
-                    <td style={{ fontSize: 12, color: 'var(--ink-3)' }}>
-                      {p.upi_id ? `UPI: ${p.upi_id}` : p.account_no ? `****${p.account_no.slice(-4)} · ${p.bank_name ?? ''}` : '--'}
-                    </td>
-                    <td><span className={`badge ${STATUS_BADGE[p.status] ?? 'badge-gray'}`}>{p.status}</span></td>
-                    <td>
-                      {p.status === 'pending' && (
-                        <div className="page-actions">
-                          <button className="btn btn-sm btn-muted" disabled={!!saving} onClick={() => handleAction(p.id, 'processing')}>Mark Processing</button>
-                          <button className="btn btn-sm btn-primary" disabled={!!saving} onClick={() => handleAction(p.id, 'paid')}>{saving === p.id ? '…' : 'Mark Paid'}</button>
-                          <button className="btn btn-sm btn-danger" disabled={!!saving} onClick={() => handleAction(p.id, 'rejected')}>Reject</button>
-                        </div>
-                      )}
-                      {p.status === 'processing' && (
-                        <button className="btn btn-sm btn-primary" disabled={!!saving} onClick={() => handleAction(p.id, 'paid')}>{saving === p.id ? '…' : 'Mark Paid'}</button>
-                      )}
-                      {(p.status === 'paid' || p.status === 'rejected') && (
-                        <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>{p.processed_at ? fmtDate(p.processed_at) : '--'}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <Pagination total={total} page={page} perPage={20} onPage={setPage} />
-          </div>
-
+          <DataTable
+            title="Payout Requests"
+            columns={columns}
+            data={pagePayouts}
+            loading={loading}
+            emptyMessage="No payout requests."
+            keyExtractor={(p) => p.id}
+            footer={<Pagination total={total} page={page} perPage={20} onPage={setPage} />}
+          />
         </div>
       </div>
     </div>

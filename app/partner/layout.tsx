@@ -3,10 +3,11 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/api'
+import { RouteLoader } from '@/components/ui/RouteLoader'
 import {
   LayoutDashboard, Network, Ticket, Users, Layers,
   BarChart3, ArrowDownToLine, FileText, Shield, LogOut, Tag, Globe,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, ChevronUp, ChevronDown,
 } from 'lucide-react'
 
 const NAV = [
@@ -77,11 +78,15 @@ export default function PartnerAdminLayout({ children }: { children: React.React
             }}
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+            <span className="toggle-icon-desktop">
+              {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+            </span>
+            <span className="toggle-icon-mobile">
+              {isCollapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+            </span>
           </button>
         </div>
         <nav className="sidebar-nav">
-          <div className="nav-section">Manage</div>
           {NAV.map(item => (
             <Link key={item.href} href={item.href}
               className={`nav-link ${pathname === item.href ? 'active' : ''}`}
@@ -102,7 +107,10 @@ export default function PartnerAdminLayout({ children }: { children: React.React
           </button>
         </nav>
       </aside>
-      <main className="admin-main">{children}</main>
+      <main className="admin-main">
+        <RouteLoader />
+        {children}
+      </main>
     </div>
   )
 }

@@ -1,0 +1,613 @@
+/* ── Page: Biz Policy — page shell, Flight/Insurance/Eligibility/Tiers editors
+   (app/biz/policy/**) ────────────────────────────────────────────────────── */
+
+.policy-wrapper {
+  display: flex;
+  min-height: calc(100vh - 54px);
+}
+.policy-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%);
+  border-right: 1px solid #E5E7EB;
+  padding: 24px 16px;
+  overflow-y: auto;
+  position: sticky;
+  top: 54px;
+  height: calc(100vh - 54px);
+}
+.policy-main {
+  flex: 1;
+  padding: 32px 32px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.hero-banner-box {
+  background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+  border-radius: 24px;
+  padding: 32px;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 16px 36px -10px rgba(49, 46, 129, 0.25);
+}
+.policy-item-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 6px;
+}
+.policy-item-btn:hover {
+  background: #F3F4F6;
+}
+.policy-item-btn.active {
+  background: #FEF2F2;
+  border-color: #FCA5A5;
+  box-shadow: 0 4px 12px rgba(227, 30, 36, 0.08);
+}
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #F3F4F6;
+  color: #374151;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background: #E5E7EB;
+}
+.mobile-nav-toggle {
+  display: none;
+}
+@media (max-width: 1024px) {
+  .policy-wrapper {
+    flex-direction: column;
+  }
+  .policy-sidebar {
+    width: 100%;
+    position: relative;
+    top: 0;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #E5E7EB;
+    display: none;
+  }
+  .policy-sidebar--mobile-open {
+    display: block;
+  }
+  .mobile-nav-toggle {
+    display: inline-flex;
+  }
+  .policy-main {
+    padding: 20px 16px 36px;
+  }
+  .hero-banner-box {
+    padding: 24px;
+    border-radius: 20px;
+  }
+}
+@media (max-width: 640px) {
+  .policy-main {
+    padding: 14px 10px 28px;
+  }
+}
+
+/* ── page.tsx specific ── */
+
+.pp-page {
+  min-height: calc(100vh - 54px);
+  background: #F5F6FA;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.pp-sidebar-heading {
+  font-size: 12px;
+  font-weight: 900;
+  color: #111827;
+  letter-spacing: 0.06em;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pp-items-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.pp-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pp-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.pp-item-icon--selected {
+  background: var(--accent, #E31E24) !important;
+  color: #ffffff !important;
+}
+
+.pp-item-icon--domestic_flight { background: #EFF6FF; color: #2563EB; }
+.pp-item-icon--hotel { background: #ECFDF5; color: #047857; }
+.pp-item-icon--cab { background: #FFFBEB; color: #D97706; }
+.pp-item-icon--bus { background: #FEF2F2; color: #DC2626; }
+.pp-item-icon--train { background: #F5F3FF; color: #7C3AED; }
+.pp-item-icon--rental_cab { background: #F0F9FF; color: #0284C7; }
+.pp-item-icon--travel_request_form { background: #F3F4F6; color: #4B5563; }
+.pp-item-icon--gift_cards { background: #FDF2F8; color: #DB2777; }
+.pp-item-icon--visa { background: #ECFDF5; color: #059669; }
+.pp-item-icon--insurance { background: #FAF5FF; color: #9333EA; }
+
+.pp-item-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.pp-item-label--selected {
+  font-weight: 800;
+  color: var(--accent, #E31E24);
+}
+
+.pp-badge-live {
+  font-size: 10px;
+  font-weight: 800;
+  color: #059669;
+  background: #ECFDF5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #A7F3D0;
+}
+
+.pp-badge-soon {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9CA3AF;
+  background: #F3F4F6;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.pp-breadcrumb-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pp-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+}
+
+.pp-breadcrumb-active {
+  color: var(--accent, #E31E24);
+  font-weight: 700;
+}
+
+.pp-hero-glow {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(227, 30, 36, 0.25) 0%, rgba(0, 0, 0, 0) 70%);
+  pointer-events: none;
+}
+
+.pp-hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pp-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.pp-hero-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.pp-hero-title {
+  font-size: 24px;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pp-hero-subtitle {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 4px 0 0;
+  font-weight: 500;
+}
+
+.pp-hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.pp-metric-label {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+}
+
+.pp-metric-value {
+  font-size: 18px;
+  font-weight: 900;
+  margin-top: 2px;
+}
+
+.pp-metric-value--category {
+  color: #ffffff;
+}
+
+.pp-metric-value--status {
+  color: #34D399;
+}
+
+.pp-metric-value--escalation {
+  color: #60A5FA;
+}
+
+.pp-soon-box {
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 20px;
+  padding: 64px 24px;
+  text-align: center;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.03);
+}
+
+.pp-soon-emoji {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.pp-soon-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: #111827;
+  margin: 0;
+}
+
+.pp-soon-desc {
+  font-size: 13.5px;
+  color: #6B7280;
+  margin: 6px auto 0;
+  max-width: 400px;
+}
+
+/* ── Shared policy editor vocabulary (Flight/Insurance/Eligibility/Tiers) ──── */
+
+.pol-loading {
+  padding: 40px;
+  font-size: 14px;
+  color: #9CA3AF;
+}
+
+.pol-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.pol-header-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  color: #1a1a2e;
+}
+
+.pol-header-sub {
+  font-size: 12px;
+  color: #9CA3AF;
+  margin-top: 4px;
+}
+
+.pol-save-btn {
+  padding: 10px 26px;
+  background: #E31E24;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pol-save-btn--saved {
+  background: #16A34A;
+}
+
+.pol-card {
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.pol-sec {
+  font-size: 11px;
+  font-weight: 800;
+  color: #6B7280;
+  letter-spacing: 0.08em;
+  padding: 12px 24px;
+  background: #F9FAFB;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.pol-trow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  border-bottom: 1px solid #F9FAFB;
+  gap: 20px;
+}
+
+.pol-trow-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.pol-trow-desc {
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 2px;
+}
+
+.pol-toggle {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  background: #D1D5DB;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pol-toggle--on {
+  background: #E31E24;
+}
+
+.pol-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.15s;
+}
+
+.pol-toggle-knob--on {
+  left: 23px;
+}
+
+.pol-radio-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+}
+
+.pol-radio-input {
+  accent-color: #E31E24;
+}
+
+.pol-block {
+  padding: 14px 24px;
+  border-bottom: 1px solid #F9FAFB;
+}
+
+.pol-block--plain {
+  padding: 14px 24px;
+}
+
+.pol-label-13 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.pol-desc-12 {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.pol-mb-4 { margin-bottom: 4px; }
+.pol-mb-6 { margin-bottom: 6px; }
+.pol-mb-8 { margin-bottom: 8px; }
+.pol-mb-10 { margin-bottom: 10px; }
+.pol-mb-12 { margin-bottom: 12px; }
+.pol-mb-14 { margin-bottom: 14px; }
+.pol-mt-8 { margin-top: 8px; }
+
+.pol-select {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #E5E7EB;
+  font-size: 13px;
+  outline: none;
+  background: #fff;
+}
+
+.pol-input-w200 {
+  width: 200px;
+}
+
+.pol-input-w72 {
+  width: 72px;
+}
+
+.pol-select-w300 {
+  max-width: 300px;
+}
+
+.pol-subrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  margin-left: 22px;
+}
+
+.pol-checkbox-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.pol-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pol-checkbox-input {
+  accent-color: #E31E24;
+}
+
+.pol-subsection-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 14px;
+}
+
+.pol-addon-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+/* ── ApprovalTiers.tsx ── */
+
+.pol-tier-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pol-tier-label {
+  font-size: 12px;
+  color: #6B7280;
+  min-width: 76px;
+  flex-shrink: 0;
+}
+
+.pol-tier-spacer {
+  flex-shrink: 0;
+  width: 120px;
+}
+
+.pol-tier-amount {
+  width: 120px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1.5px solid #E5E7EB;
+  font-size: 13px;
+  outline: none;
+}
+
+.pol-tier-select {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1.5px solid #E5E7EB;
+  font-size: 13px;
+  outline: none;
+  background: #fff;
+}
+
+.pol-tier-remove-btn {
+  border: none;
+  background: none;
+  color: #DC2626;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.pol-tier-add-btn {
+  margin-top: 4px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1.5px dashed #CBD5E1;
+  background: none;
+  color: #6B7280;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}

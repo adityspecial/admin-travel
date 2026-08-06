@@ -1,0 +1,5 @@
+/* ── Page: Partner Payouts (app/partner/payouts/page.tsx) ───────────────────── */
+
+.payout-stat-grid {
+  grid-template-columns: repeat(3, 1fr);
+}

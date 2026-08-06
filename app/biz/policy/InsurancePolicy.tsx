@@ -22,26 +22,24 @@ const DFLT: S = {
   auto_include:     false,
 }
 
-const SEL = { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid #E5E7EB', fontSize: 13, outline: 'none' as const, background: '#fff' }
-
 function Tog({ v, set }: { v: boolean; set: (x: boolean) => void }) {
   return (
-    <button onClick={() => set(!v)} style={{ width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', background: v ? '#E31E24' : '#D1D5DB', position: 'relative', flexShrink: 0 as const }}>
-      <span style={{ position: 'absolute', top: 3, left: v ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.15s' }} />
+    <button onClick={() => set(!v)} className={`pol-toggle ${v ? 'pol-toggle--on' : ''}`}>
+      <span className={`pol-toggle-knob ${v ? 'pol-toggle-knob--on' : ''}`} />
     </button>
   )
 }
 
 function Sec({ t }: { t: string }) {
-  return <div style={{ fontSize: 11, fontWeight: 800, color: '#6B7280', letterSpacing: '0.08em', padding: '12px 24px', background: '#F9FAFB', borderBottom: '1px solid #F3F4F6' }}>{t}</div>
+  return <div className="pol-sec">{t}</div>
 }
 
 function TRow({ label, desc, v, set }: { label: string; desc?: string; v: boolean; set: (x: boolean) => void }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 24px', borderBottom: '1px solid #F9FAFB', gap: 20 }}>
+    <div className="pol-trow">
       <div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{label}</div>
-        {desc && <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{desc}</div>}
+        <div className="pol-trow-label">{label}</div>
+        {desc && <div className="pol-trow-desc">{desc}</div>}
       </div>
       <Tog v={v} set={set} />
     </div>
@@ -50,8 +48,8 @@ function TRow({ label, desc, v, set }: { label: string; desc?: string; v: boolea
 
 function RadioRow({ k, val, label, s, setS }: { k: keyof S; val: string; label: string; s: S; setS: (s: S) => void }) {
   return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer', fontSize: 13, color: '#374151' }}>
-      <input type="radio" checked={s[k] === val} onChange={() => setS({ ...s, [k]: val })} style={{ accentColor: '#E31E24' }} />
+    <label className="pol-radio-row">
+      <input type="radio" checked={s[k] === val} onChange={() => setS({ ...s, [k]: val })} className="pol-radio-input" />
       {label}
     </label>
   )
@@ -97,32 +95,30 @@ export function InsurancePolicy() {
     setTimeout(() => setSaved(false), 2500)
   }
 
-  if (loading) return <div style={{ padding: 40, fontSize: 14, color: '#9CA3AF' }}>Loading…</div>
-
-  const card = { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' as const, marginBottom: 20 }
+  if (loading) return <div className="pol-loading">Loading…</div>
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div className="pol-header-row">
         <div>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#1a1a2e' }}>Insurance Policy</h1>
-          <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>Rules for travel insurance across all booking types.</div>
+          <h1 className="pol-header-title">Insurance Policy</h1>
+          <div className="pol-header-sub">Rules for travel insurance across all booking types.</div>
         </div>
-        <button onClick={save} disabled={saving} style={{ padding: '10px 26px', background: saved ? '#16A34A' : '#E31E24', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+        <button onClick={save} disabled={saving} className={`pol-save-btn ${saved ? 'pol-save-btn--saved' : ''}`}>
           {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save Policy'}
         </button>
       </div>
 
       {/* BUDGET */}
-      <div style={card}>
+      <div className="pol-card">
         <Sec t="BUDGET AND APPROVAL" />
-        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Insurance Cap (₹ per policy)</div>
-          <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 10 }}>Policies above this amount require manager approval. Leave blank for no cap.</div>
-          <input type="number" value={s.max_price} onChange={e => setS(p => ({ ...p, max_price: e.target.value }))} placeholder="e.g. 3000" style={{ ...SEL, width: 200 }} />
+        <div className="pol-block">
+          <div className="pol-label-13 pol-mb-4">Insurance Cap (₹ per policy)</div>
+          <div className="pol-desc-12 pol-mb-10">Policies above this amount require manager approval. Leave blank for no cap.</div>
+          <input type="number" value={s.max_price} onChange={e => setS(p => ({ ...p, max_price: e.target.value }))} placeholder="e.g. 3000" className="pol-select pol-input-w200" />
         </div>
-        <div style={{ padding: '14px 24px' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 10 }}>Approval Requirement</div>
+        <div className="pol-block--plain">
+          <div className="pol-label-13 pol-mb-10">Approval Requirement</div>
           <RadioRow k="require_approval" val="none"      label="No approval needed — employees can self-book"           s={s} setS={setS} />
           <RadioRow k="require_approval" val="above_cap" label="Approval required when premium exceeds the cap above"   s={s} setS={setS} />
           <RadioRow k="require_approval" val="always"    label="Always require manager approval for any insurance purchase" s={s} setS={setS} />
@@ -130,7 +126,7 @@ export function InsurancePolicy() {
       </div>
 
       {/* WHERE IT APPEARS */}
-      <div style={card}>
+      <div className="pol-card">
         <Sec t="WHERE INSURANCE IS OFFERED" />
         <TRow label="During Flight Bookings"  desc="Show insurance add-on on the flight review screen."     v={s.addon_flights}    set={upd('addon_flights')} />
         <TRow label="During Hotel Bookings"   desc="Show insurance add-on on the hotel review screen."      v={s.addon_hotels}     set={upd('addon_hotels')} />

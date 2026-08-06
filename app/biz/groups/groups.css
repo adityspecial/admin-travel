@@ -1,0 +1,50 @@
+/* ── Page: Biz Groups (app/biz/groups/page.tsx) ──────────────────────────────── */
+
+.groups-page {
+  padding: 28px 32px;
+  max-width: 900px;
+}
+
+.groups-header {
+  margin-bottom: 24px;
+}
+
+.groups-breadcrumb {
+  font-size: 12px;
+  color: #9CA3AF;
+  margin-bottom: 6px;
+}
+
+.groups-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.groups-empty-card {
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 60px 32px;
+  text-align: center;
+}
+
+.groups-empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.groups-empty-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+}
+
+.groups-empty-desc {
+  font-size: 14px;
+  color: #6B7280;
+  max-width: 400px;
+  margin: 0 auto;
+}

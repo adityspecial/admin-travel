@@ -130,21 +130,13 @@ export default function SuperVisaPage() {
               subtitle: v.page_title,
             })
           }
-          style={{
-            width: 56,
-            height: 40,
-            borderRadius: 8,
-            overflow: 'hidden',
-            background: '#f1f5f9',
-            flexShrink: 0,
-            cursor: v.hero_image_url ? 'pointer' : 'default',
-          }}
+          className={`visa-thumb-cell ${v.hero_image_url ? 'visa-thumb-cell--clickable' : ''}`}
           title={v.hero_image_url ? 'Click to open full desktop preview' : undefined}
         >
           {v.hero_image_url ? (
-            <img src={v.hero_image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={v.hero_image_url} alt="" className="visa-thumb-img" />
           ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+            <div className="visa-thumb-empty">
               🌍
             </div>
           )}
@@ -160,7 +152,7 @@ export default function SuperVisaPage() {
       key: 'page_title',
       header: 'Page Title',
       render: (v) => (
-        <span className="data-table-muted-cell" style={{ maxWidth: 200, display: 'inline-block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <span className="data-table-muted-cell visa-title-cell">
           {v.page_title}
         </span>
       ),
@@ -179,7 +171,7 @@ export default function SuperVisaPage() {
       key: 'visa_fee_display',
       header: 'Fee',
       render: (v) => (
-        <span style={{ fontWeight: 800, color: '#0f172a' }}>
+        <span className="visa-fee-cell">
           {v.visa_fee_display ?? '—'}
         </span>
       ),
@@ -191,8 +183,7 @@ export default function SuperVisaPage() {
         <button
           type="button"
           onClick={() => toggleActive(v)}
-          className={`data-table-status-pill ${v.is_active ? 'active' : 'inactive'}`}
-          style={{ border: 'none', cursor: 'pointer' }}
+          className={`data-table-status-pill visa-status-toggle-btn ${v.is_active ? 'active' : 'inactive'}`}
         >
           {v.is_active ? '●Active' : '●Draft'}
         </button>
@@ -268,17 +259,7 @@ export default function SuperVisaPage() {
 
           {/* Alert Message Banner */}
           {msg && (
-            <div
-              style={{
-                background: msg.startsWith('Error') ? '#fef2f2' : '#dcfce7',
-                color: msg.startsWith('Error') ? '#991b1b' : '#15803d',
-                border: `1px solid ${msg.startsWith('Error') ? '#fecaca' : '#bbf7d0'}`,
-                borderRadius: 12,
-                padding: '12px 16px',
-                fontSize: 13,
-                fontWeight: 700,
-              }}
-            >
+            <div className={`visa-alert ${msg.startsWith('Error') ? 'visa-alert--error' : 'visa-alert--ok'}`}>
               {msg.startsWith('Error') ? '❌ ' : '✅ '}
               {msg}
             </div>
@@ -289,16 +270,16 @@ export default function SuperVisaPage() {
             title="Visa Destination Catalog"
             subtitle="Manage country visa requirements, processing times, fee structures, and page content."
             headerAction={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center', gap: 8, width: 280 }}>
-                  <div style={{ flex: 1 }}>
+              <div className="visa-header-actions">
+                <form onSubmit={handleSearch} className="visa-search-form">
+                  <div className="visa-flex-1">
                     <AppInput
                       placeholder="Search country, title, slug..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       icon={<Search size={15} />}
                       wrapperClassName="m-0"
-                      style={{ padding: '8px 12px 8px 36px', fontSize: 13 }}
+                      className="visa-search-input"
                     />
                   </div>
                   {search && (
@@ -317,16 +298,14 @@ export default function SuperVisaPage() {
                 </form>
                 <a
                   href="/super/visa/enquiries"
-                  className="btn btn-muted btn-sm"
-                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  className="btn btn-muted btn-sm visa-link-icon-gap"
                 >
                   <FileText size={14} />
                   <span>Enquiries</span>
                 </a>
                 <button
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-primary btn-sm visa-btn-icon-gap"
                   onClick={() => setShowCreate(true)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
                 >
                   <Plus size={14} />
                   <span>New Visa Page</span>

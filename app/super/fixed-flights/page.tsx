@@ -59,6 +59,12 @@ const EMPTY_FORM = {
 function fmtAmt(n: number) { return '₹' + Number(n).toLocaleString('en-IN') }
 function fmtDate(d: string) { return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) }
 
+function sourcePillClass(source: string) {
+  if (source === 'mybiz') return 'ff-source-pill--mybiz'
+  if (source === 'mypartner') return 'ff-source-pill--mypartner'
+  return 'ff-source-pill--consumer'
+}
+
 export default function FixedFlightsPage() {
   const [tab, setTab] = useState<TabType>('bookings')
 
@@ -226,7 +232,7 @@ export default function FixedFlightsPage() {
     <div>
       <div className="admin-topbar">
         <h2>Charter & Fixed Departures</h2>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="ff-topbar-actions">
           {tab === 'featured' && (
             <button
               className="btn btn-primary"
@@ -248,7 +254,7 @@ export default function FixedFlightsPage() {
 
       <div className="admin-content">
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: '#0F172A', borderRadius: 10, padding: 4, width: 'fit-content' }}>
+        <div className="ff-tab-bar">
           {([
             { key: 'bookings', label: 'Nexus Bookings' },
             { key: 'featured', label: 'Featured Routes' },
@@ -258,11 +264,7 @@ export default function FixedFlightsPage() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              style={{
-                padding: '7px 18px', borderRadius: 8, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer',
-                background: tab === t.key ? '#1A56DB' : 'transparent',
-                color:      tab === t.key ? '#fff' : '#64748B',
-              }}
+              className={`ff-tab-btn ${tab === t.key ? 'ff-tab-btn--active' : ''}`}
             >
               {t.label}
             </button>
@@ -274,7 +276,7 @@ export default function FixedFlightsPage() {
           <>
             {/* Stats */}
             {nexusStats && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 24 }}>
+              <div className="ff-stats-grid">
                 <StatCard
                   label="Total Bookings"
                   value={nexusStats.total_bookings}
@@ -323,53 +325,49 @@ export default function FixedFlightsPage() {
             )}
 
             {nexusLoading ? (
-              <div style={{ color: '#94A3B8', padding: 32 }}>Loading…</div>
+              <div className="ff-loading">Loading…</div>
             ) : nexusBookings.length === 0 ? (
-              <div style={{ color: '#94A3B8', padding: 32, textAlign: 'center' }}>
+              <div className="ff-empty">
                 No Nexus bookings yet. Charter routes must be configured in "Featured Routes" first.
               </div>
             ) : (
               <div className="table-card">
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <table className="ff-table">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #1E293B', textAlign: 'left' }}>
+                    <tr className="ff-thead-row">
                       {['Booking Ref / PNR', 'Route', 'Date', 'Passengers', 'Amount', 'Source', 'Status', 'Booked On'].map(h => (
-                        <th key={h} style={{ padding: '10px 12px', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                        <th key={h} className="ff-th">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {nexusBookings.map(b => (
-                      <tr key={b.id} style={{ borderBottom: '1px solid #0F172A' }}>
-                        <td style={{ padding: '12px', fontSize: 13 }}>
-                          <div style={{ fontWeight: 700, color: '#F1F5F9', letterSpacing: 1 }}>{b.booking_ref}</div>
-                          {b.pnr && <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>PNR: {b.pnr}</div>}
-                          {b.contact_email && <div style={{ fontSize: 11, color: '#94A3B8' }}>{b.contact_email}</div>}
+                      <tr key={b.id} className="ff-tr">
+                        <td className="ff-td-ref">
+                          <div className="ff-ref-code">{b.booking_ref}</div>
+                          {b.pnr && <div className="ff-pnr-sub">PNR: {b.pnr}</div>}
+                          {b.contact_email && <div className="ff-email-sub">{b.contact_email}</div>}
                         </td>
-                        <td style={{ padding: '12px', fontWeight: 700, color: '#E2E8F0', fontSize: 14 }}>
+                        <td className="ff-td-route">
                           {b.origin} → {b.destination}
-                          <div style={{ fontSize: 11, color: '#64748B', fontWeight: 400 }}>{b.airline} {b.flight_number}</div>
+                          <div className="ff-flight-sub">{b.airline} {b.flight_number}</div>
                         </td>
-                        <td style={{ padding: '12px', fontSize: 13, color: '#CBD5E1' }}>{fmtDate(b.travel_date)}</td>
-                        <td style={{ padding: '12px', fontSize: 13, color: '#94A3B8' }}>
+                        <td className="ff-td-date">{fmtDate(b.travel_date)}</td>
+                        <td className="ff-td-muted13">
                           {b.adults}A{b.children > 0 ? ` ${b.children}C` : ''}{b.infants > 0 ? ` ${b.infants}I` : ''}
                         </td>
-                        <td style={{ padding: '12px', fontWeight: 700, color: '#E2E8F0' }}>{fmtAmt(b.total_amount)}</td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{
-                            padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                            background: b.source === 'mybiz' ? '#1e3a5f' : b.source === 'mypartner' ? '#2d1b69' : '#0d3321',
-                            color:      b.source === 'mybiz' ? '#93C5FD' : b.source === 'mypartner' ? '#C4B5FD' : '#86EFAC',
-                          }}>
+                        <td className="ff-td-amt-strong">{fmtAmt(b.total_amount)}</td>
+                        <td className="ff-td-plain">
+                          <span className={`ff-source-pill ${sourcePillClass(b.source)}`}>
                             {b.source}
                           </span>
                         </td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: '#14532D', color: '#86EFAC' }}>
+                        <td className="ff-td-plain">
+                          <span className="ff-status-pill-static">
                             {b.status}
                           </span>
                         </td>
-                        <td style={{ padding: '12px', fontSize: 12, color: '#64748B' }}>
+                        <td className="ff-td-sub">
                           {new Date(b.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                         </td>
                       </tr>
@@ -384,65 +382,58 @@ export default function FixedFlightsPage() {
         {/* ── Tab: Featured Routes ── */}
         {tab === 'featured' && (
           <>
-            <div style={{ color: '#94A3B8', fontSize: 13, marginBottom: 20, padding: '10px 14px', background: '#0F172A', borderRadius: 8, border: '1px solid #1E293B' }}>
+            <div className="ff-info-banner">
               Featured routes appear on the consumer home screen as charter flight cards, powered by live Nexus DMC data.
               Add the IATA codes and city names for routes you want to highlight.
             </div>
 
             {sectorsLoad ? (
-              <div style={{ color: '#94A3B8', padding: 24 }}>Loading…</div>
+              <div className="ff-loading-24">Loading…</div>
             ) : sectors.length === 0 ? (
-              <div style={{ color: '#94A3B8', padding: 32, textAlign: 'center' }}>
+              <div className="ff-empty">
                 No featured routes yet. Click "+ Add Route" to add your first charter route.
               </div>
             ) : (
               <div className="table-card">
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <table className="ff-table">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #1E293B', textAlign: 'left' }}>
+                    <tr className="ff-thead-row">
                       {['Route', 'Cities', 'Order', 'Status', ''].map(h => (
-                        <th key={h} style={{ padding: '10px 12px', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                        <th key={h} className="ff-th">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {sectors.map(s => (
-                      <tr key={s.id} style={{ borderBottom: '1px solid #0F172A' }}>
-                        <td style={{ padding: '12px', fontSize: 15, fontWeight: 800, color: '#F1F5F9', letterSpacing: 1 }}>
+                      <tr key={s.id} className="ff-tr">
+                        <td className="ff-td-route-lg">
                           {s.origin} → {s.destination}
                         </td>
-                        <td style={{ padding: '12px', fontSize: 13, color: '#94A3B8' }}>
+                        <td className="ff-td-muted13">
                           {s.origin_city} → {s.destination_city}
                         </td>
-                        <td style={{ padding: '12px', fontSize: 13, color: '#94A3B8' }}>{s.display_order}</td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{
-                            padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                            background: s.is_active ? '#14532D' : '#1E293B',
-                            color:      s.is_active ? '#86EFAC' : '#64748B',
-                          }}>
+                        <td className="ff-td-muted13">{s.display_order}</td>
+                        <td className="ff-td-plain">
+                          <span className={`ff-status-pill ${s.is_active ? 'ff-status-pill--active' : 'ff-status-pill--inactive'}`}>
                             {s.is_active ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td style={{ padding: '12px' }}>
-                          <div style={{ display: 'flex', gap: 8 }}>
+                        <td className="ff-td-plain">
+                          <div className="ff-row-actions">
                             <button
-                              className="btn btn-ghost"
-                              style={{ fontSize: 12, padding: '4px 10px' }}
+                              className="btn btn-ghost ff-btn-sm"
                               onClick={() => { setSectorForm({ origin: s.origin, destination: s.destination, origin_city: s.origin_city, destination_city: s.destination_city, display_order: s.display_order }); setEditSectorId(s.id); setSectorErr(''); setShowSectorForm(true) }}
                             >
                               Edit
                             </button>
                             <button
-                              className="btn btn-ghost"
-                              style={{ fontSize: 12, padding: '4px 10px', color: s.is_active ? '#EF4444' : '#22C55E' }}
+                              className={`btn btn-ghost ff-btn-sm ${s.is_active ? 'ff-btn-danger' : 'ff-btn-success'}`}
                               onClick={() => toggleSector(s)}
                             >
                               {s.is_active ? 'Deactivate' : 'Activate'}
                             </button>
                             <button
-                              className="btn btn-ghost"
-                              style={{ fontSize: 12, padding: '4px 10px', color: '#EF4444' }}
+                              className="btn btn-ghost ff-btn-sm ff-btn-danger"
                               onClick={() => deleteSector(s.id)}
                             >
                               Delete
@@ -458,14 +449,14 @@ export default function FixedFlightsPage() {
 
             {/* Add/Edit sector modal */}
             {showSectorForm && (
-              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ background: '#0F172A', border: '1px solid #1E293B', borderRadius: 16, padding: 28, width: 420 }}>
-                  <h3 style={{ margin: '0 0 20px', color: '#F1F5F9', fontSize: 18 }}>
+              <div className="ff-modal-overlay">
+                <div className="ff-modal-box ff-modal-box--sector">
+                  <h3 className="ff-modal-title">
                     {editSectorId ? 'Edit Featured Route' : 'Add Featured Route'}
                   </h3>
-                  {sectorErr && <div style={{ background: '#450a0a', color: '#fca5a5', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 13 }}>{sectorErr}</div>}
+                  {sectorErr && <div className="ff-error-banner">{sectorErr}</div>}
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <div className="ff-modal-grid">
                     {[
                       { key: 'origin',           label: 'Origin IATA',       placeholder: 'DEL' },
                       { key: 'destination',      label: 'Destination IATA',  placeholder: 'BOM' },
@@ -473,28 +464,28 @@ export default function FixedFlightsPage() {
                       { key: 'destination_city', label: 'Destination City',  placeholder: 'Mumbai' },
                     ].map(({ key, label, placeholder }) => (
                       <div key={key}>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>{label}</label>
+                        <label className="ff-field-label">{label}</label>
                         <input
                           value={(sectorForm as any)[key]}
                           placeholder={placeholder}
                           onChange={e => setSectorForm(f => ({ ...f, [key]: e.target.value }))}
                           disabled={!!editSectorId && (key === 'origin' || key === 'destination')}
-                          style={{ width: '100%', background: '#1E293B', border: '1px solid #334155', borderRadius: 8, padding: '9px 12px', color: '#F1F5F9', fontSize: 13, outline: 'none', boxSizing: 'border-box', opacity: (!!editSectorId && (key === 'origin' || key === 'destination')) ? 0.5 : 1 }}
+                          className="ff-field-input"
                         />
                       </div>
                     ))}
                     <div>
-                      <label style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Display Order</label>
+                      <label className="ff-field-label">Display Order</label>
                       <input
                         type="number"
                         value={sectorForm.display_order}
                         onChange={e => setSectorForm(f => ({ ...f, display_order: Number(e.target.value) }))}
-                        style={{ width: '100%', background: '#1E293B', border: '1px solid #334155', borderRadius: 8, padding: '9px 12px', color: '#F1F5F9', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                        className="ff-field-input"
                       />
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-end' }}>
+                  <div className="ff-modal-footer">
                     <button className="btn btn-ghost" onClick={() => setShowSectorForm(false)}>Cancel</button>
                     <button className="btn btn-primary" onClick={saveSector} disabled={sectorSaving}>
                       {sectorSaving ? 'Saving…' : editSectorId ? 'Save Changes' : 'Add Route'}
@@ -509,56 +500,56 @@ export default function FixedFlightsPage() {
         {/* ── Tab: Manual Flights (legacy) ── */}
         {tab === 'manual' && (
           <>
-            <div style={{ color: '#94A3B8', fontSize: 13, marginBottom: 20, padding: '10px 14px', background: '#0F172A', borderRadius: 8, border: '1px solid #1E293B' }}>
+            <div className="ff-info-banner">
               Manual flights are custom fixed-departure entries managed by admins directly (not sourced from Nexus DMC).
             </div>
 
             {manualLoad ? (
-              <div style={{ color: '#94A3B8', padding: 32 }}>Loading…</div>
+              <div className="ff-loading">Loading…</div>
             ) : manualFlights.length === 0 ? (
-              <div style={{ color: '#94A3B8', padding: 32, textAlign: 'center' }}>No manual flights yet. Click "+ Add Flight" to create one.</div>
+              <div className="ff-empty">No manual flights yet. Click "+ Add Flight" to create one.</div>
             ) : (
               <div className="table-card">
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <table className="ff-table">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #1E293B', textAlign: 'left' }}>
+                    <tr className="ff-thead-row">
                       {['Flight', 'Route', 'Date', 'Seats', 'Price', 'Status', ''].map(h => (
-                        <th key={h} style={{ padding: '10px 12px', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                        <th key={h} className="ff-th">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {manualFlights.map(f => (
-                      <tr key={f.id} style={{ borderBottom: '1px solid #0F172A' }}>
-                        <td style={{ padding: '12px', fontSize: 13 }}>
-                          <div style={{ fontWeight: 700, color: '#F1F5F9' }}>{f.airline_name}</div>
-                          <div style={{ color: '#64748B', fontSize: 11 }}>{f.flight_number} · {f.departure_time}–{f.arrival_time} ({f.duration})</div>
-                          <div style={{ color: '#94A3B8', fontSize: 11, marginTop: 2 }}>{f.title}</div>
+                      <tr key={f.id} className="ff-tr">
+                        <td className="ff-td-ref">
+                          <div className="ff-airline-name">{f.airline_name}</div>
+                          <div className="ff-flight-meta">{f.flight_number} · {f.departure_time}–{f.arrival_time} ({f.duration})</div>
+                          <div className="ff-flight-title-sub">{f.title}</div>
                         </td>
-                        <td style={{ padding: '12px', fontWeight: 700, color: '#E2E8F0', fontSize: 14 }}>{f.from_code} → {f.to_code}</td>
-                        <td style={{ padding: '12px', fontSize: 13, color: '#CBD5E1' }}>{fmtDate(f.departure_date)}</td>
-                        <td style={{ padding: '12px', minWidth: 120 }}>
-                          <div style={{ fontSize: 12, color: seatsLeft(f) <= 5 ? '#EF4444' : '#94A3B8', marginBottom: 4 }}>
-                            {f.seats_booked}/{f.total_seats} · <strong style={{ color: seatsLeft(f) <= 5 ? '#EF4444' : '#22C55E' }}>{seatsLeft(f)} left</strong>
+                        <td className="ff-td-route">{f.from_code} → {f.to_code}</td>
+                        <td className="ff-td-date">{fmtDate(f.departure_date)}</td>
+                        <td className="ff-td-seats">
+                          <div className={`ff-seats-line ${seatsLeft(f) <= 5 ? 'ff-seats-line--low' : ''}`}>
+                            {f.seats_booked}/{f.total_seats} · <strong className={seatsLeft(f) <= 5 ? 'ff-seats-left--low' : 'ff-seats-left'}>{seatsLeft(f)} left</strong>
                           </div>
-                          <div style={{ height: 4, borderRadius: 2, background: '#1E293B' }}>
-                            <div style={{ height: 4, borderRadius: 2, background: pct(f) > 80 ? '#EF4444' : '#1A56DB', width: `${pct(f)}%` }} />
+                          <div className="ff-progress-track">
+                            <div className={`ff-progress-fill ${pct(f) > 80 ? 'ff-progress-fill--danger' : ''}`} style={{ width: `${pct(f)}%` }} />
                           </div>
                         </td>
-                        <td style={{ padding: '12px', fontWeight: 700, color: '#E2E8F0' }}>{fmtAmt(f.price_per_seat)}</td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: f.is_active ? '#14532D' : '#1E293B', color: f.is_active ? '#86EFAC' : '#64748B' }}>
+                        <td className="ff-td-amt-strong">{fmtAmt(f.price_per_seat)}</td>
+                        <td className="ff-td-plain">
+                          <span className={`ff-status-pill ${f.is_active ? 'ff-status-pill--active' : 'ff-status-pill--inactive'}`}>
                             {f.is_active ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td style={{ padding: '12px' }}>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }}
+                        <td className="ff-td-plain">
+                          <div className="ff-row-actions">
+                            <button className="btn btn-ghost ff-btn-sm"
                               onClick={() => {
                                 setFlightForm({ title: f.title, from_city: '', from_code: f.from_code, to_city: '', to_code: f.to_code, departure_date: f.departure_date, departure_time: f.departure_time, arrival_time: f.arrival_time, duration: f.duration, airline_name: f.airline_name, airline_code: '', flight_number: f.flight_number, total_seats: String(f.total_seats), price_per_seat: String(f.price_per_seat), booking_deadline: f.booking_deadline ?? '', description: '', image_url: '' })
                                 setEditFlightId(f.id); setFlightErr(''); setShowFlightForm(true)
                               }}>Edit</button>
-                            <button className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 10px', color: f.is_active ? '#EF4444' : '#22C55E' }} onClick={() => toggleManual(f)}>
+                            <button className={`btn btn-ghost ff-btn-sm ${f.is_active ? 'ff-btn-danger' : 'ff-btn-success'}`} onClick={() => toggleManual(f)}>
                               {f.is_active ? 'Deactivate' : 'Activate'}
                             </button>
                           </div>
@@ -571,11 +562,11 @@ export default function FixedFlightsPage() {
             )}
 
             {showFlightForm && (
-              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ background: '#0F172A', border: '1px solid #1E293B', borderRadius: 16, padding: 28, width: 560, maxHeight: '90vh', overflowY: 'auto' }}>
-                  <h3 style={{ margin: '0 0 20px', color: '#F1F5F9', fontSize: 18 }}>{editFlightId ? 'Edit Flight' : 'Add Fixed Departure Flight'}</h3>
-                  {flightErr && <div style={{ background: '#450a0a', color: '#fca5a5', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 13 }}>{flightErr}</div>}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="ff-modal-overlay">
+                <div className="ff-modal-box ff-modal-box--flight">
+                  <h3 className="ff-modal-title">{editFlightId ? 'Edit Flight' : 'Add Fixed Departure Flight'}</h3>
+                  {flightErr && <div className="ff-error-banner">{flightErr}</div>}
+                  <div className="ff-modal-grid">
                     {[
                       { key: 'title', label: 'Flight Title', placeholder: 'Mumbai → Goa Charter' },
                       { key: 'from_city', label: 'From City', placeholder: 'Mumbai' },
@@ -593,13 +584,13 @@ export default function FixedFlightsPage() {
                       { key: 'price_per_seat', label: 'Price Per Seat (₹)', placeholder: '4999', type: 'number' },
                       { key: 'booking_deadline', label: 'Booking Deadline', placeholder: '', type: 'date' },
                     ].map(({ key, label, placeholder, type }) => (
-                      <div key={key} style={key === 'title' ? { gridColumn: 'span 2' } : {}}>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>{label}</label>
-                        <input type={type ?? 'text'} value={(flightForm as any)[key]} placeholder={placeholder} onChange={e => setFlightForm(f => ({ ...f, [key]: e.target.value }))} style={{ width: '100%', background: '#1E293B', border: '1px solid #334155', borderRadius: 8, padding: '9px 12px', color: '#F1F5F9', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                      <div key={key} className={key === 'title' ? 'ff-span-2' : ''}>
+                        <label className="ff-field-label">{label}</label>
+                        <input type={type ?? 'text'} value={(flightForm as any)[key]} placeholder={placeholder} onChange={e => setFlightForm(f => ({ ...f, [key]: e.target.value }))} className="ff-field-input" />
                       </div>
                     ))}
                   </div>
-                  <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-end' }}>
+                  <div className="ff-modal-footer">
                     <button className="btn btn-ghost" onClick={() => setShowFlightForm(false)}>Cancel</button>
                     <button className="btn btn-primary" onClick={saveManualFlight} disabled={flightSaving}>{flightSaving ? 'Saving…' : editFlightId ? 'Save Changes' : 'Create Flight'}</button>
                   </div>
@@ -610,106 +601,100 @@ export default function FixedFlightsPage() {
         )}
         {/* ── Tab: API Settings ── */}
         {tab === 'settings' && (
-          <div style={{ maxWidth: 700 }}>
+          <div className="ff-settings-wrap">
             {/* Conditions banner */}
-            <div style={{ background: '#0F172A', border: '1px solid #1E293B', borderRadius: 12, padding: '16px 20px', marginBottom: 28 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
+            <div className="ff-conditions-banner">
+              <div className="ff-conditions-title">
                 Nexus DMC API Conditions
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="ff-conditions-grid">
                 {[
                   { label: 'Minimum bookings',   value: '100 / month' },
                   { label: 'Wallet balance',      value: '₹1,00,000 minimum' },
                   { label: 'Portal vs API price', value: '₹50 per passenger' },
                   { label: 'Rate limit',          value: '100 requests / min' },
                 ].map(({ label, value }) => (
-                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', background: '#1E293B', borderRadius: 8, padding: '10px 14px' }}>
-                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>{label}</span>
-                    <span style={{ fontSize: 12, color: '#F1F5F9', fontWeight: 700 }}>{value}</span>
+                  <div key={label} className="ff-condition-row">
+                    <span className="ff-condition-label">{label}</span>
+                    <span className="ff-condition-value">{value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {settingsLoad ? (
-              <div style={{ color: '#94A3B8', padding: 24 }}>Loading…</div>
+              <div className="ff-loading-24">Loading…</div>
             ) : (
               <>
-                {settingsErr && <div style={{ background: '#450a0a', color: '#fca5a5', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 13 }}>{settingsErr}</div>}
-                {settingsOk  && <div style={{ background: '#052e16', color: '#86efac', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 13 }}>{settingsOk}</div>}
+                {settingsErr && <div className="ff-error-banner">{settingsErr}</div>}
+                {settingsOk  && <div className="ff-ok-banner">{settingsOk}</div>}
 
                 {/* Price markup */}
-                <div style={{ background: '#0F172A', border: '1px solid #1E293B', borderRadius: 12, padding: 20, marginBottom: 20 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: '#F1F5F9', marginBottom: 4 }}>Price Markup per Passenger</div>
-                  <div style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>
+                <div className="ff-card">
+                  <div className="ff-card-title">Price Markup per Passenger</div>
+                  <div className="ff-card-sub">
                     Added on top of Nexus API fare before showing to users. Nexus requires min ₹50/pax.
                   </div>
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>
+                  <div className="ff-inline-form-row">
+                    <div className="ff-flex-1">
+                      <label className="ff-field-label">
                         Amount (₹)
                       </label>
                       <input
                         type="number" min="50" step="1"
                         value={markupInput}
                         onChange={e => setMarkupInput(e.target.value)}
-                        style={{ width: '100%', background: '#1E293B', border: '1px solid #334155', borderRadius: 8, padding: '10px 14px', color: '#F1F5F9', fontSize: 14, fontWeight: 700, outline: 'none', boxSizing: 'border-box' as const }}
+                        className="ff-num-input"
                       />
                     </div>
                     <button
-                      className="btn btn-primary"
+                      className="btn btn-primary ff-btn-save"
                       onClick={() => saveSettings('markup')}
                       disabled={settingsSaving}
-                      style={{ padding: '10px 20px', whiteSpace: 'nowrap' as const }}
                     >
                       Save Markup
                     </button>
                   </div>
                   {apiSettings && (
-                    <div style={{ marginTop: 10, fontSize: 12, color: '#475569' }}>
-                      Current: <strong style={{ color: '#94A3B8' }}>₹{Number(apiSettings.markup_per_pax).toLocaleString('en-IN')}/pax</strong>
+                    <div className="ff-current-note">
+                      Current: <strong className="ff-current-value">₹{Number(apiSettings.markup_per_pax).toLocaleString('en-IN')}/pax</strong>
                       {' · '}Last updated: {new Date(apiSettings.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </div>
                   )}
                 </div>
 
                 {/* Account balance */}
-                <div style={{ background: '#0F172A', border: '1px solid #1E293B', borderRadius: 12, padding: 20 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: '#F1F5F9' }}>Nexus DMC Account Balance</div>
+                <div className="ff-card ff-card--last">
+                  <div className="ff-card-header-row">
+                    <div className="ff-card-title-inline">Nexus DMC Account Balance</div>
                     {apiSettings && (
-                      <div style={{
-                        padding: '4px 12px', borderRadius: 20, fontSize: 13, fontWeight: 800,
-                        background: Number(apiSettings.account_balance) < 100000 ? '#450a0a' : '#052e16',
-                        color:      Number(apiSettings.account_balance) < 100000 ? '#fca5a5' : '#86efac',
-                      }}>
+                      <div className={`ff-balance-pill ${Number(apiSettings.account_balance) < 100000 ? 'ff-balance-pill--low' : 'ff-balance-pill--ok'}`}>
                         ₹{Number(apiSettings.account_balance).toLocaleString('en-IN')}
                       </div>
                     )}
                   </div>
-                  <div style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>
+                  <div className="ff-card-sub">
                     Balance held with Nexus DMC. Each booking deducts automatically. Top up after depositing to Nexus.
                     {apiSettings && Number(apiSettings.account_balance) < 100000 && (
-                      <span style={{ color: '#fca5a5', fontWeight: 700 }}> ⚠ Below ₹1 lakh minimum — top up required.</span>
+                      <span className="ff-warn-text"> ⚠ Below ₹1 lakh minimum — top up required.</span>
                     )}
                   </div>
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>
+                  <div className="ff-inline-form-row">
+                    <div className="ff-flex-1">
+                      <label className="ff-field-label">
                         Set new balance after top-up (₹)
                       </label>
                       <input
                         type="number" min="0" step="1000"
                         value={balanceInput}
                         onChange={e => setBalanceInput(e.target.value)}
-                        style={{ width: '100%', background: '#1E293B', border: '1px solid #334155', borderRadius: 8, padding: '10px 14px', color: '#F1F5F9', fontSize: 14, fontWeight: 700, outline: 'none', boxSizing: 'border-box' as const }}
+                        className="ff-num-input"
                       />
                     </div>
                     <button
-                      className="btn btn-primary"
+                      className="btn btn-primary ff-btn-save"
                       onClick={() => saveSettings('balance')}
                       disabled={settingsSaving}
-                      style={{ padding: '10px 20px', whiteSpace: 'nowrap' as const }}
                     >
                       Update Balance
                     </button>

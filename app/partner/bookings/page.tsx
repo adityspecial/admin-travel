@@ -2,6 +2,10 @@
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { Pagination, usePagination } from '@/components/Pagination'
+import { StatCard } from '@/components/ui/StatCard'
+import { DataTable, ColumnDef } from '@/components/ui/DataTable'
+import { AppInput } from '@/components/ui/AppInput'
+import { Ticket, CreditCard, TrendingUp, Search } from 'lucide-react'
 
 interface Booking {
   id: string
@@ -18,9 +22,18 @@ interface Booking {
   agent?: { agency_name: string; agent_code: string }
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  flight: 'badge-blue', hotel: 'badge-teal', bus: 'badge-gray',
-  fixed_flight: 'badge-violet', package: 'badge-yellow',
+const STATUSES = ['all', 'confirmed', 'pending', 'cancelled']
+
+// The real badge system (globals.css) only ships green/red/yellow/blue/gray —
+// no teal or violet — so booking types and payment methods are mapped onto
+// those five tones instead of classes that don't exist.
+const TYPE_TONE: Record<string, string> = {
+  flight: 'badge-blue', hotel: 'badge-green', bus: 'badge-gray',
+  fixed_flight: 'badge-yellow', package: 'badge-red',
+}
+
+function formatCurrency(value: number) {
+  return `₹${(value ?? 0).toLocaleString('en-IN')}`
 }
 
 export default function PartnerBookingsPage() {
@@ -51,106 +64,133 @@ export default function PartnerBookingsPage() {
   const totalCommission = bookings.reduce((s, b) => s + b.commission, 0)
   const { slice: pageBookings, page, setPage, total } = usePagination(filtered, 20)
 
+  const columns: ColumnDef<Booking>[] = [
+    {
+      key: 'booking_ref',
+      header: 'Booking Ref',
+      render: (b) => <span className="data-table-code-pill">{b.booking_ref}</span>,
+    },
+    {
+      key: 'booking_type',
+      header: 'Type',
+      render: (b) => (
+        <span className={`badge ${TYPE_TONE[b.booking_type] ?? 'badge-gray'}`}>
+          {b.booking_type.replace('_', ' ')}
+        </span>
+      ),
+    },
+    {
+      key: 'customer_name',
+      header: 'Customer',
+      render: (b) => <span className="data-table-cell-bold">{b.customer_name ?? '--'}</span>,
+    },
+    {
+      key: 'agent',
+      header: 'Agent',
+      render: (b) => (
+        <span className="data-table-muted-cell">
+          {b.agent?.agency_name ?? 'Self'}
+          {b.agent?.agent_code && ` (${b.agent.agent_code})`}
+        </span>
+      ),
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      render: (b) => <span className="data-table-cell-bold">{formatCurrency(b.amount)}</span>,
+    },
+    {
+      key: 'commission',
+      header: 'Commission',
+      render: (b) => <span style={{ color: 'var(--success)', fontWeight: 700 }}>+{formatCurrency(b.commission)}</span>,
+    },
+    {
+      key: 'payment_method',
+      header: 'Payment',
+      render: (b) =>
+        b.payment_method === 'wallet' ? (
+          <span className="badge badge-yellow">Wallet</span>
+        ) : b.payment_method === 'razorpay' ? (
+          <span className="badge badge-blue">Razorpay</span>
+        ) : (
+          <span className="data-table-muted-cell">--</span>
+        ),
+    },
+    {
+      key: 'travel_date',
+      header: 'Travel Date',
+      render: (b) => (
+        <span className="data-table-muted-cell">
+          {b.travel_date ? new Date(b.travel_date).toLocaleDateString('en-IN') : '--'}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (b) => {
+        const isConfirmed = b.status === 'confirmed'
+        const isPending   = b.status === 'pending'
+        return (
+          <span className={`data-table-status-pill ${isConfirmed ? 'active' : 'inactive'} ${isPending ? 'agents-status-pill-pending' : ''}`}>
+            {isConfirmed ? '●Confirmed' : isPending ? '●Pending' : '●Cancelled'}
+          </span>
+        )
+      },
+    },
+  ]
+
   return (
     <div>
       <div className="admin-topbar">
         <h2>Team Bookings</h2>
-        <span className="topbar-meta">{bookings.length} total bookings</span>
+        <span className="topbar-meta">{bookings.length.toLocaleString('en-IN')} total bookings</span>
       </div>
 
       <div className="admin-content">
         <div className="page-stack">
-
-          <section className="stat-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-            {[
-              { label: 'Total Bookings',  value: bookings.length.toLocaleString('en-IN'), sub: 'Across your team',       icon: 'BK', tone: '' },
-              { label: 'Total Amount',    value: `₹${totalAmount.toLocaleString('en-IN')}`, sub: 'Combined booking value', icon: 'AM', tone: 'teal' },
-              { label: 'Total Commission',value: `₹${totalCommission.toLocaleString('en-IN')}`, sub: 'Earned by your team', icon: 'CM', tone: 'orange' },
-            ].map(card => (
-              <div className={`stat-card ${card.tone}`.trim()} key={card.label}>
-                <div className="stat-head">
-                  <div className="stat-num">{card.value}</div>
-                  <span className="stat-icon">{card.icon}</span>
-                </div>
-                <div className="stat-label">{card.label}</div>
-                <div className="stat-sub">{card.sub}</div>
-              </div>
-            ))}
-          </section>
-
-          <div className="table-card">
-            <div className="table-header">
-              <div>
-                <div className="card-title">All Team Bookings</div>
-                <div className="card-copy">Bookings made by you and all your sub-agents.</div>
-              </div>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <select className="form-input" style={{ width: 140 }} value={filter} onChange={e => setFilter(e.target.value)}>
-                  <option value="all">All statuses</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="cancelled">Cancelled</option>
-                  <option value="pending">Pending</option>
-                </select>
-                <input className="form-input" style={{ width: 220 }} placeholder="Search ref, customer, agent…"
-                  value={search} onChange={e => setSearch(e.target.value)} />
-              </div>
-            </div>
-
-            {loading ? (
-              <p style={{ padding: 20, color: 'var(--muted)' }}>Loading…</p>
-            ) : (
-              <>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Booking Ref</th>
-                      <th>Type</th>
-                      <th>Customer</th>
-                      <th>Agent</th>
-                      <th>Amount</th>
-                      <th>Commission</th>
-                      <th>Payment</th>
-                      <th>Travel Date</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.length === 0 ? (
-                      <tr><td colSpan={9} className="empty-state">No bookings found.</td></tr>
-                    ) : pageBookings.map(b => (
-                      <tr key={b.id}>
-                        <td><code style={{ fontSize: 12 }}>{b.booking_ref}</code></td>
-                        <td><span className={`badge ${TYPE_COLORS[b.booking_type] ?? 'badge-gray'}`}>{b.booking_type.replace('_', ' ')}</span></td>
-                        <td style={{ fontWeight: 600 }}>{b.customer_name ?? '--'}</td>
-                        <td style={{ fontSize: 12, color: 'var(--muted)' }}>
-                          {b.agent?.agency_name ?? 'Self'}
-                          {b.agent?.agent_code && <span style={{ marginLeft: 4, opacity: 0.7 }}>({b.agent.agent_code})</span>}
-                        </td>
-                        <td style={{ fontWeight: 700 }}>₹{b.amount.toLocaleString('en-IN')}</td>
-                        <td style={{ color: 'var(--success)', fontWeight: 700 }}>+₹{b.commission.toLocaleString('en-IN')}</td>
-                        <td>
-                          {b.payment_method === 'wallet' ? (
-                            <span className="badge badge-violet">Wallet</span>
-                          ) : b.payment_method === 'razorpay' ? (
-                            <span className="badge badge-blue">Razorpay</span>
-                          ) : (
-                            <span style={{ color: 'var(--muted)' }}>--</span>
-                          )}
-                        </td>
-                        <td style={{ color: 'var(--muted)' }}>{b.travel_date ? new Date(b.travel_date).toLocaleDateString('en-IN') : '--'}</td>
-                        <td>
-                          <span className={`badge ${b.status === 'confirmed' ? 'badge-green' : b.status === 'cancelled' ? 'badge-red' : 'badge-gray'}`}>
-                            {b.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <Pagination total={total} page={page} perPage={20} onPage={setPage} />
-              </>
-            )}
+          <div className="stat-grid">
+            <StatCard Icon={Ticket} label="Total Bookings" value={bookings.length} sub="Across your team" badge="Volume" />
+            <StatCard Icon={CreditCard} label="Total Amount" value={formatCurrency(totalAmount)} sub="Combined booking value" badge="Revenue" iconBg="#f0fdf4" iconColor="#0d9488" badgeBg="#ccfbf1" badgeColor="#0f766e" />
+            <StatCard Icon={TrendingUp} label="Total Commission" value={formatCurrency(totalCommission)} sub="Earned by your team" badge="Earnings" iconBg="#fff7ed" iconColor="#ea580c" badgeBg="#ffedd5" badgeColor="#c2410c" />
           </div>
+
+          <DataTable
+            title="All Team Bookings"
+            subtitle="Bookings made by you and all your sub-agents."
+            headerAction={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ width: 260 }}>
+                  <AppInput
+                    placeholder="Search ref, customer, agent…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    icon={<Search size={15} />}
+                    wrapperClassName="m-0"
+                  />
+                </div>
+
+                <div className="segmented-row">
+                  {STATUSES.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className={`segment-btn ${filter === s ? 'active' : ''}`}
+                      onClick={() => setFilter(s)}
+                    >
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            }
+            columns={columns}
+            data={pageBookings}
+            loading={loading}
+            emptyMessage="No bookings found."
+            keyExtractor={(b) => b.id}
+            footer={<Pagination total={total} page={page} perPage={20} onPage={setPage} />}
+          />
         </div>
       </div>
     </div>

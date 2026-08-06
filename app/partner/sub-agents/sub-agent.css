@@ -1,0 +1,7 @@
+/* ── Page: Sub-Agents (app/partner/sub-agents/page.tsx) ─────────────────────── */
+
+.subagent-suspend-warning {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 10px;
+}

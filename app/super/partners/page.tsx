@@ -169,25 +169,8 @@ export default function PartnersPage() {
       header: 'Tier',
       render: (p) => {
         const tier = (p.tier || 'silver').toLowerCase()
-        const tierStyle =
-          tier === 'platinum'
-            ? { bg: '#fef08a', color: '#854d0e' }
-            : tier === 'gold'
-            ? { bg: '#dbeafe', color: '#1e40af' }
-            : { bg: '#f1f5f9', color: '#475569' }
         return (
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 800,
-              padding: '3px 9px',
-              borderRadius: 99,
-              background: tierStyle.bg,
-              color: tierStyle.color,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}
-          >
+          <span className={`agents-tier-badge agents-tier-badge--${tier}`}>
             {tier}
           </span>
         )
@@ -206,7 +189,7 @@ export default function PartnersPage() {
       key: 'createdAt',
       header: 'Created',
       render: (p) => (
-        <span className="data-table-muted-cell" style={{ fontSize: 12.5 }}>
+        <span className="data-table-muted-cell partners-created-cell">
           {new Date(p.createdAt).toLocaleDateString('en-IN')}
         </span>
       ),
@@ -223,7 +206,7 @@ export default function PartnersPage() {
       <div className="admin-content">
         <div className="page-stack">
           {/* Stat Cards */}
-          <section className="stat-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+          <section className="stat-grid partners-stat-grid">
             {statCards.map((card) => (
               <StatCard key={card.label} {...card} />
             ))}
@@ -234,22 +217,21 @@ export default function PartnersPage() {
             title="Senior Agent Partners"
             subtitle="Manage which agents have admin access to manage their sub-agents."
             headerAction={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 280 }}>
+              <div className="partners-header-actions">
+                <div className="partners-search-wrapper">
                   <AppInput
                     placeholder="Search name, email, code..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     icon={<Search size={15} />}
                     wrapperClassName="m-0"
-                    style={{ padding: '8px 12px 8px 36px', fontSize: 13 }}
+                    className="partners-search-input"
                   />
                 </div>
                 <button
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-primary btn-sm partners-btn-icon-gap"
                   onClick={() => setShowCreateForm(true)}
                   disabled={availableAgents.length === 0}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
                 >
                   <Plus size={14} />
                   <span>Add Partner</span>
@@ -277,7 +259,7 @@ export default function PartnersPage() {
         onClose={() => setShowCreateForm(false)}
       >
         {createSuccess && (
-          <div style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 12, padding: '12px 14px', fontSize: 13, fontWeight: 700 }}>
+          <div className="partners-success-banner">
             ✅ {createSuccess}
           </div>
         )}

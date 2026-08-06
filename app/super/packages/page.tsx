@@ -95,21 +95,13 @@ export default function SuperPackagesPage() {
               subtitle: pkg.destination,
             })
           }
-          style={{
-            width: 56,
-            height: 40,
-            borderRadius: 8,
-            overflow: 'hidden',
-            background: '#f1f5f9',
-            flexShrink: 0,
-            cursor: pkg.thumbnail_url ? 'pointer' : 'default',
-          }}
+          className={`pkg-thumb-cell ${pkg.thumbnail_url ? 'pkg-thumb-cell--clickable' : ''}`}
           title={pkg.thumbnail_url ? 'Click to open full desktop preview' : undefined}
         >
           {pkg.thumbnail_url ? (
-            <img src={pkg.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={pkg.thumbnail_url} alt="" className="pkg-thumb-img" />
           ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#94a3b8', fontWeight: 600 }}>
+            <div className="pkg-thumb-empty">
               No img
             </div>
           )}
@@ -120,12 +112,12 @@ export default function SuperPackagesPage() {
       key: 'name',
       header: 'Package Title',
       render: (pkg) => (
-        <div style={{ maxWidth: 240 }}>
-          <div className="data-table-cell-bold" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div className="pkg-title-cell">
+          <div className="data-table-cell-bold pkg-title-text">
             {pkg.name}
           </div>
           {pkg.rating != null && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, color: '#d97706', marginTop: 2 }}>
+            <div className="pkg-rating-row">
               <Star size={11} fill="#d97706" />
               <span>{pkg.rating.toFixed(1)}</span>
             </div>
@@ -137,7 +129,7 @@ export default function SuperPackagesPage() {
       key: 'destination',
       header: 'Destination',
       render: (pkg) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#334155', fontWeight: 600 }}>
+        <div className="pkg-dest-row">
           <MapPin size={13} color="#64748b" />
           <span>{pkg.destination}</span>
         </div>
@@ -147,7 +139,7 @@ export default function SuperPackagesPage() {
       key: 'duration',
       header: 'Duration',
       render: (pkg) => (
-        <span className="data-table-code-pill" style={{ background: '#f1f5f9', color: '#334155' }}>
+        <span className="data-table-code-pill pkg-duration-pill">
           {pkg.duration_nights}N / {pkg.duration_days}D
         </span>
       ),
@@ -156,7 +148,7 @@ export default function SuperPackagesPage() {
       key: 'base_price',
       header: 'Base Price',
       render: (pkg) => (
-        <span style={{ fontWeight: 800, color: '#0f172a' }}>
+        <span className="pkg-price-cell">
           ₹{pkg.base_price.toLocaleString('en-IN')}
         </span>
       ),
@@ -173,19 +165,7 @@ export default function SuperPackagesPage() {
         <button
           type="button"
           onClick={() => toggleFeatured(pkg)}
-          style={{
-            background: pkg.is_featured ? '#fef3c7' : '#f1f5f9',
-            color: pkg.is_featured ? '#b45309' : '#64748b',
-            border: `1px solid ${pkg.is_featured ? '#fde68a' : '#e2e8f0'}`,
-            borderRadius: 99,
-            padding: '3px 10px',
-            fontSize: 11,
-            fontWeight: 800,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
+          className={`pkg-feature-btn ${pkg.is_featured ? 'pkg-feature-btn--on' : ''}`}
         >
           <Sparkles size={11} fill={pkg.is_featured ? '#b45309' : 'none'} />
           <span>{pkg.is_featured ? 'Featured' : 'Feature'}</span>
@@ -199,8 +179,7 @@ export default function SuperPackagesPage() {
         <button
           type="button"
           onClick={() => toggleActive(pkg)}
-          className={`data-table-status-pill ${pkg.is_active ? 'active' : 'inactive'}`}
-          style={{ border: 'none', cursor: 'pointer' }}
+          className={`data-table-status-pill pkg-status-toggle-btn ${pkg.is_active ? 'active' : 'inactive'}`}
         >
           {pkg.is_active ? '●Active' : '●Inactive'}
         </button>
@@ -267,7 +246,7 @@ export default function SuperPackagesPage() {
 
           {/* Alert Message Banner */}
           {msg && (
-            <div style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 12, padding: '12px 16px', fontSize: 13, fontWeight: 700 }}>
+            <div className="pkg-alert-ok">
               ✅ {msg}
             </div>
           )}
@@ -277,15 +256,15 @@ export default function SuperPackagesPage() {
             title="Package Inventory"
             subtitle="Browse, filter, toggle featured status, and edit itinerary details for all holiday packages."
             headerAction={
-              <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center', gap: 8, width: 340 }}>
-                <div style={{ flex: 1 }}>
+              <form onSubmit={handleSearch} className="pkg-search-form">
+                <div className="pkg-flex-1">
                   <AppInput
                     placeholder="Search name, destination, operator..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     icon={<Search size={15} />}
                     wrapperClassName="m-0"
-                    style={{ padding: '8px 12px 8px 36px', fontSize: 13 }}
+                    className="pkg-search-input"
                   />
                 </div>
                 {search && (

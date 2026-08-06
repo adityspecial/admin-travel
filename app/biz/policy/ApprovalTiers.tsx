@@ -2,9 +2,6 @@
 
 export interface ApprovalTier { maxAmount: number | null; approval: string }
 
-const SEL = { flex: 1, padding: '7px 10px', borderRadius: 6, border: '1.5px solid #E5E7EB', fontSize: 13, outline: 'none' as const, background: '#fff' }
-const AMT = { width: 120, padding: '6px 10px', borderRadius: 6, border: '1.5px solid #E5E7EB', fontSize: 13, outline: 'none' as const }
-
 // Ordered list of { upTo amount, who approves } — the last tier always has
 // maxAmount: null (no upper bound). Replaces a flat in/out-of-policy switch
 // with proper budget tiering (e.g. auto-approve under ₹10k, manager
@@ -29,24 +26,24 @@ export function ApprovalTiersEditor({ tiers, onChange }: { tiers: ApprovalTier[]
         const isLast  = i === tiers.length - 1
         const prevMax = i > 0 ? tiers[i - 1].maxAmount : 0
         return (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <span style={{ fontSize: 12, color: '#6B7280', minWidth: 76, flexShrink: 0 }}>
+          <div key={i} className="pol-tier-row">
+            <span className="pol-tier-label">
               {i === 0 ? 'Up to ₹' : `₹${(prevMax ?? 0).toLocaleString('en-IN')} – ${isLast ? 'above' : ''}`}
             </span>
             {isLast ? (
-              <span style={{ flexShrink: 0, width: 120 }} />
+              <span className="pol-tier-spacer" />
             ) : (
-              <input type="number" min={0} value={t.maxAmount ?? ''} style={AMT}
+              <input type="number" min={0} value={t.maxAmount ?? ''} className="pol-tier-amount"
                 onChange={e => updateTier(i, { maxAmount: Number(e.target.value) || 0 })} />
             )}
-            <select value={t.approval} style={SEL} onChange={e => updateTier(i, { approval: e.target.value })}>
+            <select value={t.approval} className="pol-tier-select" onChange={e => updateTier(i, { approval: e.target.value })}>
               <option value="none">No Approval Required</option>
               <option value="manager">Manager Approval</option>
               <option value="hod">HOD Approval</option>
             </select>
             {tiers.length > 1 && (
               <button onClick={() => removeTier(i)} title="Remove tier"
-                style={{ border: 'none', background: 'none', color: '#DC2626', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '0 4px', flexShrink: 0 }}>
+                className="pol-tier-remove-btn">
                 ×
               </button>
             )}
@@ -54,7 +51,7 @@ export function ApprovalTiersEditor({ tiers, onChange }: { tiers: ApprovalTier[]
         )
       })}
       <button onClick={addTier}
-        style={{ marginTop: 4, padding: '6px 14px', borderRadius: 6, border: '1.5px dashed #CBD5E1', background: 'none', color: '#6B7280', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+        className="pol-tier-add-btn">
         + Add Tier
       </button>
     </div>

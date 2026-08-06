@@ -1,0 +1,64 @@
+Super Admin (platform-wide, AirDunia staff — admin/super/*)
+Organizations
+
+View, create, edit, delete any org
+Toggle an org active/inactive (kill-switch)
+Override any org's cap/buffer directly (flight/hotel/insurance/cab/visa/package, all 6 + buffers)
+Invite/edit/delete members in any org, across orgs
+View any org's spend, view any org's pending approvals
+Bookings
+
+View/search every booking on the platform, across all types (flight/hotel/cab/bus/insurance/multicity/package)
+View PNR/booking detail for any booking
+Cancel any flight booking directly (admin override — hotel/cab/bus cancel-override not built yet)
+Payments
+
+View/filter all Razorpay payments platform-wide
+Trigger a refund on any payment
+Users (B2C consumers)
+
+Search/view any consumer's profile, bookings, payment history
+Ban/unban a user (blocks login immediately via Supabase)
+Force-logout a user (invalidates their sessions within ~60s)
+Flag/unflag a user as suspicious (no access restriction, just a marker)
+Soft-delete a user (anonymizes profile + bans login, keeps booking history)
+Trigger a password-reset email for a user
+Export a user's full data (DPDP compliance)
+Risk / Security
+
+View and manage the IP blocklist (block/unblock an IP; enforced at every authenticated request across all portals)
+System
+
+View which third-party API credentials are configured (boolean only, never actual values) — TekTravels, Razorpay, FareGuide, Nexus, AirIQ, Kafila, FlightSeva, Gozo, ASEGO, WhatsApp, Email
+View the platform-wide API health/booking-volume dashboard
+Reports
+
+Cross-agency agent leaderboard, flight route/geo breakdown
+Audit
+
+View the admin action audit log (who did what, across super/biz/partner)
+Biz Admin
+Two different roles share this label — worth keeping distinct:
+
+a) Org's own staff (employee / manager / admin roles, live inside mybiz/biz-portal)
+
+Book flights/hotels/buses/cabs/insurance/packages/fixed-flights for themselves (and colleagues, if policy allows)
+Manager: view team's bookings, approve/reject bookings in their department, view pending approvals
+Org admin: invite/edit members, manage departments & cost centers, set auto-approval rules, view all/team trip reports incl. spend, view invoices/GST reports/wallet
+b) org_manager — AirDunia staff assigned to manage ONE org via admin/biz/* (dangerous keys start off, must be explicitly granted per staffer)
+
+Edit that org's caps/buffers and travel policy (flight/hotel/cab tiers, cabin restrictions, addon toggles)
+View that org's wallet, view/decide that org's pending approvals
+Edit company details, manage that org's promos, manage cost centers, respond to that org's support tickets
+Partner Admin (agent_admin — AirDunia staff managing ONE partner agency via admin/partner/*)
+Routine ops (on by default):
+
+Manage that agency's sub-agents
+View wallet, view payouts, view customers, view bookings
+Manage markups
+Manage promos
+Respond to visa enquiries
+Dangerous, off by default (must be explicitly granted per staffer):
+
+Decide/approve payouts (releases real money)
+Manage promo cash (injects real money into wallets)

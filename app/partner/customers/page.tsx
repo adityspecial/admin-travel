@@ -2,6 +2,11 @@
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { Pagination, usePagination } from '@/components/Pagination'
+import { StatCard } from '@/components/ui/StatCard'
+import { DataTable, ColumnDef } from '@/components/ui/DataTable'
+import { AppInput } from '@/components/ui/AppInput'
+import { Users, IdCard, AlertTriangle, Search } from 'lucide-react'
+import './cutomer.css'
 
 interface Customer { id: string; name: string; email?: string; phone?: string; passport_no?: string; passport_expiry?: string; gender?: string; created_at: string }
 
@@ -30,45 +35,86 @@ export default function PartnerCustomersPage() {
 
   const { slice: pageCustomers, page, setPage, total } = usePagination(customers, 20)
 
+  const expiredCount = customers.filter(c => c.passport_expiry && new Date(c.passport_expiry) < new Date()).length
+  const missingPassportCount = customers.filter(c => !c.passport_no).length
+
+  const columns: ColumnDef<Customer>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (c) => <span className="data-table-cell-bold">{c.name}</span>,
+    },
+    {
+      key: 'phone',
+      header: 'Phone',
+      render: (c) => c.phone ?? '--',
+    },
+    {
+      key: 'email',
+      header: 'Email',
+      render: (c) => <span className="data-table-muted-cell">{c.email ?? '--'}</span>,
+    },
+    {
+      key: 'passport_no',
+      header: 'Passport',
+      render: (c) => c.passport_no ? <span className="data-table-code-pill">{c.passport_no}</span> : <span className="data-table-muted-cell">--</span>,
+    },
+    {
+      key: 'passport_expiry',
+      header: 'Expiry',
+      render: (c) => {
+        const expired = c.passport_expiry && new Date(c.passport_expiry) < new Date()
+        return <span className={expired ? 'customer-expiry-cell--expired' : undefined}>{fmtDate(c.passport_expiry)}</span>
+      },
+    },
+    {
+      key: 'gender',
+      header: 'Gender',
+      render: (c) => c.gender ?? '--',
+    },
+    {
+      key: 'created_at',
+      header: 'Added',
+      render: (c) => <span className="data-table-muted-cell">{fmtDate(c.created_at)}</span>,
+    },
+  ]
+
   return (
     <div>
       <div className="admin-topbar">
         <h2>Customers</h2>
-        <span className="topbar-meta">{customers.length} saved profiles</span>
+        <span className="topbar-meta">{customers.length.toLocaleString('en-IN')} saved profiles</span>
       </div>
+
       <div className="admin-content">
         <div className="page-stack">
-          <div className="table-card">
-            <div className="table-header">
-              <div>
-                <div className="card-title">Customer CRM</div>
-                <div className="card-copy">All traveller profiles saved by this agent.</div>
-              </div>
-              <input className="toolbar-search" style={{ width: 280 }} placeholder="Search by name, email or phone…"
-                value={search} onChange={e => handleSearch(e.target.value)} />
-            </div>
-            <table>
-              <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Passport</th><th>Expiry</th><th>Gender</th><th>Added</th></tr></thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={7} className="empty-state">Loading…</td></tr>
-                ) : customers.length === 0 ? (
-                  <tr><td colSpan={7} className="empty-state">No customers yet.</td></tr>
-                ) : pageCustomers.map(c => (
-                  <tr key={c.id}>
-                    <td style={{ fontWeight: 700 }}>{c.name}</td>
-                    <td>{c.phone ?? '--'}</td>
-                    <td style={{ color: 'var(--ink-3)' }}>{c.email ?? '--'}</td>
-                    <td><code style={{ fontSize: 12 }}>{c.passport_no ?? '--'}</code></td>
-                    <td style={{ color: c.passport_expiry && new Date(c.passport_expiry) < new Date() ? 'var(--danger)' : undefined }}>{fmtDate(c.passport_expiry)}</td>
-                    <td>{c.gender ?? '--'}</td>
-                    <td style={{ color: 'var(--ink-3)' }}>{fmtDate(c.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <Pagination total={total} page={page} perPage={20} onPage={setPage} />
+          <div className="stat-grid">
+            <StatCard Icon={Users} label="Total Customers" value={customers.length} sub="Saved traveller profiles" badge="CRM" />
+            <StatCard Icon={AlertTriangle} label="Expired Passports" value={expiredCount} sub="Need renewal before next trip" badge="Attention" iconBg="#fef2f2" iconColor="#dc2626" badgeBg="#fee2e2" badgeColor="#b91c1c" />
+            <StatCard Icon={IdCard} label="Missing Passport Info" value={missingPassportCount} sub="Profiles without a passport number" badge="Incomplete" iconBg="#fff7ed" iconColor="#ea580c" badgeBg="#ffedd5" badgeColor="#c2410c" />
           </div>
+
+          <DataTable
+            title="Customer CRM"
+            subtitle="All traveller profiles saved by this agent."
+            headerAction={
+              <div className="customer-search-wrapper">
+                <AppInput
+                  placeholder="Search by name, email or phone…"
+                  value={search}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  icon={<Search size={15} />}
+                  wrapperClassName="m-0"
+                />
+              </div>
+            }
+            columns={columns}
+            data={pageCustomers}
+            loading={loading}
+            emptyMessage="No customers yet."
+            keyExtractor={(c) => c.id}
+            footer={<Pagination total={total} page={page} perPage={20} onPage={setPage} />}
+          />
         </div>
       </div>
     </div>

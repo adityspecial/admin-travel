@@ -224,6 +224,17 @@ textarea {
   transform: scale(1.05);
 }
 
+.toggle-icon-desktop,
+.toggle-icon-mobile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-icon-mobile {
+  display: none;
+}
+
 .sidebar.collapsed .nav-section {
   display: none;
 }
@@ -356,7 +367,7 @@ textarea {
 
 .nav-link.active .nav-icon {
   background: oklch(0 0 0 / 0.16);
-  color: var(--sidebar-text, #ffffff);
+  color: oklch(1 0 0);
 }
 
 /* ── Main content ───────────────────────────────────────────────────── */
@@ -1213,14 +1224,11 @@ code {
 }
 
 /* ── Partner sidebar override ───────────────────────────────────────── */
-
-.partner-sidebar {
-  background: oklch(0.148 0.055 50);
-}
-
-.partner-sidebar .nav-link.active {
-  background: var(--orange);
-}
+/* Background and active-link color are intentionally NOT hardcoded here —
+   .sidebar { background-color: var(--sidebar-bg) } and .nav-link.active
+   { background: var(--accent) } already apply, and hardcoding here blocked
+   the ThemeCustomizer's Sidebar Background / Primary Accent Swatch pickers
+   from having any effect on /partner. */
 
 .page-hero.partner-hero {
   background: var(--orange);
@@ -1269,6 +1277,18 @@ aside::-webkit-scrollbar {
     position: static;
     width: auto;
     min-height: auto;
+  }
+
+  .toggle-icon-desktop {
+    display: none;
+  }
+
+  .toggle-icon-mobile {
+    display: inline-flex;
+  }
+
+  .sidebar.collapsed .sidebar-nav {
+    display: none;
   }
 
   .admin-topbar,

@@ -137,35 +137,30 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
   ] as const
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
-      <div style={{ background:'#fff', borderRadius:14, width:'100%', maxWidth:720, maxHeight:'92vh', display:'flex', flexDirection:'column', boxShadow:'0 24px 64px rgba(0,0,0,0.18)' }}>
+    <div className="visa-modal-overlay">
+      <div className="visa-modal-box">
 
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'18px 24px', borderBottom:'1px solid #E5E7EB', flexShrink:0 }}>
+        <div className="visa-modal-header">
           <div>
-            <h2 style={{ margin:0, fontSize:17, fontWeight:700 }}>Edit Visa Page</h2>
-            {pageTitle && <p style={{ margin:'2px 0 0', fontSize:12, color:'#6B7280' }}>{pageTitle}</p>}
+            <h2 className="visa-modal-title">Edit Visa Page</h2>
+            {pageTitle && <p className="visa-modal-subtitle">{pageTitle}</p>}
           </div>
-          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', fontSize:22, color:'#9CA3AF' }}>✕</button>
+          <button onClick={onClose} className="visa-modal-close-btn">✕</button>
         </div>
 
-        <div style={{ display:'flex', borderBottom:'1px solid #E5E7EB', overflowX:'auto', flexShrink:0 }}>
+        <div className="visa-modal-tabs">
           {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id as any)} style={{
-              padding:'10px 15px', border:'none', background:'none', cursor:'pointer', whiteSpace:'nowrap',
-              fontSize:13, fontWeight: tab===t.id ? 700 : 500,
-              color: tab===t.id ? '#2563EB' : '#6B7280',
-              borderBottom: tab===t.id ? '2px solid #2563EB' : '2px solid transparent',
-            }}>{t.label}</button>
+            <button key={t.id} onClick={() => setTab(t.id as any)} className={`visa-modal-tab ${tab === t.id ? 'visa-modal-tab--active' : ''}`}>{t.label}</button>
           ))}
         </div>
 
-        <div style={{ flex:1, overflowY:'auto', padding:24 }}>
-          {loading ? <div style={{ textAlign:'center', padding:40, color:'#6B7280' }}>Loading…</div> : <>
+        <div className="visa-modal-body">
+          {loading ? <div className="visa-modal-loading">Loading…</div> : <>
 
             {/* ── Hero & SEO ──────────────────────────────────────────── */}
             {tab === 'hero' && (
-              <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+              <div className="visa-stack-14">
+                <div className="visa-form-grid-14">
                   <F label="Country" value={country} onChange={setCountry} placeholder="Singapore" />
                   <F label="Page Title" value={title} onChange={setTitle} placeholder="Singapore Visa" />
                   <F label="Processing Time" value={processingTime} onChange={setProcessingTime} placeholder="3 to 5 Working Days" />
@@ -174,10 +169,10 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
                   <F label="Sample Visa Image URL" value={sampleVisaUrl} onChange={setSampleVisaUrl} placeholder="https://…" />
                 </div>
                 <F label="Hero Background Image URL" value={heroImage} onChange={setHeroImage} placeholder="https://…" />
-                {heroImage && <img src={heroImage} alt="" style={{ width:'100%', maxHeight:180, objectFit:'cover', borderRadius:8, border:'1px solid #E5E7EB' }} />}
+                {heroImage && <img src={heroImage} alt="" className="visa-hero-preview" />}
                 <TA label="Meta Description (SEO)" value={metaDesc} onChange={setMetaDesc} rows={2} placeholder="Apply for Singapore Visa online. Fast processing in 3–5 days…" />
                 <LineList label="Keywords (SEO)" value={keywords} onChange={setKeywords} placeholder="e.g. singapore visa for indians" />
-                <div style={{ display:'flex', alignItems:'center', gap:24, paddingTop:4 }}>
+                <div className="visa-checkbox-row">
                   <Chk label="Active (visible on website)" checked={isActive} onChange={setIsActive} />
                 </div>
                 <LineList label="Footer Notes (below pricing cards)" value={footerNotes} onChange={setFooterNotes}
@@ -187,20 +182,20 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
 
             {/* ── About ────────────────────────────────────────────────── */}
             {tab === 'about' && (
-              <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+              <div className="visa-stack-16">
                 <F label="Section Heading" value={aboutTitle} onChange={setAboutTitle} placeholder="Singapore Visa for Indians" />
                 <div>
-                  <label style={lbl}>About Paragraphs</label>
-                  <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:6 }}>
+                  <label className="visa-field-label">About Paragraphs</label>
+                  <div className="visa-stack6-mt6">
                     {aboutParagraphs.map((p, i) => (
-                      <div key={i} style={{ display:'flex', gap:6, alignItems:'flex-start' }}>
+                      <div key={i} className="visa-para-row">
                         <textarea value={p} rows={3} placeholder="Paragraph text…"
                           onChange={e => setAboutParagraphs(ps => ps.map((x,j) => j===i ? e.target.value : x))}
-                          style={{ ...inp(), flex:1, resize:'vertical', lineHeight:1.5 }} />
-                        <button onClick={() => setAboutParagraphs(ps => ps.filter((_,j) => j!==i))} style={rmBtn()}>✕</button>
+                          className="visa-field-input visa-field-flex visa-field-textarea" />
+                        <button onClick={() => setAboutParagraphs(ps => ps.filter((_,j) => j!==i))} className="visa-btn-remove">✕</button>
                       </div>
                     ))}
-                    <button onClick={() => setAboutParagraphs(ps => [...ps, ''])} style={addBtn()}>+ Add Paragraph</button>
+                    <button onClick={() => setAboutParagraphs(ps => [...ps, ''])} className="visa-btn-add">+ Add Paragraph</button>
                   </div>
                 </div>
               </div>
@@ -208,15 +203,15 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
 
             {/* ── Visa Types ────────────────────────────────────────────── */}
             {tab === 'types' && (
-              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                <p style={{ margin:'0 0 4px', fontSize:12, color:'#6B7280' }}>Each card shows as a pricing table on the visa page.</p>
+              <div className="visa-stack-12">
+                <p className="visa-hint">Each card shows as a pricing table on the visa page.</p>
                 {visaTypes.map((t, i) => (
-                  <div key={i} style={card()}>
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-                      <span style={{ fontSize:13, fontWeight:700, color:'#2563EB' }}>Visa Type {i+1}</span>
-                      <button onClick={() => setVisaTypes(vt => vt.filter((_,j) => j!==i))} style={rmBtn()}>✕ Remove</button>
+                  <div key={i} className="visa-card">
+                    <div className="visa-row-mb10">
+                      <span className="visa-label-blue">Visa Type {i+1}</span>
+                      <button onClick={() => setVisaTypes(vt => vt.filter((_,j) => j!==i))} className="visa-btn-remove">✕ Remove</button>
                     </div>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                    <div className="visa-grid2-10">
                       <F label="Visa Type Name" value={t.name} onChange={v => setVisaTypes(vt => vt.map((x,j) => j===i ? {...x, name:v} : x))} placeholder="Singapore Tourist Visa" />
                       <F label="Processing Time" value={t.processing_time} onChange={v => setVisaTypes(vt => vt.map((x,j) => j===i ? {...x, processing_time:v} : x))} placeholder="3-5 working days" />
                       <F label="Stay Period" value={t.stay_period} onChange={v => setVisaTypes(vt => vt.map((x,j) => j===i ? {...x, stay_period:v} : x))} placeholder="Up to 30 days" />
@@ -226,54 +221,54 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
                     </div>
                   </div>
                 ))}
-                <button onClick={() => setVisaTypes(vt => [...vt, { name:'', processing_time:'', stay_period:'', validity:'', visa_fee:'', service_charge:'' }])} style={addBtn()}>+ Add Visa Type</button>
+                <button onClick={() => setVisaTypes(vt => [...vt, { name:'', processing_time:'', stay_period:'', validity:'', visa_fee:'', service_charge:'' }])} className="visa-btn-add">+ Add Visa Type</button>
               </div>
             )}
 
             {/* ── Docs & FAQs ────────────────────────────────────────────── */}
             {tab === 'docs' && (
-              <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              <div className="visa-stack-20">
                 <div>
-                  <label style={lbl}>Document Sections (Accordion)</label>
-                  <p style={{ margin:'2px 0 8px', fontSize:11, color:'#9CA3AF' }}>Each section becomes an expandable accordion on the page.</p>
-                  <div style={{ display:'flex', flexDirection:'column', gap:12, marginTop:6 }}>
+                  <label className="visa-field-label">Document Sections (Accordion)</label>
+                  <p className="visa-hint-sub">Each section becomes an expandable accordion on the page.</p>
+                  <div className="visa-stack12-mt6">
                     {docSections.map((sec, i) => (
-                      <div key={i} style={card()}>
-                        <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:10 }}>
+                      <div key={i} className="visa-card">
+                        <div className="visa-row-gap8-mb10">
                           <input value={sec.title} placeholder="Section heading e.g. Must Have Documents"
                             onChange={e => setDocSections(ds => ds.map((x,j) => j===i ? {...x, title:e.target.value} : x))}
-                            style={{ ...inp(), flex:1, fontWeight:600 }} />
-                          <button onClick={() => setDocSections(ds => ds.filter((_,j) => j!==i))} style={rmBtn()}>✕</button>
+                            className="visa-field-input visa-field-flex visa-field-bold" />
+                          <button onClick={() => setDocSections(ds => ds.filter((_,j) => j!==i))} className="visa-btn-remove">✕</button>
                         </div>
                         {sec.items.map((item, k) => (
-                          <div key={k} style={{ display:'flex', gap:6, alignItems:'center', marginBottom:6 }}>
+                          <div key={k} className="visa-item-row-mb6">
                             <input value={item} placeholder="Document requirement…"
                               onChange={e => setDocSections(ds => ds.map((x,j) => j===i ? {...x, items: x.items.map((it,l) => l===k ? e.target.value : it)} : x))}
-                              style={{ ...inp(), flex:1 }} />
-                            <button onClick={() => setDocSections(ds => ds.map((x,j) => j===i ? {...x, items: x.items.filter((_,l) => l!==k)} : x))} style={rmBtn()}>✕</button>
+                              className="visa-field-input visa-field-flex" />
+                            <button onClick={() => setDocSections(ds => ds.map((x,j) => j===i ? {...x, items: x.items.filter((_,l) => l!==k)} : x))} className="visa-btn-remove">✕</button>
                           </div>
                         ))}
-                        <button onClick={() => setDocSections(ds => ds.map((x,j) => j===i ? {...x, items:[...x.items,'']} : x))} style={{ ...addBtn(), fontSize:12, padding:'5px 10px' }}>+ Add Document</button>
+                        <button onClick={() => setDocSections(ds => ds.map((x,j) => j===i ? {...x, items:[...x.items,'']} : x))} className="visa-btn-add visa-btn-add--sm">+ Add Document</button>
                       </div>
                     ))}
-                    <button onClick={() => setDocSections(ds => [...ds, { title:'', items:[] }])} style={addBtn()}>+ Add Section</button>
+                    <button onClick={() => setDocSections(ds => [...ds, { title:'', items:[] }])} className="visa-btn-add">+ Add Section</button>
                   </div>
                 </div>
 
                 <div>
-                  <label style={lbl}>FAQs</label>
-                  <div style={{ display:'flex', flexDirection:'column', gap:10, marginTop:6 }}>
+                  <label className="visa-field-label">FAQs</label>
+                  <div className="visa-stack10-mt6">
                     {faqs.map((f, i) => (
-                      <div key={i} style={card()}>
-                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                          <span style={{ fontSize:12, fontWeight:700, color:'#374151' }}>FAQ {i+1}</span>
-                          <button onClick={() => setFaqs(fs => fs.filter((_,j) => j!==i))} style={rmBtn()}>✕ Remove</button>
+                      <div key={i} className="visa-card">
+                        <div className="visa-row-mb8">
+                          <span className="visa-label-dark-sm">FAQ {i+1}</span>
+                          <button onClick={() => setFaqs(fs => fs.filter((_,j) => j!==i))} className="visa-btn-remove">✕ Remove</button>
                         </div>
                         <F label="Question" value={f.question} onChange={v => setFaqs(fs => fs.map((x,j) => j===i ? {...x, question:v} : x))} placeholder="e.g. Do Indians need a visa for Singapore?" />
                         <TA label="Answer" value={f.answer} rows={3} onChange={v => setFaqs(fs => fs.map((x,j) => j===i ? {...x, answer:v} : x))} placeholder="Answer text…" />
                       </div>
                     ))}
-                    <button onClick={() => setFaqs(fs => [...fs, { question:'', answer:'' }])} style={addBtn()}>+ Add FAQ</button>
+                    <button onClick={() => setFaqs(fs => [...fs, { question:'', answer:'' }])} className="visa-btn-add">+ Add FAQ</button>
                   </div>
                 </div>
               </div>
@@ -281,17 +276,17 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
 
             {/* ── Process & Info ─────────────────────────────────────────── */}
             {tab === 'process' && (
-              <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              <div className="visa-stack-20">
                 <div>
-                  <label style={lbl}>Application Process Steps</label>
-                  <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:6 }}>
+                  <label className="visa-field-label">Application Process Steps</label>
+                  <div className="visa-stack8-mt6">
                     {steps.map((s, i) => (
-                      <div key={i} style={card()}>
-                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                          <span style={{ fontSize:13, fontWeight:700, color:'#2563EB' }}>Step {s.step_number || i+1}</span>
-                          <button onClick={() => setSteps(ss => ss.filter((_,j) => j!==i))} style={rmBtn()}>✕ Remove</button>
+                      <div key={i} className="visa-card">
+                        <div className="visa-row-mb8">
+                          <span className="visa-label-blue">Step {s.step_number || i+1}</span>
+                          <button onClick={() => setSteps(ss => ss.filter((_,j) => j!==i))} className="visa-btn-remove">✕ Remove</button>
                         </div>
-                        <div style={{ display:'grid', gridTemplateColumns:'60px 1fr', gap:10, marginBottom:8 }}>
+                        <div className="visa-grid-step">
                           <F label="Step #" value={String(s.step_number)} type="number"
                             onChange={v => setSteps(ss => ss.map((x,j) => j===i ? {...x, step_number:Number(v)||i+1} : x))} />
                           <F label="Title" value={s.title}
@@ -301,34 +296,34 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
                           onChange={v => setSteps(ss => ss.map((x,j) => j===i ? {...x, description:v} : x))} placeholder="What happens in this step…" />
                       </div>
                     ))}
-                    <button onClick={() => setSteps(ss => [...ss, { step_number: ss.length+1, title:'', description:'' }])} style={addBtn()}>+ Add Step</button>
+                    <button onClick={() => setSteps(ss => [...ss, { step_number: ss.length+1, title:'', description:'' }])} className="visa-btn-add">+ Add Step</button>
                   </div>
                 </div>
 
                 <div>
-                  <label style={lbl}>Why Choose Us</label>
-                  <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:6 }}>
+                  <label className="visa-field-label">Why Choose Us</label>
+                  <div className="visa-stack8-mt6">
                     {whyUs.map((w, i) => (
-                      <div key={i} style={{ display:'grid', gridTemplateColumns:'1fr 2fr auto', gap:8, alignItems:'center' }}>
-                        <input value={w.title} placeholder="Point title" onChange={e => setWhyUs(ws => ws.map((x,j) => j===i ? {...x, title:e.target.value} : x))} style={inp()} />
-                        <input value={w.description} placeholder="Brief description" onChange={e => setWhyUs(ws => ws.map((x,j) => j===i ? {...x, description:e.target.value} : x))} style={inp()} />
-                        <button onClick={() => setWhyUs(ws => ws.filter((_,j) => j!==i))} style={rmBtn()}>✕</button>
+                      <div key={i} className="visa-grid-why">
+                        <input value={w.title} placeholder="Point title" onChange={e => setWhyUs(ws => ws.map((x,j) => j===i ? {...x, title:e.target.value} : x))} className="visa-field-input" />
+                        <input value={w.description} placeholder="Brief description" onChange={e => setWhyUs(ws => ws.map((x,j) => j===i ? {...x, description:e.target.value} : x))} className="visa-field-input" />
+                        <button onClick={() => setWhyUs(ws => ws.filter((_,j) => j!==i))} className="visa-btn-remove">✕</button>
                       </div>
                     ))}
-                    <button onClick={() => setWhyUs(ws => [...ws, { title:'', description:'' }])} style={addBtn()}>+ Add Point</button>
+                    <button onClick={() => setWhyUs(ws => [...ws, { title:'', description:'' }])} className="visa-btn-add">+ Add Point</button>
                   </div>
                 </div>
 
                 <div>
-                  <label style={lbl}>Page Banners / CTAs</label>
-                  <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:6 }}>
+                  <label className="visa-field-label">Page Banners / CTAs</label>
+                  <div className="visa-stack8-mt6">
                     {banners.map((b, i) => (
-                      <div key={i} style={card()}>
-                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                          <span style={{ fontSize:12, fontWeight:600, color:'#374151' }}>Banner {i+1}</span>
-                          <button onClick={() => setBanners(bs => bs.filter((_,j) => j!==i))} style={rmBtn()}>✕</button>
+                      <div key={i} className="visa-card">
+                        <div className="visa-row-mb8">
+                          <span className="visa-label-dark">Banner {i+1}</span>
+                          <button onClick={() => setBanners(bs => bs.filter((_,j) => j!==i))} className="visa-btn-remove">✕</button>
                         </div>
-                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                        <div className="visa-grid2-8">
                           <F label="Banner Text" value={b.text} onChange={v => setBanners(bs => bs.map((x,j) => j===i ? {...x, text:v} : x))} placeholder="Detailed Visa Process…" />
                           <F label="Button Label" value={b.button_label} onChange={v => setBanners(bs => bs.map((x,j) => j===i ? {...x, button_label:v} : x))} placeholder="Click Here" />
                           <F label="Link / URL" value={b.link} onChange={v => setBanners(bs => bs.map((x,j) => j===i ? {...x, link:v} : x))} placeholder="/visa/singapore-visa#process" />
@@ -336,19 +331,19 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
                         </div>
                       </div>
                     ))}
-                    <button onClick={() => setBanners(bs => [...bs, { text:'', link:'', bg_color:'#1a3a5c', button_label:'' }])} style={addBtn()}>+ Add Banner</button>
+                    <button onClick={() => setBanners(bs => [...bs, { text:'', link:'', bg_color:'#1a3a5c', button_label:'' }])} className="visa-btn-add">+ Add Banner</button>
                   </div>
                 </div>
 
                 <div>
-                  <label style={lbl}>Embassy Information</label>
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginTop:6 }}>
+                  <label className="visa-field-label">Embassy Information</label>
+                  <div className="visa-grid2-10-mt6">
                     <F label="City" value={embassy.city} onChange={v => setEmbassy(e => ({...e, city:v}))} placeholder="New Delhi" />
                     <F label="Phone" value={embassy.phone} onChange={v => setEmbassy(e => ({...e, phone:v}))} placeholder="+91-11-4149-8000" />
-                    <div style={{ gridColumn:'1/-1' }}><F label="Address" value={embassy.address} onChange={v => setEmbassy(e => ({...e, address:v}))} placeholder="E-6, Chandragupta Marg, New Delhi" /></div>
+                    <div className="visa-span-2"><F label="Address" value={embassy.address} onChange={v => setEmbassy(e => ({...e, address:v}))} placeholder="E-6, Chandragupta Marg, New Delhi" /></div>
                     <F label="Email" value={embassy.email} onChange={v => setEmbassy(e => ({...e, email:v}))} placeholder="contact@embassy.gov" />
                     <F label="Website" value={embassy.website} onChange={v => setEmbassy(e => ({...e, website:v}))} placeholder="https://…" />
-                    <div style={{ gridColumn:'1/-1' }}><F label="Timing" value={embassy.timing} onChange={v => setEmbassy(e => ({...e, timing:v}))} placeholder="Mon–Fri, 9:00 AM – 5:00 PM" /></div>
+                    <div className="visa-span-2"><F label="Timing" value={embassy.timing} onChange={v => setEmbassy(e => ({...e, timing:v}))} placeholder="Mon–Fri, 9:00 AM – 5:00 PM" /></div>
                   </div>
                 </div>
               </div>
@@ -356,17 +351,17 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
 
             {/* ── Team & Attractions ─────────────────────────────────────── */}
             {tab === 'team' && (
-              <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              <div className="visa-stack-20">
                 <div>
-                  <label style={lbl}>Visa Experts Team</label>
-                  <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:6 }}>
+                  <label className="visa-field-label">Visa Experts Team</label>
+                  <div className="visa-stack8-mt6">
                     {experts.map((e, i) => (
-                      <div key={i} style={card()}>
-                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                          <span style={{ fontSize:12, fontWeight:600, color:'#374151' }}>Expert {i+1}</span>
-                          <button onClick={() => setExperts(es => es.filter((_,j) => j!==i))} style={rmBtn()}>✕ Remove</button>
+                      <div key={i} className="visa-card">
+                        <div className="visa-row-mb8">
+                          <span className="visa-label-dark">Expert {i+1}</span>
+                          <button onClick={() => setExperts(es => es.filter((_,j) => j!==i))} className="visa-btn-remove">✕ Remove</button>
                         </div>
-                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                        <div className="visa-grid2-8">
                           <F label="Name" value={e.name} onChange={v => setExperts(es => es.map((x,j) => j===i ? {...x, name:v} : x))} placeholder="Kulsum Thakur" />
                           <F label="Role / Title" value={e.role} onChange={v => setExperts(es => es.map((x,j) => j===i ? {...x, role:v} : x))} placeholder="Visa Officer" />
                           <F label="Years of Experience" value={e.experience_years} type="number" onChange={v => setExperts(es => es.map((x,j) => j===i ? {...x, experience_years:v} : x))} placeholder="3" />
@@ -374,20 +369,20 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
                         </div>
                       </div>
                     ))}
-                    <button onClick={() => setExperts(es => [...es, { name:'', role:'Visa Officer', experience_years:'', photo_url:'' }])} style={addBtn()}>+ Add Expert</button>
+                    <button onClick={() => setExperts(es => [...es, { name:'', role:'Visa Officer', experience_years:'', photo_url:'' }])} className="visa-btn-add">+ Add Expert</button>
                   </div>
                 </div>
 
                 <div>
-                  <label style={lbl}>Tourist Attractions</label>
-                  <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:6 }}>
+                  <label className="visa-field-label">Tourist Attractions</label>
+                  <div className="visa-stack8-mt6">
                     {attractions.map((a, i) => (
-                      <div key={i} style={card()}>
-                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                          <span style={{ fontSize:12, fontWeight:600, color:'#374151' }}>Attraction {i+1}</span>
-                          <button onClick={() => setAttractions(as => as.filter((_,j) => j!==i))} style={rmBtn()}>✕ Remove</button>
+                      <div key={i} className="visa-card">
+                        <div className="visa-row-mb8">
+                          <span className="visa-label-dark">Attraction {i+1}</span>
+                          <button onClick={() => setAttractions(as => as.filter((_,j) => j!==i))} className="visa-btn-remove">✕ Remove</button>
                         </div>
-                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                        <div className="visa-grid2-8">
                           <F label="Name" value={a.name} onChange={v => setAttractions(as => as.map((x,j) => j===i ? {...x, name:v} : x))} placeholder="Marina Bay Sands" />
                           <F label="Image URL" value={a.image_url} onChange={v => setAttractions(as => as.map((x,j) => j===i ? {...x, image_url:v} : x))} placeholder="https://…" />
                         </div>
@@ -395,7 +390,7 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
                           onChange={v => setAttractions(as => as.map((x,j) => j===i ? {...x, description:v} : x))} placeholder="Iconic resort with rooftop infinity pool…" />
                       </div>
                     ))}
-                    <button onClick={() => setAttractions(as => [...as, { name:'', image_url:'', description:'' }])} style={addBtn()}>+ Add Attraction</button>
+                    <button onClick={() => setAttractions(as => [...as, { name:'', image_url:'', description:'' }])} className="visa-btn-add">+ Add Attraction</button>
                   </div>
                 </div>
               </div>
@@ -403,10 +398,10 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
           </>}
         </div>
 
-        <div style={{ padding:'14px 24px', borderTop:'1px solid #E5E7EB', display:'flex', alignItems:'center', gap:12, flexShrink:0 }}>
-          {err ? <span style={{ flex:1, fontSize:13, color:'#dc2626' }}>{err}</span> : <span style={{ flex:1 }} />}
-          <button onClick={onClose} style={footerBtn('#6B7280')}>Cancel</button>
-          <button onClick={save} disabled={saving||loading} style={{ ...footerBtn('#2563EB'), opacity:(saving||loading)?0.6:1, minWidth:140 }}>
+        <div className="visa-modal-footer">
+          {err ? <span className="visa-modal-err">{err}</span> : <span className="visa-flex-1" />}
+          <button onClick={onClose} className="visa-btn-footer visa-btn-footer--cancel">Cancel</button>
+          <button onClick={save} disabled={saving||loading} className="visa-btn-footer visa-btn-footer--save">
             {saving ? 'Saving…' : 'Save All Changes'}
           </button>
         </div>
@@ -415,45 +410,28 @@ export function VisaEditModal({ visaId, onClose, onSaved }: {
   )
 }
 
-// ── Shared style helpers ───────────────────────────────────────────────────────
-const lbl: React.CSSProperties = { fontSize:12, fontWeight:600, color:'#374151', display:'block', marginBottom:4 }
-const inp = (): React.CSSProperties => ({
-  width:'100%', padding:'8px 12px', border:'1px solid #E5E7EB', borderRadius:8,
-  fontSize:14, boxSizing:'border-box', outline:'none', fontFamily:'inherit',
-})
-function card(): React.CSSProperties {
-  return { border:'1px solid #E5E7EB', borderRadius:10, padding:14 }
-}
-function addBtn(): React.CSSProperties {
-  return { background:'#EFF6FF', color:'#2563EB', border:'1px solid #BFDBFE', borderRadius:8, cursor:'pointer', padding:'7px 14px', fontSize:13, fontWeight:600, fontFamily:'inherit', alignSelf:'flex-start' }
-}
-function rmBtn(): React.CSSProperties {
-  return { background:'none', border:'none', cursor:'pointer', color:'#dc2626', fontSize:12, fontWeight:600, fontFamily:'inherit', padding:'2px 6px' }
-}
-function footerBtn(color: string): React.CSSProperties {
-  return { background:color, color:'#fff', border:'none', borderRadius:8, cursor:'pointer', padding:'9px 20px', fontSize:14, fontWeight:600, fontFamily:'inherit' }
-}
+// ── Field primitives ─────────────────────────────────────────────────────────
 function F({ label, value, onChange, type='text', placeholder }: { label:string; value:string; onChange:(v:string)=>void; type?:string; placeholder?:string }) {
-  return <div><label style={lbl}>{label}</label><input type={type} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} style={inp()} /></div>
+  return <div><label className="visa-field-label">{label}</label><input type={type} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} className="visa-field-input" /></div>
 }
 function TA({ label, value, onChange, rows=4, placeholder }: { label:string; value:string; onChange:(v:string)=>void; rows?:number; placeholder?:string }) {
-  return <div><label style={lbl}>{label}</label><textarea value={value} rows={rows} placeholder={placeholder} onChange={e => onChange(e.target.value)} style={{ ...inp(), resize:'vertical', lineHeight:1.5 }} /></div>
+  return <div><label className="visa-field-label">{label}</label><textarea value={value} rows={rows} placeholder={placeholder} onChange={e => onChange(e.target.value)} className="visa-field-input visa-field-textarea" /></div>
 }
 function Chk({ label, checked, onChange }: { label:string; checked:boolean; onChange:(v:boolean)=>void }) {
-  return <label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:13, fontWeight:500 }}><input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ width:16, height:16 }} />{label}</label>
+  return <label className="visa-chk-label"><input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="visa-chk-input" />{label}</label>
 }
 function LineList({ label, value, onChange, placeholder }: { label:string; value:string[]; onChange:(v:string[])=>void; placeholder?:string }) {
   return (
     <div>
-      <label style={lbl}>{label}</label>
-      <div style={{ display:'flex', flexDirection:'column', gap:6, marginTop:6 }}>
+      <label className="visa-field-label">{label}</label>
+      <div className="visa-linelist-wrap">
         {value.map((item, i) => (
-          <div key={i} style={{ display:'flex', gap:6, alignItems:'center' }}>
-            <input value={item} placeholder={placeholder} onChange={e => onChange(value.map((x,j) => j===i ? e.target.value : x))} style={{ ...inp(), flex:1 }} />
-            <button onClick={() => onChange(value.filter((_,j) => j!==i))} style={rmBtn()}>✕</button>
+          <div key={i} className="visa-linelist-row">
+            <input value={item} placeholder={placeholder} onChange={e => onChange(value.map((x,j) => j===i ? e.target.value : x))} className="visa-field-input visa-field-flex" />
+            <button onClick={() => onChange(value.filter((_,j) => j!==i))} className="visa-btn-remove">✕</button>
           </div>
         ))}
-        <button onClick={() => onChange([...value, ''])} style={addBtn()}>+ Add</button>
+        <button onClick={() => onChange([...value, ''])} className="visa-btn-add">+ Add</button>
       </div>
     </div>
   )

@@ -1,0 +1,25 @@
+/* ── Page: Partner Reports (app/partner/reports/page.tsx) ───────────────────── */
+
+.preport-commission-cell {
+  font-weight: 700;
+  color: var(--success);
+}
+
+.preport-date-range {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.preport-date-input {
+  width: auto;
+}
+
+.preport-to-label {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.preport-stat-grid {
+  grid-template-columns: repeat(3, 1fr);
+}

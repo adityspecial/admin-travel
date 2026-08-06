@@ -2,6 +2,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { Pagination, usePagination } from '@/components/Pagination'
+import { StatCard } from '@/components/ui/StatCard'
+import { DataTable, ColumnDef } from '@/components/ui/DataTable'
+import { AppInput } from '@/components/ui/AppInput'
+import { IndianRupee, Receipt, XCircle, Clock, TrendingUp, Search } from 'lucide-react'
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts'
@@ -40,6 +44,9 @@ interface Stats {
   timeline: { date: string; revenue: number; count: number }[]
   byType: { type: string; revenue: number }[]
 }
+interface OrderPayment {
+  id: string; status: string; amount: number
+}
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([])
@@ -53,7 +60,7 @@ export default function PaymentsPage() {
   const [bookingType, setBookingType] = useState('')
 
   const [orderQuery,   setOrderQuery]   = useState('')
-  const [orderResults, setOrderResults] = useState<any[] | null>(null)
+  const [orderResults, setOrderResults] = useState<OrderPayment[] | null>(null)
   const [orderLoading, setOrderLoading] = useState(false)
   const [orderError,   setOrderError]   = useState('')
 
@@ -92,6 +99,26 @@ export default function PaymentsPage() {
     [stats],
   )
 
+  const orderColumns: ColumnDef<OrderPayment>[] = [
+    { key: 'id', header: 'Payment ID', render: (p) => <span className="data-table-code-pill">{p.id}</span> },
+    { key: 'status', header: 'Status', render: (p) => <span className={`badge ${STATUS_BADGE[p.status] ?? 'badge-gray'}`}>{p.status}</span> },
+    { key: 'amount', header: 'Amount', render: (p) => <span className="data-table-cell-bold">₹{(p.amount / 100).toLocaleString('en-IN')}</span> },
+  ]
+
+  const paymentColumns: ColumnDef<Payment>[] = [
+    { key: 'created_at', header: 'Date', render: (p) => <span className="data-table-muted-cell">{formatDate(p.created_at)}</span> },
+    { key: 'booking_type', header: 'Booking Type', render: (p) => BOOKING_TYPE_LABELS[p.booking_type] ?? p.booking_type },
+    { key: 'amount', header: 'Amount', render: (p) => <span className="data-table-cell-bold">₹{Number(p.amount).toLocaleString('en-IN')}</span> },
+    { key: 'status', header: 'Status', render: (p) => <span className={`badge ${STATUS_BADGE[p.status] ?? 'badge-gray'}`}>{p.status}</span> },
+    { key: 'payment_method', header: 'Method', render: (p) => <span className="data-table-muted-cell">{p.payment_method ?? '--'}</span> },
+    { key: 'razorpay_payment_id', header: 'Razorpay Payment ID', render: (p) => <span className="data-table-code-pill">{p.razorpay_payment_id ?? '--'}</span> },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (p) => <a href={`/super/payments/${p.id}`} className="data-table-btn data-table-btn-edit">View</a>,
+    },
+  ]
+
   return (
     <div>
       <div className="admin-topbar">
@@ -109,67 +136,65 @@ export default function PaymentsPage() {
                 <div className="card-copy">Narrow the payment list and revenue chart by date range, status, or booking type.</div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', padding: '16px 20px' }}>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#6B7280', fontWeight: 600 }}>
+            <div className="pay-filters-row">
+              <label className="pay-field-label-col">
                 From
                 <input type="date" value={from} onChange={e => setFrom(e.target.value)}
-                  style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 13 }} />
+                  className="pay-filter-field" />
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#6B7280', fontWeight: 600 }}>
+              <label className="pay-field-label-col">
                 To
                 <input type="date" value={to} onChange={e => setTo(e.target.value)}
-                  style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 13 }} />
+                  className="pay-filter-field" />
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#6B7280', fontWeight: 600 }}>
+              <label className="pay-field-label-col">
                 Status
                 <select value={status} onChange={e => setStatus(e.target.value)}
-                  style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 13 }}>
+                  className="pay-filter-field">
                   <option value="">All</option>
                   <option value="captured">Captured</option>
                   <option value="pending">Pending</option>
                   <option value="failed">Failed</option>
                 </select>
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#6B7280', fontWeight: 600 }}>
+              <label className="pay-field-label-col">
                 Booking Type
                 <select value={bookingType} onChange={e => setBookingType(e.target.value)}
-                  style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 13 }}>
+                  className="pay-filter-field">
                   <option value="">All</option>
                   {Object.entries(BOOKING_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
               </label>
-              <div style={{ alignSelf: 'flex-end' }}>
-                <button className="btn btn-primary btn-sm" onClick={load}>Apply</button>
+              <div className="pay-filter-apply">
+                <button className="quick-action-btn-primary" onClick={load}>Apply</button>
               </div>
             </div>
           </section>
 
           {/* Stat tiles */}
           <section className="stat-grid">
-            {[
-              { label: 'Total Revenue', value: formatMoney(stats?.totalRevenue ?? 0), sub: `${formatCount(stats?.capturedCount ?? 0)} captured payments`, icon: '₹', tone: '' },
-              { label: 'Total Payments', value: formatCount(stats?.totalCount ?? 0), sub: 'In the selected range', icon: 'PAY', tone: 'teal' },
-              { label: 'Failed', value: formatCount(stats?.failedCount ?? 0), sub: 'Payment attempts that failed', icon: 'ERR', tone: 'rose' },
-              { label: 'Pending', value: formatCount(stats?.pendingCount ?? 0), sub: 'Awaiting capture or reconciliation', icon: 'WAIT', tone: 'orange' },
-            ].map(card => (
-              <div className={`stat-card ${card.tone}`.trim()} key={card.label}>
-                <div className="stat-head">
-                  <div className="stat-num">{card.value}</div>
-                  <span className="stat-icon">{card.icon}</span>
-                </div>
-                <div className="stat-label">{card.label}</div>
-                <div className="stat-sub">{card.sub}</div>
-              </div>
-            ))}
+            <StatCard Icon={IndianRupee} label="Total Revenue" value={formatMoney(stats?.totalRevenue ?? 0)} sub={`${formatCount(stats?.capturedCount ?? 0)} captured payments`} badge="Revenue" />
+            <StatCard Icon={Receipt} label="Total Payments" value={formatCount(stats?.totalCount ?? 0)} sub="In the selected range" badge="Volume" iconBg="#f0fdf4" iconColor="#0d9488" badgeBg="#ccfbf1" badgeColor="#0f766e" />
+            <StatCard Icon={XCircle} label="Failed" value={formatCount(stats?.failedCount ?? 0)} sub="Payment attempts that failed" badge="Attention" iconBg="#fef2f2" iconColor="#dc2626" badgeBg="#fee2e2" badgeColor="#b91c1c" />
+            <StatCard Icon={Clock} label="Pending" value={formatCount(stats?.pendingCount ?? 0)} sub="Awaiting capture or reconciliation" badge="Review" iconBg="#fff7ed" iconColor="#ea580c" badgeBg="#ffedd5" badgeColor="#c2410c" />
           </section>
 
           {/* Revenue timeline */}
-          <section className="chart-card">
-            <div className="card-title">Revenue Timeline</div>
-            <div className="card-copy">Captured revenue per day for the selected range.</div>
-            <div style={{ marginTop: 16, height: 260 }}>
+          <div className="dashboard-card-lucrative">
+            <div className="dashboard-card-header">
+              <div className="dashboard-card-title-group">
+                <div className="dashboard-card-icon-icon dashboard-card-icon-blue">
+                  <TrendingUp size={19} strokeWidth={2.2} />
+                </div>
+                <div>
+                  <h3 className="dashboard-card-title">Revenue Timeline</h3>
+                  <p className="dashboard-card-subtitle">Captured revenue per day for the selected range</p>
+                </div>
+              </div>
+            </div>
+            <div className="pay-chart-wrap">
               {chartData.length === 0 ? (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 13 }}>
+                <div className="pay-chart-empty">
                   No captured revenue in this range yet.
                 </div>
               ) : (
@@ -195,93 +220,46 @@ export default function PaymentsPage() {
                 </ResponsiveContainer>
               )}
             </div>
-          </section>
+          </div>
 
           {/* Order lookup */}
-          <section className="table-card">
-            <div className="table-header">
-              <div>
-                <div className="card-title">Order → Payments Lookup</div>
-                <div className="card-copy">Paste a Razorpay order_id to see every payment attempt made against it, live from Razorpay.</div>
+          <DataTable
+            title="Order → Payments Lookup"
+            subtitle="Paste a Razorpay order_id to see every payment attempt made against it, live from Razorpay."
+            headerAction={
+              <div className="pay-lookup-row">
+                <div style={{ width: 260 }}>
+                  <AppInput
+                    value={orderQuery}
+                    onChange={e => setOrderQuery(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && lookupOrder()}
+                    placeholder="order_XXXXXXXXXXXXXX"
+                    icon={<Search size={15} />}
+                    wrapperClassName="m-0"
+                  />
+                </div>
+                <button className="quick-action-btn-primary" onClick={lookupOrder} disabled={orderLoading}>
+                  {orderLoading ? 'Looking up…' : 'Look up'}
+                </button>
               </div>
-            </div>
-            <div style={{ display: 'flex', gap: 10, padding: '16px 20px' }}>
-              <input
-                value={orderQuery}
-                onChange={e => setOrderQuery(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && lookupOrder()}
-                placeholder="order_XXXXXXXXXXXXXX"
-                style={{ flex: 1, maxWidth: 360, padding: '8px 12px', borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 13, fontFamily: 'monospace' }}
-              />
-              <button className="btn btn-primary btn-sm" onClick={lookupOrder} disabled={orderLoading}>
-                {orderLoading ? 'Looking up…' : 'Look up'}
-              </button>
-            </div>
-            {orderError && <div style={{ padding: '0 20px 16px', color: '#DC2626', fontSize: 13 }}>{orderError}</div>}
-            {orderResults && (
-              <table>
-                <thead>
-                  <tr><th>Payment ID</th><th>Status</th><th>Amount</th></tr>
-                </thead>
-                <tbody>
-                  {orderResults.length === 0 ? (
-                    <tr><td colSpan={3} className="empty-state">No payment attempts found for this order.</td></tr>
-                  ) : orderResults.map((p: any) => (
-                    <tr key={p.id}>
-                      <td><code>{p.id}</code></td>
-                      <td><span className={`badge ${STATUS_BADGE[p.status] ?? ''}`}>{p.status}</span></td>
-                      <td>₹{(p.amount / 100).toLocaleString('en-IN')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </section>
+            }
+            columns={orderColumns}
+            data={orderResults ?? []}
+            emptyMessage={orderError || (orderResults ? 'No payment attempts found for this order.' : 'Paste an order_id above and look it up.')}
+            keyExtractor={(p) => p.id}
+          />
 
           {/* Payments table */}
-          <div className="table-card">
-            <div className="table-header">
-              <div>
-                <div className="card-title">Recent Payments</div>
-                <div className="card-copy">Most recent 1,000 payments matching the current filters.</div>
-              </div>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Booking Type</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Method</th>
-                  <th>Razorpay Payment ID</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={7} className="empty-state">Loading…</td></tr>
-                ) : error ? (
-                  <tr><td colSpan={7} className="empty-state" style={{ color: '#DC2626' }}>{error}</td></tr>
-                ) : payments.length === 0 ? (
-                  <tr><td colSpan={7} className="empty-state">No payments match these filters.</td></tr>
-                ) : pagePayments.map(p => (
-                  <tr key={p.id}>
-                    <td style={{ whiteSpace: 'nowrap' }}>{formatDate(p.created_at)}</td>
-                    <td>{BOOKING_TYPE_LABELS[p.booking_type] ?? p.booking_type}</td>
-                    <td style={{ fontWeight: 800 }}>₹{Number(p.amount).toLocaleString('en-IN')}</td>
-                    <td><span className={`badge ${STATUS_BADGE[p.status] ?? ''}`}>{p.status}</span></td>
-                    <td style={{ color: '#6B7280' }}>{p.payment_method ?? '--'}</td>
-                    <td><code style={{ fontSize: 11 }}>{p.razorpay_payment_id ?? '--'}</code></td>
-                    <td>
-                      <a href={`/super/payments/${p.id}`} className="btn btn-ghost btn-sm">View</a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <Pagination total={total} page={page} perPage={20} onPage={setPage} />
-          </div>
+          <DataTable
+            title="Recent Payments"
+            subtitle="Most recent 1,000 payments matching the current filters."
+            columns={paymentColumns}
+            data={pagePayments}
+            loading={loading}
+            emptyMessage={error || 'No payments match these filters.'}
+            keyExtractor={(p) => p.id}
+            footer={<Pagination total={total} page={page} perPage={20} onPage={setPage} />}
+          />
         </div>
       </div>
     </div>

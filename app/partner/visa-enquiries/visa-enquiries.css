@@ -1,0 +1,12 @@
+/* ── Page: Partner Visa Enquiries (app/partner/visa-enquiries/page.tsx) ─────── */
+
+.pvisaenq-status-select {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.pvisaenq-msg {
+  margin-left: 12px;
+  color: var(--success);
+  font-weight: 600;
+}

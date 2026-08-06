@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { downloadExcel } from '@/lib/excel'
 import { ReportTabs } from './ReportTabs'
+import './reports.css'
 import {
   BarChart3,
   FileSpreadsheet,
@@ -64,11 +65,11 @@ function getPresets() {
 }
 
 const REPORT_TYPES = [
-  { key: 'flight', label: 'Flight Bookings', Icon: Plane, color: '#2563EB', bg: '#EFF6FF' },
-  { key: 'flightpnr', label: 'Flight PNR Log', Icon: Ticket, color: '#7C3AED', bg: '#F5F3FF' },
-  { key: 'hotel', label: 'Hotel Stays', Icon: Hotel, color: '#047857', bg: '#ECFDF5' },
-  { key: 'cab', label: 'Cab Services', Icon: Car, color: '#D97706', bg: '#FFFBEB' },
-  { key: 'bus', label: 'Bus Tickets', Icon: Bus, color: '#DC2626', bg: '#FEF2F2' },
+  { key: 'flight', label: 'Flight Bookings', Icon: Plane },
+  { key: 'flightpnr', label: 'Flight PNR Log', Icon: Ticket },
+  { key: 'hotel', label: 'Hotel Stays', Icon: Hotel },
+  { key: 'cab', label: 'Cab Services', Icon: Car },
+  { key: 'bus', label: 'Bus Tickets', Icon: Bus },
 ]
 
 export default function ReportsPage() {
@@ -140,190 +141,44 @@ export default function ReportsPage() {
   const currentLabel = presets.find((p) => p.id === preset)?.label ?? 'Custom Date Range'
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 54px)', background: '#F5F6FA', width: '100%', overflowX: 'hidden' }}>
-      <style>{`
-        .reports-wrapper {
-          display: flex;
-          min-height: calc(100vh - 54px);
-        }
-        .reports-sidebar {
-          width: 260px;
-          flex-shrink: 0;
-          background: linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%);
-          border-right: 1px solid #E5E7EB;
-          padding: 24px 20px;
-          overflow-y: auto;
-          position: sticky;
-          top: 54px;
-          height: calc(100vh - 54px);
-        }
-        .reports-main {
-          flex: 1;
-          padding: 32px 32px 48px;
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-          min-width: 0;
-        }
-        .hero-banner-box {
-          background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
-          border-radius: 24px;
-          padding: 32px;
-          color: #ffffff;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 16px 36px -10px rgba(49, 46, 129, 0.25);
-        }
-        .card-shell {
-          background: #ffffff;
-          border: 1px solid #E5E7EB;
-          border-radius: 20px;
-          padding: 26px;
-          box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.03), 0 2px 6px rgba(0, 0, 0, 0.02);
-        }
-        .input-field {
-          padding: 8px 12px;
-          border-radius: 8px;
-          border: 1.5px solid #E5E7EB;
-          font-size: 12.5px;
-          outline: none;
-          box-sizing: border-box;
-          transition: all 0.2s ease;
-          width: 100%;
-        }
-        .input-field:focus {
-          border-color: var(--accent, #E31E24);
-          box-shadow: 0 0 0 3px rgba(227, 30, 36, 0.1);
-        }
-        .btn-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 20px;
-          background: linear-gradient(135deg, var(--accent, #E31E24) 0%, #B91C1C 100%);
-          color: #ffffff;
-          border: none;
-          border-radius: 12px;
-          font-weight: 600;
-          font-size: 13px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
-          white-space: nowrap;
-        }
-        .btn-primary:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 18px var(--accent, rgba(227, 30, 36, 0.35));
-        }
-        .btn-secondary {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 16px;
-          background: #F3F4F6;
-          color: #374151;
-          border: 1px solid #E5E7EB;
-          border-radius: 10px;
-          font-weight: 700;
-          font-size: 12.5px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .btn-secondary:hover {
-          background: #E5E7EB;
-        }
-        .create-dashed-card {
-          border: 2px dashed #D1D5DB;
-          border-radius: 16px;
-          padding: 24px 16px;
-          text-align: center;
-          cursor: pointer;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s ease;
-          background: #FAFAFA;
-        }
-        .create-dashed-card:hover {
-          border-color: var(--accent, #E31E24);
-          background: #FEF2F2;
-        }
-        .mobile-sidebar-toggle {
-          display: none;
-        }
-        @media (max-width: 1024px) {
-          .reports-wrapper {
-            flex-direction: column;
-          }
-          .reports-sidebar {
-            width: 100%;
-            position: relative;
-            top: 0;
-            height: auto;
-            border-right: none;
-            border-bottom: 1px solid #E5E7EB;
-            display: ${showMobileSidebar ? 'block' : 'none'};
-          }
-          .mobile-sidebar-toggle {
-            display: inline-flex;
-          }
-          .reports-main {
-            padding: 20px 16px 36px;
-          }
-          .hero-banner-box {
-            padding: 24px;
-            border-radius: 20px;
-          }
-        }
-        @media (max-width: 640px) {
-          .reports-main {
-            padding: 14px 10px 28px;
-          }
-          .card-shell {
-            padding: 18px 14px;
-            border-radius: 16px;
-          }
-        }
-      `}</style>
-
+    <div className="rp-page">
       <div className="reports-wrapper">
         {/* Left Date Filter Sidebar */}
-        <aside className="reports-sidebar">
-          <div style={{ fontSize: '13px', fontWeight: 900, color: '#111827', letterSpacing: '0.06em', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <aside className={`reports-sidebar ${showMobileSidebar ? 'reports-sidebar--mobile-open' : ''}`}>
+          <div className="rp-sidebar-heading">
             <Calendar size={16} color="var(--accent, #E31E24)" /> REPORTING PERIOD
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="rp-presets-list">
             {presets.map((p) => (
-              <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <label key={p.id} className="rp-preset-row">
                 <input
                   type="radio"
                   name="period"
                   checked={preset === p.id && !customDate}
                   onChange={() => selectPreset(p)}
-                  style={{ accentColor: 'var(--accent, #E31E24)', width: '15px', height: '15px' }}
+                  className="rp-preset-radio"
                 />
-                <span style={{ fontSize: '12.5px', color: '#374151', fontWeight: preset === p.id && !customDate ? 700 : 500 }}>{p.label}</span>
+                <span className={`rp-preset-label ${preset === p.id && !customDate ? 'rp-preset-label--selected' : ''}`}>{p.label}</span>
               </label>
             ))}
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '6px' }}>
+            <label className="rp-preset-row rp-preset-row--custom">
               <input
                 type="radio"
                 name="period"
                 checked={customDate}
                 onChange={() => setCustomDate(true)}
-                style={{ accentColor: 'var(--accent, #E31E24)', width: '15px', height: '15px' }}
+                className="rp-preset-radio"
               />
-              <span style={{ fontSize: '12.5px', color: '#374151', fontWeight: customDate ? 700 : 500 }}>Custom Date Range</span>
+              <span className={`rp-preset-label ${customDate ? 'rp-preset-label--selected' : ''}`}>Custom Date Range</span>
             </label>
 
             {customDate && (
-              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', background: '#F9FAFB', borderRadius: '10px', border: '1px solid #E5E7EB' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280' }}>From Date:</label>
+              <div className="rp-custom-box">
+                <label className="rp-custom-field-label">From Date:</label>
                 <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="input-field" />
-                <label style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280' }}>To Date:</label>
+                <label className="rp-custom-field-label">To Date:</label>
                 <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="input-field" />
               </div>
             )}
@@ -333,11 +188,11 @@ export default function ReportsPage() {
         {/* Main Content Workspace */}
         <main className="reports-main">
           {/* Breadcrumb Navigation & Mobile Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>
+          <div className="rp-breadcrumb-row">
+            <div className="rp-breadcrumb">
               <span>Admin</span>
               <ChevronRight size={13} color="#9CA3AF" />
-              <span style={{ color: 'var(--accent, #E31E24)', fontWeight: 700 }}>Reports & Travel Analytics</span>
+              <span className="rp-breadcrumb-active">Reports & Travel Analytics</span>
             </div>
 
             <button onClick={() => setShowMobileSidebar((v) => !v)} className="btn-secondary mobile-sidebar-toggle">
@@ -348,43 +203,18 @@ export default function ReportsPage() {
           {/* Hero Header Banner */}
           <div className="hero-banner-box">
             {/* Ambient Background Glow */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '-40px',
-                right: '-40px',
-                width: '240px',
-                height: '240px',
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(227, 30, 36, 0.25) 0%, rgba(0, 0, 0, 0) 70%)',
-                pointerEvents: 'none',
-              }}
-            />
+            <div className="rp-hero-glow" />
 
-            <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-                <div
-                  style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '18px',
-                    background: 'rgba(255, 255, 255, 0.15)',
-                    backdropFilter: 'blur(16px)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#ffffff',
-                    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)',
-                  }}
-                >
+            <div className="rp-hero-content">
+              <div className="rp-hero-left">
+                <div className="rp-hero-icon">
                   <BarChart3 size={28} />
                 </div>
                 <div>
-                  <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h1 className="rp-hero-title">
                     Financial Travel Reports <Sparkles size={18} color="#F59E0B" />
                   </h1>
-                  <p style={{ fontSize: '13.5px', color: 'rgba(255, 255, 255, 0.85)', marginTop: '4px', margin: 0, fontWeight: 500 }}>
+                  <p className="rp-hero-subtitle">
                     Generate scheduled spend exports, GST tax statements, department allocations, and employee travel ledgers.
                   </p>
                 </div>
@@ -392,22 +222,22 @@ export default function ReportsPage() {
             </div>
 
             {/* Quick Metrics Bar Inside Hero */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '14px', marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.15)' }}>
+            <div className="rp-hero-metrics">
               <div>
-                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Period Spend</div>
-                <div style={{ fontSize: '22px', fontWeight: 900, color: '#ffffff', marginTop: '2px' }}>
+                <div className="rp-metric-label">Period Spend</div>
+                <div className="rp-metric-value-lg">
                   {loading ? '…' : fmt(data?.summary?.totalSpend ?? 0)}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Total Bookings</div>
-                <div style={{ fontSize: '20px', fontWeight: 900, color: '#34D399', marginTop: '2px' }}>
+                <div className="rp-metric-label">Total Bookings</div>
+                <div className="rp-metric-value-sm rp-metric-value-sm--bookings">
                   {loading ? '…' : `${data?.summary?.totalBookings ?? 0} Bookings`}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Avg Booking Value</div>
-                <div style={{ fontSize: '20px', fontWeight: 900, color: '#60A5FA', marginTop: '2px' }}>
+                <div className="rp-metric-label">Avg Booking Value</div>
+                <div className="rp-metric-value-sm rp-metric-value-sm--avg">
                   {loading ? '…' : `₹${Math.round(data?.summary?.avgBookingValue ?? 0).toLocaleString('en-IN')}`}
                 </div>
               </div>
@@ -416,52 +246,40 @@ export default function ReportsPage() {
 
           {/* Create & Schedule Custom Reports Box */}
           <div className="card-shell">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <div className="rp-card-header-row">
               <FileSpreadsheet size={20} color="var(--accent, #E31E24)" />
-              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: 0 }}>Create & Schedule Custom Reports</h3>
+              <h3 className="rp-card-title">Create & Schedule Custom Reports</h3>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+            <div className="rp-create-grid">
               {/* Card 1: Create New */}
               <div className="create-dashed-card">
-                <div
-                  style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '50%',
-                    background: '#FEF2F2',
-                    color: 'var(--accent, #E31E24)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '10px',
-                  }}
-                >
+                <div className="rp-dashed-icon">
                   <Plus size={22} />
                 </div>
-                <div style={{ fontSize: '13.5px', fontWeight: 900, color: 'var(--accent, #E31E24)' }}>CREATE NEW REPORT</div>
-                <span style={{ fontSize: '11.5px', color: '#6B7280', marginTop: '4px' }}>Build custom data field export</span>
+                <div className="rp-dashed-title">CREATE NEW REPORT</div>
+                <span className="rp-dashed-sub">Build custom data field export</span>
               </div>
 
               {/* Card 2: What is custom report */}
-              <div style={{ border: '1px solid #E5E7EB', borderRadius: '14px', padding: '18px', background: '#ffffff' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <div className="rp-info-card">
+                <div className="rp-info-card-header">
                   <HelpCircle size={18} color="#2563EB" />
-                  <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#111827' }}>What is a custom report?</div>
+                  <div className="rp-info-card-title">What is a custom report?</div>
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px', color: '#6B7280', lineHeight: 1.6 }}>
+                <ul className="rp-info-list">
                   <li>Export comprehensive travel booking ledgers.</li>
                   <li>Select specific data columns for effective corporate auditing.</li>
                 </ul>
               </div>
 
               {/* Card 3: How to schedule */}
-              <div style={{ border: '1px solid #E5E7EB', borderRadius: '14px', padding: '18px', background: '#ffffff' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <div className="rp-info-card">
+                <div className="rp-info-card-header">
                   <Mail size={18} color="#10B981" />
-                  <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#111827' }}>Scheduled Email Reports</div>
+                  <div className="rp-info-card-title">Scheduled Email Reports</div>
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px', color: '#6B7280', lineHeight: 1.6 }}>
+                <ul className="rp-info-list">
                   <li>Specify daily, weekly, or monthly delivery schedules.</li>
                   <li>We will automatically email your finance team Excel ledgers!</li>
                 </ul>
@@ -470,11 +288,11 @@ export default function ReportsPage() {
           </div>
 
           {/* Report Summary & Category Breakdown Table */}
-          <div className="card-shell" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '18px 24px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div className="card-shell rp-table-card">
+            <div className="rp-table-header">
               <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: 0 }}>
-                  Report Summary <span style={{ fontSize: '13px', color: '#6B7280', fontWeight: 600 }}>({currentLabel})</span>
+                <h3 className="rp-card-title">
+                  Report Summary <span className="rp-period-label">({currentLabel})</span>
                 </h3>
               </div>
 
@@ -483,29 +301,29 @@ export default function ReportsPage() {
               </button>
             </div>
 
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="rp-table-scroll">
+              <table className="rp-table">
                 <thead>
-                  <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                    <th style={{ textAlign: 'left', padding: '14px 20px', fontSize: '11px', fontWeight: 700, color: '#6B7280', letterSpacing: '0.04em' }}>
+                  <tr className="rp-thead-row">
+                    <th className="rp-th">
                       BOOKING CATEGORY
                     </th>
-                    <th style={{ textAlign: 'left', padding: '14px 20px', fontSize: '11px', fontWeight: 700, color: '#6B7280', letterSpacing: '0.04em' }}>
+                    <th className="rp-th">
                       TOTAL BOOKINGS
                     </th>
-                    <th style={{ textAlign: 'left', padding: '14px 20px', fontSize: '11px', fontWeight: 700, color: '#6B7280', letterSpacing: '0.04em' }}>
+                    <th className="rp-th">
                       TOTAL SPEND (₹)
                     </th>
-                    <th style={{ textAlign: 'left', padding: '14px 20px', fontSize: '11px', fontWeight: 700, color: '#6B7280', letterSpacing: '0.04em' }}>
+                    <th className="rp-th">
                       OUT OF POLICY (%)
                     </th>
-                    <th style={{ width: 48, padding: '14px 20px' }}></th>
+                    <th className="rp-th-icon"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={5} style={{ padding: '48px', textAlign: 'center', color: '#9CA3AF', fontSize: '13.5px', fontWeight: 600 }}>
+                      <td colSpan={5} className="rp-loading-cell">
                         Loading summary metrics…
                       </td>
                     </tr>
@@ -516,23 +334,23 @@ export default function ReportsPage() {
                       const IconComp = rt.Icon
 
                       return (
-                        <tr key={rt.key} style={{ borderTop: '1px solid #F3F4F6' }}>
-                          <td style={{ padding: '16px 20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: rt.bg, color: rt.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <tr key={rt.key} className="rp-tr">
+                          <td className="rp-td">
+                            <div className="rp-cat-row">
+                              <div className={`rp-cat-icon rp-cat-icon--${rt.key}`}>
                                 <IconComp size={18} />
                               </div>
-                              <span style={{ fontSize: '14px', fontWeight: 800, color: '#111827' }}>{rt.label}</span>
+                              <span className="rp-cat-label">{rt.label}</span>
                             </div>
                           </td>
-                          <td style={{ padding: '16px 20px', fontSize: '14px', fontWeight: 800, color: '#111827' }}>{count}</td>
-                          <td style={{ padding: '16px 20px', fontSize: '14px', fontWeight: 900, color: '#111827' }}>{fmt(spend)}</td>
-                          <td style={{ padding: '16px 20px', fontSize: '13px', color: '#6B7280', fontWeight: 600 }}>0.0%</td>
-                          <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                          <td className="rp-td-count">{count}</td>
+                          <td className="rp-td-spend">{fmt(spend)}</td>
+                          <td className="rp-td-oop">0.0%</td>
+                          <td className="rp-td-download">
                             <button
                               onClick={handleExcelDownload}
                               disabled={!data}
-                              style={{ border: 'none', background: 'transparent', color: 'var(--accent, #E31E24)', cursor: 'pointer', padding: '4px' }}
+                              className="rp-btn-download-icon"
                               title="Download Category Report"
                             >
                               <Download size={16} />

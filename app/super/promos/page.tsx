@@ -2,6 +2,10 @@
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { Pagination, usePagination } from '@/components/Pagination'
+import { StatCard } from '@/components/ui/StatCard'
+import { DataTable, ColumnDef } from '@/components/ui/DataTable'
+import { AppInput } from '@/components/ui/AppInput'
+import { Tag, CheckCircle2, Repeat, Search, Plus } from 'lucide-react'
 import { CreatePromoModal, EditPromoModal, UsageModal } from './PromoModals'
 
 export interface Promo {
@@ -32,11 +36,13 @@ export function fmtDiscount(p: Promo) {
     : `Rs ${p.discount_value.toLocaleString('en-IN')}`
 }
 
+const FILTERS = ['all', 'active', 'inactive'] as const
+
 export default function SuperPromosPage() {
   const [promos, setPromos]         = useState<Promo[]>([])
   const [loading, setLoading]       = useState(true)
   const [search, setSearch]         = useState('')
-  const [filter, setFilter]         = useState<'all' | 'active' | 'inactive'>('all')
+  const [filter, setFilter]         = useState<typeof FILTERS[number]>('all')
   const [showCreate, setShowCreate] = useState(false)
   const [editPromo, setEditPromo]   = useState<Promo | null>(null)
   const [usagePromo, setUsagePromo] = useState<Promo | null>(null)
@@ -71,121 +77,129 @@ export default function SuperPromosPage() {
     setPromos(prev => prev.map(x => x.id === p.id ? { ...x, is_active: false } : x))
   }
 
+  const columns: ColumnDef<Promo>[] = [
+    {
+      key: 'code',
+      header: 'Code',
+      render: (p) => <span className="data-table-code-pill">{p.code}</span>,
+    },
+    {
+      key: 'discount_type',
+      header: 'Type',
+      render: (p) => (
+        <span className={`badge ${p.discount_type === 'percentage' ? 'badge-blue' : 'badge-yellow'}`}>
+          {p.discount_type === 'percentage' ? '%' : 'Rs'}
+        </span>
+      ),
+    },
+    {
+      key: 'discount_value',
+      header: 'Discount',
+      render: (p) => <span className="data-table-cell-bold">{fmtDiscount(p)}</span>,
+    },
+    {
+      key: 'min_booking_amount',
+      header: 'Min Amt',
+      render: (p) => <span className="data-table-muted-cell">{p.min_booking_amount ? `Rs ${p.min_booking_amount.toLocaleString('en-IN')}` : '--'}</span>,
+    },
+    {
+      key: 'max_discount_amount',
+      header: 'Max Cap',
+      render: (p) => <span className="data-table-muted-cell">{p.max_discount_amount ? `Rs ${p.max_discount_amount.toLocaleString('en-IN')}` : '--'}</span>,
+    },
+    {
+      key: 'current_uses',
+      header: 'Uses',
+      render: (p) => (
+        <span>
+          {p.current_uses}
+          <span className="data-table-muted-cell">{p.max_uses ? ` / ${p.max_uses}` : ''}</span>
+        </span>
+      ),
+    },
+    {
+      key: 'applicable_to',
+      header: 'Applies To',
+      render: (p) => <span className="badge badge-gray">{p.applicable_to ?? 'all'}</span>,
+    },
+    {
+      key: 'valid_until',
+      header: 'Valid Until',
+      render: (p) => <span className="data-table-muted-cell">{fmtDate(p.valid_until)}</span>,
+    },
+    {
+      key: 'is_active',
+      header: 'Status',
+      render: (p) => <span className={`badge ${p.is_active ? 'badge-green' : 'badge-red'}`}>{p.is_active ? 'Active' : 'Inactive'}</span>,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (p) => (
+        <div className="data-table-actions">
+          <button type="button" className="data-table-btn data-table-btn-edit" onClick={() => setEditPromo(p)}>Edit</button>
+          <button type="button" className="data-table-btn data-table-btn-success" onClick={() => setUsagePromo(p)}>Usage</button>
+          {p.is_active && (
+            <button type="button" className="data-table-btn data-table-btn-danger" onClick={() => deactivate(p)}>Off</button>
+          )}
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div>
       <div className="admin-topbar">
         <h2>Promo Codes</h2>
         <span className="topbar-meta">{promos.length} codes total</span>
       </div>
+
       <div className="admin-content">
         <div className="page-stack">
+          <div className="stat-grid">
+            <StatCard Icon={Tag} label="Total Codes" value={promos.length} sub="All promo codes ever created" badge="All" />
+            <StatCard Icon={CheckCircle2} label="Active Now" value={active} sub={`${promos.length - active} inactive`} badge="Live" iconBg="#f0fdf4" iconColor="#0d9488" badgeBg="#ccfbf1" badgeColor="#0f766e" />
+            <StatCard Icon={Repeat} label="Total Uses" value={totalUses.toLocaleString('en-IN')} sub="Cumulative redemptions" badge="Redemptions" iconBg="#fff7ed" iconColor="#ea580c" badgeBg="#ffedd5" badgeColor="#c2410c" />
+          </div>
 
-          <section className="stat-grid">
-            {[
-              { label: 'Total Codes',  value: promos.length,                           sub: 'All promo codes ever created',       icon: 'CP', tone: ''       },
-              { label: 'Active Now',   value: active,                                  sub: `${promos.length - active} inactive`, icon: 'AC', tone: 'teal'   },
-              { label: 'Total Uses',   value: totalUses.toLocaleString('en-IN'),        sub: 'Cumulative redemptions',             icon: 'US', tone: 'orange' },
-            ].map(c => (
-              <div className={`stat-card ${c.tone}`.trim()} key={c.label}>
-                <div className="stat-head">
-                  <div className="stat-num">{c.value}</div>
-                  <span className="stat-icon">{c.icon}</span>
+          <DataTable
+            title="Promo Codes"
+            headerAction={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ width: 260 }}>
+                  <AppInput
+                    placeholder="Search by code or description…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    icon={<Search size={15} />}
+                    wrapperClassName="m-0"
+                  />
                 </div>
-                <div className="stat-label">{c.label}</div>
-                <div className="stat-sub">{c.sub}</div>
-              </div>
-            ))}
-          </section>
-
-          <div className="surface-card">
-            <div className="table-toolbar">
-              <input
-                className="toolbar-search"
-                style={{ maxWidth: 320 }}
-                placeholder="Search by code or description..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-              <div className="page-actions">
-                {(['all', 'active', 'inactive'] as const).map(f => (
-                  <button
-                    key={f}
-                    className={`btn ${filter === f ? 'btn-primary' : 'btn-ghost'} btn-sm`}
-                    onClick={() => setFilter(f)}
-                  >
-                    {f.charAt(0).toUpperCase() + f.slice(1)}
-                  </button>
-                ))}
-                <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(true)}>
-                  + New Promo
+                <div className="segmented-row">
+                  {FILTERS.map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      className={`segment-btn ${filter === f ? 'active' : ''}`}
+                      onClick={() => setFilter(f)}
+                    >
+                      {f.charAt(0).toUpperCase() + f.slice(1)}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" className="quick-action-btn-primary" onClick={() => setShowCreate(true)}>
+                  <Plus size={14} strokeWidth={2.5} />
+                  New Promo
                 </button>
               </div>
-            </div>
-          </div>
-
-          <div className="table-card">
-            <table>
-              <thead>
-                <tr>
-                  <th>Code</th>
-                  <th>Type</th>
-                  <th>Discount</th>
-                  <th>Min Amt</th>
-                  <th>Max Cap</th>
-                  <th>Uses</th>
-                  <th>Applies To</th>
-                  <th>Valid Until</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={10} className="empty-state">Loading...</td></tr>
-                ) : slice.length === 0 ? (
-                  <tr><td colSpan={10} className="empty-state">No promo codes found.</td></tr>
-                ) : slice.map(p => (
-                  <tr key={p.id}>
-                    <td><code style={{ fontWeight: 700 }}>{p.code}</code></td>
-                    <td>
-                      <span className={`badge ${p.discount_type === 'percentage' ? 'badge-blue' : 'badge-yellow'}`}>
-                        {p.discount_type === 'percentage' ? '%' : 'Rs'}
-                      </span>
-                    </td>
-                    <td style={{ fontWeight: 700 }}>{fmtDiscount(p)}</td>
-                    <td style={{ color: '#64748B' }}>
-                      {p.min_booking_amount ? `Rs ${p.min_booking_amount.toLocaleString('en-IN')}` : '—'}
-                    </td>
-                    <td style={{ color: '#64748B' }}>
-                      {p.max_discount_amount ? `Rs ${p.max_discount_amount.toLocaleString('en-IN')}` : '—'}
-                    </td>
-                    <td>
-                      {p.current_uses}
-                      <span style={{ color: '#94A3B8' }}>{p.max_uses ? ` / ${p.max_uses}` : ''}</span>
-                    </td>
-                    <td><span className="badge badge-gray">{p.applicable_to ?? 'all'}</span></td>
-                    <td style={{ color: '#64748B', fontSize: 12 }}>{fmtDate(p.valid_until)}</td>
-                    <td>
-                      <span className={`badge ${p.is_active ? 'badge-green' : 'badge-red'}`}>
-                        {p.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="page-actions">
-                        <button className="btn btn-ghost btn-sm" onClick={() => setEditPromo(p)}>Edit</button>
-                        <button className="btn btn-muted btn-sm" onClick={() => setUsagePromo(p)}>Usage</button>
-                        {p.is_active && (
-                          <button className="btn btn-ghost btn-sm" onClick={() => deactivate(p)}>Off</button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <Pagination total={total} page={page} perPage={20} onPage={setPage} />
-          </div>
-
+            }
+            columns={columns}
+            data={slice}
+            loading={loading}
+            emptyMessage="No promo codes found."
+            keyExtractor={(p) => p.id}
+            footer={<Pagination total={total} page={page} perPage={20} onPage={setPage} />}
+          />
         </div>
       </div>
 
