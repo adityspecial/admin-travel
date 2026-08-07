@@ -44,7 +44,16 @@ export default function OrgsPage() {
     {
       key: 'name',
       header: 'Name',
-      render: (org) => <span className="data-table-cell-bold">{org.name}</span>,
+      render: (org) => (
+        <span className="data-table-cell-bold" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {org.name}
+          {org.escalated && (
+            <span title={org.escalation_reason ?? 'Escalated'} style={{ fontSize: 10, fontWeight: 800, color: '#DC2626', background: '#FEF2F2', border: '1px solid #FCA5A5', padding: '2px 7px', borderRadius: 99 }}>
+              ⚠ ESCALATED
+            </span>
+          )}
+        </span>
+      ),
     },
     {
       key: 'org_code',

@@ -239,7 +239,6 @@ export default function BizPermissionsPage() {
                     key={mod.key}
                     module={mod}
                     matrix={localMatrix[mod.key] ?? {}}
-                    highlight={mod.key === 'policy'}
                     saving={saving?.startsWith(mod.key + '.') ? saving.split('.')[1] : null}
                     onChange={(perm, enabled) => handleToggle(mod.key, perm, enabled)}
                   />

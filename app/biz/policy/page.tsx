@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { FlightPolicy } from './FlightPolicy'
 import { InsurancePolicy } from './InsurancePolicy'
 import { EligibilityPolicy } from './EligibilityPolicy'
+import { SimpleCapPolicy } from './SimpleCapPolicy'
 import './policy.css'
 import {
   ShieldCheck,
@@ -16,6 +17,7 @@ import {
   Gift,
   Globe,
   Shield,
+  Package,
   Sparkles,
   ChevronRight,
   Sliders,
@@ -33,6 +35,12 @@ const TYPES = [
   { key: 'travel_request_form', label: 'Request Form', icon: FileText },
   { key: 'gift_cards', label: 'Gift Cards', icon: Gift },
   { key: 'visa', label: 'Visa Concierge', icon: Globe },
+  // Missing from origin/test's redesign (never added there) — the render
+  // logic below already has a working sel === 'package' branch (SimpleCapPolicy),
+  // it just had no sidebar entry to reach it. Restored, no color/bg (unused —
+  // this file's own sidebar rendering keys color entirely off
+  // `pp-item-icon--${t.key}` CSS classes, not per-type fields).
+  { key: 'package', label: 'Packages', icon: Package },
   { key: 'insurance', label: 'Travel Insurance', icon: Shield },
 ]
 
@@ -161,6 +169,10 @@ export default function PolicyPage() {
               <EligibilityPolicy key={sel} type="hotel" title="Hotel" />
             ) : sel === 'cab' ? (
               <EligibilityPolicy key={sel} type="cab" title="Cab" />
+            ) : sel === 'visa' ? (
+              <SimpleCapPolicy key={sel} capField="visaCap" bufferField="visaCapBuffer" title="Visa" unit="per application" />
+            ) : sel === 'package' ? (
+              <SimpleCapPolicy key={sel} capField="packageCap" bufferField="packageCapBuffer" title="Package" unit="per booking" />
             ) : LIVE.has(sel) ? (
               <FlightPolicy key={sel} type={sel} />
             ) : (

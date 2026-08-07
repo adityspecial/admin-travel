@@ -222,6 +222,36 @@ export default function PaymentsPage() {
             </div>
           </div>
 
+          {/* Revenue by booking type — stats.byType was already computed
+              server-side but never rendered anywhere. */}
+          <section className="table-card">
+            <div className="table-header">
+              <div>
+                <div className="card-title">Revenue by Booking Type</div>
+                <div className="card-copy">Captured revenue breakdown for the selected range.</div>
+              </div>
+            </div>
+            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {(!stats?.byType || stats.byType.length === 0) ? (
+                <div style={{ color: '#9CA3AF', fontSize: 13 }}>No captured revenue in this range yet.</div>
+              ) : (() => {
+                const sorted = [...stats.byType].sort((a, b) => b.revenue - a.revenue)
+                const max = Math.max(...sorted.map(t => t.revenue), 1)
+                return sorted.map(t => (
+                  <div key={t.type} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 90, fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'capitalize' }}>
+                      {BOOKING_TYPE_LABELS[t.type] ?? t.type}
+                    </div>
+                    <div style={{ flex: 1, background: '#F3F4F6', borderRadius: 6, overflow: 'hidden', height: 18 }}>
+                      <div style={{ width: `${(t.revenue / max) * 100}%`, background: '#2563EB', height: '100%', borderRadius: 6 }} />
+                    </div>
+                    <div style={{ width: 110, textAlign: 'right', fontSize: 13, fontWeight: 800 }}>{formatMoney(t.revenue)}</div>
+                  </div>
+                ))
+              })()}
+            </div>
+          </section>
+
           {/* Order lookup */}
           <DataTable
             title="Order → Payments Lookup"

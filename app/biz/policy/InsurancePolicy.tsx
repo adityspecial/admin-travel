@@ -4,6 +4,7 @@ import { adminFetch } from '@/lib/api'
 
 interface S {
   max_price: string
+  buffer: string
   require_approval: string   // 'none' | 'always' | 'above_cap'
   addon_flights: boolean
   addon_hotels: boolean
@@ -14,6 +15,7 @@ interface S {
 
 const DFLT: S = {
   max_price:        '3000',
+  buffer:           '0',
   require_approval: 'above_cap',
   addon_flights:    true,
   addon_hotels:     true,
@@ -67,7 +69,7 @@ export function InsurancePolicy() {
     adminFetch('/api/admin/biz/policy/travel?type=insurance')
       .then(d => {
         const r = d.settings ?? {}
-        setS({ ...DFLT, ...r, max_price: String(r.max_price ?? DFLT.max_price) })
+        setS({ ...DFLT, ...r, max_price: String(r.max_price ?? DFLT.max_price), buffer: String(r.buffer ?? DFLT.buffer) })
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -75,21 +77,21 @@ export function InsurancePolicy() {
 
   async function save() {
     setSaving(true)
+    // max_price/buffer are edited here but never stored in travel_policies —
+    // enforce.ts's checkPolicyApproval() only reads a travel_policies row for
+    // flight/hotel/cab, so an insurance copy of these fields would just be
+    // dead storage nothing ever reads. The org's insurance_cap/buffer
+    // (synced below) is the only place that actually matters.
+    const { max_price, buffer, ...rest } = s
     await adminFetch('/api/admin/biz/policy/travel', {
       method: 'PATCH',
-      body: JSON.stringify({
-        type: 'insurance',
-        settings: { ...s, max_price: Number(s.max_price) || null },
-      }),
+      body: JSON.stringify({ type: 'insurance', settings: rest }),
     }).catch(() => {})
 
-    // Also sync insurance_cap to biz_organizations so the mobile approval gate picks it up
-    if (s.max_price) {
-      await adminFetch('/api/admin/biz/policy', {
-        method: 'PATCH',
-        body: JSON.stringify({ insuranceCap: Number(s.max_price) || null }),
-      }).catch(() => {})
-    }
+    await adminFetch('/api/admin/biz/policy', {
+      method: 'PATCH',
+      body: JSON.stringify({ insuranceCap: Number(s.max_price) || null, insuranceCapBuffer: Number(s.buffer) || 0 }),
+    }).catch(() => {})
 
     setSaving(false); setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -116,6 +118,11 @@ export function InsurancePolicy() {
           <div className="pol-label-13 pol-mb-4">Insurance Cap (₹ per policy)</div>
           <div className="pol-desc-12 pol-mb-10">Policies above this amount require manager approval. Leave blank for no cap.</div>
           <input type="number" value={s.max_price} onChange={e => setS(p => ({ ...p, max_price: e.target.value }))} placeholder="e.g. 3000" className="pol-select pol-input-w200" />
+        </div>
+        <div className="pol-block">
+          <div className="pol-label-13 pol-mb-4">Approval Buffer</div>
+          <div className="pol-desc-12 pol-mb-10">A premium exceeding the cap above by up to this amount still books without approval.</div>
+          <input type="number" value={s.buffer} onChange={e => setS(p => ({ ...p, buffer: e.target.value }))} placeholder="0" className="pol-select pol-input-w200" />
         </div>
         <div className="pol-block--plain">
           <div className="pol-label-13 pol-mb-10">Approval Requirement</div>

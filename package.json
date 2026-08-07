@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
-    "build": "next build",
-    "start": "next start -p 3001"
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=2048 next dev -p 3001",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=2048 next build",
+    "start": "cross-env NODE_OPTIONS=--max-old-space-size=2048 next start -p 3001"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",
@@ -22,6 +22,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
     "typescript": "^5"
   }
 }
