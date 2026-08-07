@@ -1,0 +1,49 @@
+/* ── Page: Partner Promo Codes (app/partner/promos/page.tsx) ────────────────── */
+
+.ppromo-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ppromo-cash-badge {
+  font-size: 13px;
+  padding: 4px 10px;
+}
+
+.ppromo-balance-display {
+  font-size: 30px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 4px 0 12px;
+}
+
+.ppromo-tx-desc {
+  font-size: 13px;
+}
+
+.ppromo-tx-badge {
+  margin-right: 8px;
+}
+
+.ppromo-tx-amount {
+  font-weight: 700;
+}
+
+.ppromo-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ppromo-search-wrapper {
+  width: 260px;
+}
+
+.ppromo-span-2 {
+  grid-column: 1 / -1;
+}
+
+.ppromo-mb-16 {
+  margin-bottom: 16px;
+}

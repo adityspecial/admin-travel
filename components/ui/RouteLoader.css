@@ -1,0 +1,19 @@
+/* ── Reusable Component: RouteLoader (components/ui/RouteLoader.tsx) ────── */
+/* Mounted inside a portal's main-content column (not the sidebar), so
+   position: sticky naturally confines its width to that column. */
+
+.route-loader-track {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: 3px;
+  width: 100%;
+  pointer-events: none;
+}
+
+.route-loader-bar {
+  height: 100%;
+  background: var(--accent, #E31E24);
+  box-shadow: 0 0 8px var(--accent, #E31E24);
+  transition: width 0.2s ease, opacity 0.2s ease;
+}

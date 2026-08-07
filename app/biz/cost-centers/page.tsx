@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import './cost-center.css'
 import {
   Layers,
   Plus,
@@ -99,150 +100,30 @@ export default function CostCentersPage() {
   const inactiveCount = items.filter((c) => !c.is_active).length
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 54px)', width: '100%', overflowX: 'hidden' }}>
-      <style>{`
-        .cc-container {
-          margin: 0 auto;
-          padding: 32px 32px 48px;
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-        }
-        .hero-banner-box {
-          background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
-          border-radius: 24px;
-          padding: 32px;
-          color: #ffffff;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 16px 36px -10px rgba(49, 46, 129, 0.25);
-        }
-        .card-shell {
-          background: #ffffff;
-          border: 1px solid #E5E7EB;
-          border-radius: 20px;
-          padding: 26px;
-          box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.03), 0 2px 6px rgba(0, 0, 0, 0.02);
-        }
-        .input-field {
-          width: 100%;
-          padding: 10px 14px;
-          border-radius: 10px;
-          border: 1.5px solid #E5E7EB;
-          font-size: 13.5px;
-          outline: none;
-          box-sizing: border-box;
-          transition: all 0.2s ease;
-        }
-        .input-field:focus {
-          border-color: var(--accent, #E31E24);
-          box-shadow: 0 0 0 3px rgba(227, 30, 36, 0.1);
-        }
-        .btn-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 22px;
-          background: linear-gradient(135deg, var(--accent, #E31E24) 0%, #B91C1C 100%);
-          color: #ffffff;
-          border: none;
-          border-radius: 12px;
-          font-weight: 600;
-          font-size: 13px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
-          white-space: nowrap;
-        }
-        .btn-primary:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 18px var(--accent, rgba(227, 30, 36, 0.35));
-        }
-        .btn-secondary {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 16px;
-          background: #F3F4F6;
-          color: #374151;
-          border: 1px solid #E5E7EB;
-          border-radius: 10px;
-          font-weight: 700;
-          font-size: 12.5px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .btn-secondary:hover {
-          background: #E5E7EB;
-        }
-        @media (max-width: 1024px) {
-          .cc-container {
-            padding: 24px 20px 36px;
-          }
-        }
-        @media (max-width: 640px) {
-          .cc-container {
-            padding: 16px 12px 28px;
-          }
-          .hero-banner-box {
-            padding: 20px;
-            border-radius: 18px;
-          }
-          .card-shell {
-            padding: 18px 14px;
-            border-radius: 16px;
-          }
-        }
-      `}</style>
-
+    <div className="cc-page">
       <div className="cc-container">
         {/* Breadcrumb Navigation */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>
+        <div className="cc-breadcrumb">
           <span>Admin</span>
           <ChevronRight size={13} color="#9CA3AF" />
-          <span style={{ color: 'var(--accent, #E31E24)', fontWeight: 700 }}>Cost Centers & Accounting</span>
+          <span className="cc-breadcrumb-active">Cost Centers & Accounting</span>
         </div>
 
         {/* Hero Header Banner */}
         <div className="hero-banner-box">
           {/* Ambient Glow */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '-40px',
-              right: '-40px',
-              width: '240px',
-              height: '240px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(227, 30, 36, 0.25) 0%, rgba(0, 0, 0, 0) 70%)',
-              pointerEvents: 'none',
-            }}
-          />
+          <div className="cc-hero-glow" />
 
-          <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-              <div
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '18px',
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  backdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ffffff',
-                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)',
-                }}
-              >
+          <div className="cc-hero-content">
+            <div className="cc-hero-left">
+              <div className="cc-hero-icon">
                 <Layers size={28} />
               </div>
               <div>
-                <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h1 className="cc-hero-title">
                   Cost Centers & Accounting <Sparkles size={18} color="#F59E0B" />
                 </h1>
-                <p style={{ fontSize: '13.5px', color: 'rgba(255, 255, 255, 0.85)', marginTop: '4px', margin: 0, fontWeight: 500 }}>
+                <p className="cc-hero-subtitle">
                   Tag travel bookings to specific departments, client projects, and subsidiary billing units for financial audits.
                 </p>
               </div>
@@ -250,38 +131,25 @@ export default function CostCentersPage() {
           </div>
 
           {/* Quick Metrics Inside Hero */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px', marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.15)' }}>
+          <div className="cc-hero-metrics">
             <div>
-              <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Total Cost Centers</div>
-              <div style={{ fontSize: '20px', fontWeight: 900, color: '#ffffff', marginTop: '2px' }}>{items.length}</div>
+              <div className="cc-metric-label">Total Cost Centers</div>
+              <div className="cc-metric-value cc-metric-value--white">{items.length}</div>
             </div>
             <div>
-              <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Active Allocations</div>
-              <div style={{ fontSize: '20px', fontWeight: 900, color: '#34D399', marginTop: '2px' }}>{activeCount}</div>
+              <div className="cc-metric-label">Active Allocations</div>
+              <div className="cc-metric-value cc-metric-value--active">{activeCount}</div>
             </div>
             <div>
-              <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Archived / Inactive</div>
-              <div style={{ fontSize: '20px', fontWeight: 900, color: '#9CA3AF', marginTop: '2px' }}>{inactiveCount}</div>
+              <div className="cc-metric-label">Archived / Inactive</div>
+              <div className="cc-metric-value cc-metric-value--inactive">{inactiveCount}</div>
             </div>
           </div>
         </div>
 
         {/* Global Error Banner */}
         {error && (
-          <div
-            style={{
-              padding: '12px 16px',
-              borderRadius: '12px',
-              background: '#FEF2F2',
-              border: '1px solid #FCA5A5',
-              color: '#DC2626',
-              fontSize: '13px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
+          <div className="cc-alert-error">
             <AlertCircle size={16} />
             <span>{error}</span>
           </div>
@@ -289,45 +157,33 @@ export default function CostCentersPage() {
 
         {/* Add Cost Center Form Card */}
         <section className="card-shell">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <div
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '12px',
-                background: '#EFF6FF',
-                color: '#2563EB',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+          <div className="cc-form-header">
+            <div className="cc-form-icon">
               <Plus size={20} />
             </div>
             <div>
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: 0 }}>Add New Cost Center</h2>
-              <span style={{ fontSize: '12px', color: '#6B7280' }}>Create unique department or project identification codes</span>
+              <h2 className="cc-card-title">Add New Cost Center</h2>
+              <span className="cc-card-subtitle">Create unique department or project identification codes</span>
             </div>
           </div>
 
           <form onSubmit={handleAdd}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+            <div className="cc-form-grid">
               <div>
-                <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '6px' }}>
+                <label className="cc-field-label">
                   Cost Center Code *
                 </label>
                 <input
                   placeholder="e.g. MKTG-2026"
                   value={form.code}
                   onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase().replace(/\s/g, '') }))}
-                  className="input-field"
-                  style={{ fontFamily: 'monospace', fontWeight: 700 }}
+                  className="input-field cc-code-input"
                   required
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '6px' }}>
+                <label className="cc-field-label">
                   Cost Center Name *
                 </label>
                 <input
@@ -340,7 +196,7 @@ export default function CostCentersPage() {
               </div>
 
               <div>
-                <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '6px' }}>
+                <label className="cc-field-label">
                   Description (Optional)
                 </label>
                 <input
@@ -352,7 +208,7 @@ export default function CostCentersPage() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div className="cc-submit-row">
               <button type="submit" disabled={saving} className="btn-primary">
                 <Plus size={15} /> {saving ? 'Creating…' : 'Create Cost Center'}
               </button>
@@ -361,34 +217,23 @@ export default function CostCentersPage() {
         </section>
 
         {/* Cost Centers Data Table Card */}
-        <section className="card-shell" style={{ padding: 0, overflow: 'hidden' }}>
+        <section className="card-shell cc-table-card">
           {/* Header Bar */}
-          <div style={{ padding: '18px 24px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: 0 }}>
+          <div className="cc-table-header">
+            <div className="cc-table-header-left">
+              <h3 className="cc-card-title">
                 {loading ? 'Cost Centers' : `Cost Centers (${filteredItems.length})`}
               </h3>
 
               {/* Status Filter Segmented Pills */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#F3F4F6', padding: '3px', borderRadius: '10px' }}>
+              <div className="cc-filter-pills">
                 {(['all', 'active', 'inactive'] as const).map((st) => {
                   const isActive = statusFilter === st
                   return (
                     <button
                       key={st}
                       onClick={() => setStatusFilter(st)}
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: '7px',
-                        border: 'none',
-                        fontSize: '11px',
-                        fontWeight: isActive ? 800 : 600,
-                        cursor: 'pointer',
-                        background: isActive ? 'var(--accent, #E31E24)' : 'transparent',
-                        color: isActive ? '#ffffff' : '#6B7280',
-                        textTransform: 'capitalize',
-                        transition: 'all 0.15s ease',
-                      }}
+                      className={`cc-filter-pill ${isActive ? 'cc-filter-pill--active' : ''}`}
                     >
                       {st}
                     </button>
@@ -398,25 +243,24 @@ export default function CostCentersPage() {
             </div>
 
             {/* Search Input */}
-            <div style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
-              <Search size={15} color="#9CA3AF" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+            <div className="cc-search-wrap">
+              <Search size={15} color="#9CA3AF" className="cc-search-icon" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search code, name, or details..."
-                className="input-field"
-                style={{ paddingLeft: '36px', fontSize: '12.5px' }}
+                className="input-field cc-search-input"
               />
             </div>
           </div>
 
           {/* Table */}
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="cc-table-scroll">
+            <table className="cc-table">
               <thead>
-                <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                <tr className="cc-thead-row">
                   {['CODE', 'COST CENTER NAME', 'DESCRIPTION', 'STATUS', 'ACTIONS'].map((h) => (
-                    <th key={h} style={{ textAlign: 'left', padding: '12px 20px', fontSize: '11px', fontWeight: 700, color: '#6B7280', letterSpacing: '0.04em' }}>
+                    <th key={h} className="cc-th">
                       {h}
                     </th>
                   ))}
@@ -425,77 +269,45 @@ export default function CostCentersPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} style={{ padding: '48px', textAlign: 'center', color: '#9CA3AF', fontSize: '13.5px', fontWeight: 600 }}>
+                    <td colSpan={5} className="cc-loading-cell">
                       Loading cost centers…
                     </td>
                   </tr>
                 ) : filteredItems.length === 0 ? (
                   <tr>
-                    <td colSpan={5} style={{ padding: '60px 20px', textAlign: 'center' }}>
-                      <Layers size={32} color="#9CA3AF" style={{ margin: '0 auto 8px' }} />
-                      <div style={{ fontSize: '15px', fontWeight: 800, color: '#111827', marginBottom: '4px' }}>No Cost Center Found</div>
-                      <div style={{ fontSize: '13px', color: '#9CA3AF' }}>Create your first cost center using the form above.</div>
+                    <td colSpan={5} className="cc-empty-cell">
+                      <Layers size={32} color="#9CA3AF" className="cc-empty-icon" />
+                      <div className="cc-empty-title">No Cost Center Found</div>
+                      <div className="cc-empty-sub">Create your first cost center using the form above.</div>
                     </td>
                   </tr>
                 ) : (
                   filteredItems.map((c) => (
-                    <tr key={c.id} style={{ borderTop: '1px solid #F3F4F6', transition: 'background 0.15s ease' }}>
-                      <td style={{ padding: '14px 20px' }}>
-                        <span
-                          style={{
-                            fontFamily: 'monospace',
-                            fontSize: '12.5px',
-                            fontWeight: 800,
-                            background: '#F3F4F6',
-                            color: '#111827',
-                            padding: '4px 10px',
-                            borderRadius: '6px',
-                            border: '1px solid #E5E7EB',
-                          }}
-                        >
+                    <tr key={c.id} className="cc-tr">
+                      <td className="cc-td">
+                        <span className="cc-code-badge">
                           {c.code}
                         </span>
                       </td>
-                      <td style={{ padding: '14px 20px' }}>
-                        <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#111827' }}>{c.name}</div>
+                      <td className="cc-td">
+                        <div className="cc-name-cell">{c.name}</div>
                       </td>
-                      <td style={{ padding: '14px 20px', fontSize: '13px', color: '#6B7280' }}>{c.description ?? '—'}</td>
-                      <td style={{ padding: '14px 20px' }}>
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            padding: '3px 10px',
-                            borderRadius: '99px',
-                            background: c.is_active ? '#ECFDF5' : '#F3F4F6',
-                            color: c.is_active ? '#047857' : '#6B7280',
-                            border: c.is_active ? '1px solid #6EE7B7' : '1px solid #E5E7EB',
-                          }}
-                        >
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: c.is_active ? '#10B981' : '#9CA3AF' }} />
+                      <td className="cc-td cc-desc-cell">{c.description ?? '—'}</td>
+                      <td className="cc-td">
+                        <span className={`cc-status-badge ${c.is_active ? 'cc-status-badge--active' : 'cc-status-badge--inactive'}`}>
+                          <span className={`cc-status-dot ${c.is_active ? 'cc-status-dot--active' : 'cc-status-dot--inactive'}`} />
                           {c.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                      <td style={{ padding: '14px 20px' }}>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <td className="cc-td">
+                        <div className="cc-actions-row">
                           <button onClick={() => toggleActive(c.id, c.is_active)} className="btn-secondary">
                             <Power size={13} color={c.is_active ? '#DC2626' : '#10B981'} />
                             {c.is_active ? 'Deactivate' : 'Activate'}
                           </button>
                           <button
                             onClick={() => handleDelete(c.id)}
-                            style={{
-                              border: 'none',
-                              background: 'transparent',
-                              color: '#DC2626',
-                              cursor: 'pointer',
-                              padding: '6px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                            }}
+                            className="cc-btn-delete-icon"
                             title="Delete Cost Center"
                           >
                             <Trash2 size={16} />

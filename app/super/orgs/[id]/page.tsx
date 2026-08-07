@@ -221,16 +221,7 @@ export default function EditOrgPage() {
         <select
           value={m.role}
           onChange={(e) => changeMemberRole(m.id, e.target.value)}
-          style={{
-            padding: '6px 10px',
-            borderRadius: 8,
-            border: '1px solid #cbd5e1',
-            fontSize: 12.5,
-            fontWeight: 700,
-            color: '#334155',
-            background: '#ffffff',
-            cursor: 'pointer',
-          }}
+          className="orgs-role-select"
         >
           {ROLES.map((r) => (
             <option key={r} value={r}>
@@ -244,7 +235,7 @@ export default function EditOrgPage() {
       key: 'created_at',
       header: 'Joined',
       render: (m) => (
-        <span className="data-table-muted-cell" style={{ fontSize: 12.5 }}>
+        <span className="data-table-muted-cell orgs-joined-cell">
           {new Date(m.created_at).toLocaleDateString('en-IN')}
         </span>
       ),
@@ -265,26 +256,24 @@ export default function EditOrgPage() {
     },
   ]
 
-  if (loading) return <div className="admin-content"><p style={{ color: '#94A3B8' }}>Loading organisation details…</p></div>
+  if (loading) return <div className="admin-content"><p className="orgs-loading-text">Loading organisation details…</p></div>
 
   return (
     <div>
       <div className="admin-topbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="orgs-header-left">
           <button
-            className="btn btn-ghost btn-sm"
+            className="btn btn-ghost btn-sm orgs-btn-icon-gap"
             onClick={() => router.back()}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
             <ArrowLeft size={14} />
             <span>Back</span>
           </button>
           <h2>Edit Organisation</h2>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="orgs-header-actions">
           <button
-            className="btn btn-sm"
-            style={{ background: '#FEE2E2', color: '#DC2626', border: '1px solid #FECACA', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            className="btn btn-sm orgs-btn-delete"
             onClick={() => setShowDeleteModal(true)}
             disabled={deleting}
           >
@@ -295,9 +284,9 @@ export default function EditOrgPage() {
       </div>
 
       <div className="admin-content">
-        {error && <div className="login-error" style={{ marginBottom: 16 }}>{error}</div>}
+        {error && <div className="login-error orgs-mb-16">{error}</div>}
         {saved && (
-          <div style={{ background: '#DCFCE7', color: '#16A34A', border: '1px solid #BBF7D0', borderRadius: 12, padding: '12px 16px', fontSize: 13, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="orgs-success-banner orgs-mb-16">
             <Check size={16} />
             <span>Changes saved successfully.</span>
           </div>
@@ -306,7 +295,7 @@ export default function EditOrgPage() {
         <div className="dashboard-grid">
           {/* Edit form */}
           <form className="explore-admin-section" onSubmit={handleSave}>
-            <div className="dashboard-card-header" style={{ marginBottom: 20 }}>
+            <div className="dashboard-card-header orgs-card-header-mb20">
               <div className="dashboard-card-title-group">
                 <div className="dashboard-card-icon-icon dashboard-card-icon-blue">
                   <Building2 size={20} strokeWidth={2.2} />
@@ -347,7 +336,7 @@ export default function EditOrgPage() {
               icon={<Globe size={16} />}
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+            <div className="orgs-caps-grid">
               <AppInput
                 label="Flight Cap (₹ per trip)"
                 type="number"
@@ -474,34 +463,32 @@ export default function EditOrgPage() {
               icon={<FileText size={16} />}
             />
 
-            <div className="app-input-group" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4, marginBottom: 20 }}>
+            <div className="app-input-group orgs-checkbox-row">
               <input
                 type="checkbox"
                 id="is_active"
                 checked={form.is_active}
                 onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))}
-                style={{ width: 18, height: 18, accentColor: '#2563eb', cursor: 'pointer' }}
+                className="orgs-checkbox"
               />
-              <label htmlFor="is_active" style={{ margin: 0, fontWeight: 700, fontSize: 13.5, color: '#0f172a', cursor: 'pointer' }}>
+              <label htmlFor="is_active" className="orgs-checkbox-label">
                 Organisation is active
               </label>
             </div>
 
-            <div style={{ display: 'flex', gap: 10, paddingTop: 10, borderTop: '1px solid #f1f5f9' }}>
+            <div className="orgs-form-actions">
               <button
-                className="btn btn-primary"
+                className="btn btn-primary orgs-btn-save"
                 type="submit"
                 disabled={saving}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px' }}
               >
                 <Save size={15} />
                 <span>{saving ? 'Saving…' : 'Save Changes'}</span>
               </button>
               <button
-                className="btn btn-ghost"
+                className="btn btn-ghost orgs-btn-cancel-pad"
                 type="button"
                 onClick={() => router.back()}
-                style={{ padding: '10px 18px' }}
               >
                 Cancel
               </button>
@@ -558,8 +545,8 @@ export default function EditOrgPage() {
           )}
 
           {/* Org stats */}
-          <div className="explore-admin-section" style={{ padding: 24 }}>
-            <div className="dashboard-card-header" style={{ marginBottom: 16 }}>
+          <div className="explore-admin-section orgs-panel-pad24">
+            <div className="dashboard-card-header orgs-card-header-mb16">
               <div className="dashboard-card-title-group">
                 <div className="dashboard-card-icon-icon dashboard-card-icon-teal">
                   <Activity size={19} strokeWidth={2.2} />
@@ -594,19 +581,13 @@ export default function EditOrgPage() {
             ].map((row) => (
               <div
                 key={row.label}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '14px 0',
-                  borderBottom: '1px solid #f1f5f9',
-                }}
+                className="orgs-info-row"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="orgs-info-row-left">
                   <row.icon size={15} color="#64748b" />
-                  <span style={{ fontSize: 13, color: '#64748b', fontWeight: 700 }}>{row.label}</span>
+                  <span className="orgs-info-label">{row.label}</span>
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>{row.value}</span>
+                <span className="orgs-info-value">{row.value}</span>
               </div>
             ))}
           </div>
@@ -657,7 +638,7 @@ export default function EditOrgPage() {
         </div>
 
         {/* Members DataTable */}
-        <div style={{ marginTop: 24 }}>
+        <div className="orgs-mt-24">
           <DataTable
             title={`Members (${members.length})`}
             subtitle="Users linked to this organisation"

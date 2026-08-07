@@ -2,6 +2,12 @@
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { Pagination, usePagination } from '@/components/Pagination'
+import { DataTable, ColumnDef } from '@/components/ui/DataTable'
+import { AppInput } from '@/components/ui/AppInput'
+import { AppPopup } from '@/components/ui/AppPopup'
+import '@/components/ui/ConfirmModal.css'
+import { Wallet, Tag, Search, Plus } from 'lucide-react'
+import './promos.css'
 
 interface Promo {
   id: string
@@ -157,47 +163,116 @@ export default function PartnerPromosPage() {
   const { slice, page, setPage, total } = usePagination(filtered, 20)
   const active = promos.filter(p => p.is_active).length
 
+  const columns: ColumnDef<Promo>[] = [
+    {
+      key: 'code',
+      header: 'Code',
+      render: (p) => <span className="data-table-code-pill">{p.code}</span>,
+    },
+    {
+      key: 'discount_value',
+      header: 'Discount',
+      render: (p) => (
+        <span className="data-table-cell-bold">
+          {p.discount_type === 'percentage' ? `${p.discount_value}%` : fmtRs(p.discount_value)}
+        </span>
+      ),
+    },
+    {
+      key: 'min_booking_amount',
+      header: 'Min Amt',
+      render: (p) => <span className="data-table-muted-cell">{p.min_booking_amount ? fmtRs(p.min_booking_amount) : '--'}</span>,
+    },
+    {
+      key: 'current_uses',
+      header: 'Uses',
+      render: (p) => (
+        <span>
+          {p.current_uses}
+          <span className="data-table-muted-cell">{p.max_uses ? ` / ${p.max_uses}` : ''}</span>
+        </span>
+      ),
+    },
+    {
+      key: 'applicable_to',
+      header: 'Applies To',
+      render: (p) => <span className="badge badge-gray">{p.applicable_to ?? 'all'}</span>,
+    },
+    {
+      key: 'valid_until',
+      header: 'Valid Until',
+      render: (p) => <span className="data-table-muted-cell">{fmtDate(p.valid_until)}</span>,
+    },
+    {
+      key: 'is_active',
+      header: 'Status',
+      render: (p) => <span className={`badge ${p.is_active ? 'badge-green' : 'badge-red'}`}>{p.is_active ? 'Active' : 'Inactive'}</span>,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (p) => (
+        <button
+          type="button"
+          className={`data-table-btn ${p.is_active ? 'data-table-btn-edit' : 'data-table-btn-success'}`}
+          disabled={toggling === p.id}
+          onClick={() => toggle(p)}
+        >
+          {toggling === p.id ? '…' : p.is_active ? 'Deactivate' : 'Activate'}
+        </button>
+      ),
+    },
+  ]
+
   return (
     <div>
       <div className="admin-topbar">
         <h2>Promo Codes</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="ppromo-topbar-right">
           {cashBalance !== null && (
-            <span className="badge badge-yellow" style={{ fontSize: 13, padding: '4px 10px' }}>
+            <span className="badge badge-yellow ppromo-cash-badge">
               Promo Cash: {fmtRs(cashBalance)}
             </span>
           )}
           <span className="topbar-meta">{promos.length} codes · {active} active</span>
         </div>
       </div>
+
       <div className="admin-content">
         <div className="page-stack">
-
           {/* Promo Cash Card */}
-          <div className="chart-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div className="card-title">Promo Cash Balance</div>
-                <div className="card-copy">Credit promo cash to your agent account. Customers can redeem it at checkout.</div>
-                <div style={{ fontSize: 28, fontWeight: 800, marginTop: 12 }}>
-                  {cashBalance !== null ? fmtRs(cashBalance) : '—'}
+          <div className="dashboard-card-lucrative">
+            <div className="dashboard-card-header">
+              <div className="dashboard-card-title-group">
+                <div className="dashboard-card-icon-icon dashboard-card-icon-orange">
+                  <Wallet size={19} strokeWidth={2.2} />
+                </div>
+                <div>
+                  <h3 className="dashboard-card-title">Promo Cash Balance</h3>
+                  <p className="dashboard-card-subtitle">Credit promo cash to your agent account. Customers can redeem it at checkout.</p>
                 </div>
               </div>
-              <button className="btn btn-primary btn-sm" onClick={() => setShowCash(true)}>
-                + Credit Cash
+              <button type="button" className="quick-action-btn-primary" onClick={() => setShowCash(true)}>
+                <Plus size={14} strokeWidth={2.5} />
+                Credit Cash
               </button>
             </div>
+
+            <div className="ppromo-balance-display">
+              {cashBalance !== null ? fmtRs(cashBalance) : '--'}
+            </div>
+
             {cashTxs.length > 0 && (
-              <div className="metric-list" style={{ marginTop: 18 }}>
+              <div className="metric-list">
                 {cashTxs.slice(0, 5).map(tx => (
                   <div className="metric-row-head" key={tx.id}>
-                    <span style={{ fontSize: 13 }}>
-                      <span className={`badge ${tx.type === 'credit' ? 'badge-green' : 'badge-red'}`} style={{ marginRight: 8 }}>
+                    <span className="ppromo-tx-desc">
+                      <span className={`badge ppromo-tx-badge ${tx.type === 'credit' ? 'badge-green' : 'badge-red'}`}>
                         {tx.type}
                       </span>
                       {tx.description}
                     </span>
-                    <span style={{ fontWeight: 700 }}>{tx.type === 'credit' ? '+' : '-'}{fmtRs(tx.amount)}</span>
+                    <span className="ppromo-tx-amount">{tx.type === 'credit' ? '+' : '-'}{fmtRs(tx.amount)}</span>
                   </div>
                 ))}
               </div>
@@ -205,220 +280,172 @@ export default function PartnerPromosPage() {
           </div>
 
           {/* Promos Table */}
-          <div className="surface-card">
-            <div className="table-toolbar">
-              <input
-                className="toolbar-search"
-                style={{ maxWidth: 320 }}
-                placeholder="Search by code or description..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-              <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(true)}>
-                + New Promo
-              </button>
-            </div>
-          </div>
-
-          <div className="table-card">
-            <table>
-              <thead>
-                <tr>
-                  <th>Code</th>
-                  <th>Discount</th>
-                  <th>Min Amt</th>
-                  <th>Uses</th>
-                  <th>Applies To</th>
-                  <th>Valid Until</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={8} className="empty-state">Loading...</td></tr>
-                ) : slice.length === 0 ? (
-                  <tr><td colSpan={8} className="empty-state">No promo codes yet. Create one to offer discounts to your clients.</td></tr>
-                ) : slice.map(p => (
-                  <tr key={p.id}>
-                    <td><code style={{ fontWeight: 700 }}>{p.code}</code></td>
-                    <td style={{ fontWeight: 700 }}>
-                      {p.discount_type === 'percentage' ? `${p.discount_value}%` : fmtRs(p.discount_value)}
-                    </td>
-                    <td style={{ color: '#64748B' }}>
-                      {p.min_booking_amount ? fmtRs(p.min_booking_amount) : '—'}
-                    </td>
-                    <td>
-                      {p.current_uses}
-                      <span style={{ color: '#94A3B8' }}>{p.max_uses ? ` / ${p.max_uses}` : ''}</span>
-                    </td>
-                    <td><span className="badge badge-gray">{p.applicable_to ?? 'all'}</span></td>
-                    <td style={{ color: '#64748B', fontSize: 12 }}>{fmtDate(p.valid_until)}</td>
-                    <td>
-                      <span className={`badge ${p.is_active ? 'badge-green' : 'badge-red'}`}>
-                        {p.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        className={`btn btn-sm ${p.is_active ? 'btn-ghost' : 'btn-muted'}`}
-                        disabled={toggling === p.id}
-                        onClick={() => toggle(p)}
-                      >
-                        {toggling === p.id ? '...' : p.is_active ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <Pagination total={total} page={page} perPage={20} onPage={setPage} />
-          </div>
-
+          <DataTable
+            title="Promo Codes"
+            subtitle="Discount codes scoped to your agency's clients."
+            headerAction={
+              <div className="ppromo-header-actions">
+                <div className="ppromo-search-wrapper">
+                  <AppInput
+                    placeholder="Search by code or description…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    icon={<Search size={15} />}
+                    wrapperClassName="m-0"
+                  />
+                </div>
+                <button type="button" className="quick-action-btn-primary" onClick={() => setShowCreate(true)}>
+                  <Plus size={14} strokeWidth={2.5} />
+                  New Promo
+                </button>
+              </div>
+            }
+            columns={columns}
+            data={slice}
+            loading={loading}
+            emptyMessage="No promo codes yet. Create one to offer discounts to your clients."
+            keyExtractor={(p) => p.id}
+            footer={<Pagination total={total} page={page} perPage={20} onPage={setPage} />}
+          />
         </div>
       </div>
 
-      {/* Create Promo Modal */}
-      {showCreate && (
-        <div className="modal-overlay">
-          <div className="form-card modal-card" style={{ maxWidth: 540 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontWeight: 800 }}>Create Promo Code</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => { setShowCreate(false); setCreateError('') }}>Close</button>
-            </div>
-            <div className="banner-soft" style={{ marginBottom: 16, fontSize: 13 }}>
-              This promo will be scoped to your agency's clients only.
-            </div>
-            {createError && <div className="login-error" style={{ marginBottom: 12 }}>{createError}</div>}
-            <form onSubmit={createPromo}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label>Coupon Code *</label>
-                  <input
-                    value={form.code}
-                    onChange={e => setF('code', e.target.value.toUpperCase())}
-                    placeholder="AGENT10"
-                    required
-                  />
-                </div>
-                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label>Description</label>
-                  <input
-                    value={form.description}
-                    onChange={e => setF('description', e.target.value)}
-                    placeholder="Exclusive discount for agency clients"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Discount Type *</label>
-                  <select value={form.discount_type} onChange={e => setF('discount_type', e.target.value)}>
-                    <option value="percentage">Percentage (%)</option>
-                    <option value="fixed">Fixed Amount (Rs)</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Discount Value *</label>
-                  <input
-                    type="number" min="0.01" step="any"
-                    value={form.discount_value}
-                    onChange={e => setF('discount_value', e.target.value)}
-                    placeholder={form.discount_type === 'percentage' ? '10' : '200'}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Min Booking Amount (Rs)</label>
-                  <input
-                    type="number" min="0"
-                    value={form.min_booking_amount}
-                    onChange={e => setF('min_booking_amount', e.target.value)}
-                    placeholder="Optional"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Total Uses Limit</label>
-                  <input
-                    type="number" min="1"
-                    value={form.max_uses}
-                    onChange={e => setF('max_uses', e.target.value)}
-                    placeholder="Unlimited"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Applicable To</label>
-                  <select value={form.applicable_to} onChange={e => setF('applicable_to', e.target.value)}>
-                    <option value="all">All bookings</option>
-                    <option value="flights">Flights only</option>
-                    <option value="hotels">Hotels only</option>
-                  </select>
-                </div>
-                <div className="form-group" />
-                <div className="form-group">
-                  <label>Valid From *</label>
-                  <input type="date" value={form.valid_from} onChange={e => setF('valid_from', e.target.value)} required />
-                </div>
-                <div className="form-group">
-                  <label>Valid Until *</label>
-                  <input type="date" value={form.valid_until} onChange={e => setF('valid_until', e.target.value)} required />
-                </div>
-              </div>
-              <div className="page-actions" style={{ marginTop: 16 }}>
-                <button type="button" className="btn btn-ghost" style={{ flex: 1 }} onClick={() => { setShowCreate(false); setCreateError('') }}>Cancel</button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={saving}>
-                  {saving ? 'Creating...' : 'Create Promo'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Create Promo AppPopup */}
+      <AppPopup
+        isOpen={showCreate}
+        title="Create Promo Code"
+        subtitle="This promo will be scoped to your agency's clients only."
+        icon={<Tag size={22} strokeWidth={2.2} />}
+        iconTone="orange"
+        maxWidth={540}
+        onClose={() => { setShowCreate(false); setCreateError('') }}
+      >
+        {createError && <div className="login-error">{createError}</div>}
 
-      {/* Credit Promo Cash Modal */}
-      {showCash && (
-        <div className="modal-overlay">
-          <div className="form-card modal-card" style={{ maxWidth: 440 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontWeight: 800 }}>Credit Promo Cash</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowCash(false)}>Close</button>
+        <form onSubmit={createPromo}>
+          <div className="agents-edit-grid">
+            <div className="ppromo-span-2">
+              <AppInput
+                label="Coupon Code"
+                required
+                value={form.code}
+                onChange={e => setF('code', e.target.value.toUpperCase())}
+                placeholder="AGENT10"
+              />
             </div>
-            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>
-              Current balance: <strong>{cashBalance !== null ? fmtRs(cashBalance) : '—'}</strong>
+
+            <div className="ppromo-span-2">
+              <AppInput
+                label="Description"
+                value={form.description}
+                onChange={e => setF('description', e.target.value)}
+                placeholder="Exclusive discount for agency clients"
+              />
             </div>
-            {cashError && <div className="login-error" style={{ marginBottom: 12 }}>{cashError}</div>}
-            {cashDone  && <div className="banner-success" style={{ marginBottom: 16 }}>{cashDone}</div>}
-            <form onSubmit={creditCash}>
-              <div className="form-group">
-                <label>Amount to Credit (Rs) *</label>
-                <input
-                  type="number" min="1"
-                  value={cashAmount}
-                  onChange={e => setCashAmount(e.target.value)}
-                  placeholder="5000"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Note (optional)</label>
-                <input
-                  value={cashNote}
-                  onChange={e => setCashNote(e.target.value)}
-                  placeholder="Promotion for Q3 campaign"
-                />
-              </div>
-              <div className="form-group">
-                <label>Expires At (optional)</label>
-                <input type="date" value={cashExpiry} onChange={e => setCashExpiry(e.target.value)} />
-              </div>
-              <div className="page-actions" style={{ marginTop: 12 }}>
-                <button type="button" className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setShowCash(false)}>Close</button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={cashBusy}>
-                  {cashBusy ? 'Crediting...' : 'Credit Promo Cash'}
-                </button>
-              </div>
-            </form>
+
+            <div className="app-input-group">
+              <label className="app-input-label">Discount Type</label>
+              <select className="app-input" value={form.discount_type} onChange={e => setF('discount_type', e.target.value)}>
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed Amount (Rs)</option>
+              </select>
+            </div>
+
+            <AppInput
+              label="Discount Value"
+              type="number" min="0.01" step="any" required
+              value={form.discount_value}
+              onChange={e => setF('discount_value', e.target.value)}
+              placeholder={form.discount_type === 'percentage' ? '10' : '200'}
+            />
+
+            <AppInput
+              label="Min Booking Amount (Rs)"
+              type="number" min="0"
+              value={form.min_booking_amount}
+              onChange={e => setF('min_booking_amount', e.target.value)}
+              placeholder="Optional"
+            />
+
+            <AppInput
+              label="Total Uses Limit"
+              type="number" min="1"
+              value={form.max_uses}
+              onChange={e => setF('max_uses', e.target.value)}
+              placeholder="Unlimited"
+            />
+
+            <div className="app-input-group">
+              <label className="app-input-label">Applicable To</label>
+              <select className="app-input" value={form.applicable_to} onChange={e => setF('applicable_to', e.target.value)}>
+                <option value="all">All bookings</option>
+                <option value="flights">Flights only</option>
+                <option value="hotels">Hotels only</option>
+              </select>
+            </div>
+            <div />
+
+            <AppInput label="Valid From" type="date" required value={form.valid_from} onChange={e => setF('valid_from', e.target.value)} />
+            <AppInput label="Valid Until" type="date" required value={form.valid_until} onChange={e => setF('valid_until', e.target.value)} />
           </div>
-        </div>
-      )}
+
+          <div className="app-popup-footer">
+            <button type="button" className="confirm-modal-btn confirm-modal-btn-cancel" onClick={() => { setShowCreate(false); setCreateError('') }}>
+              Cancel
+            </button>
+            <button type="submit" className="confirm-modal-btn confirm-modal-btn-success" disabled={saving}>
+              {saving ? 'Creating…' : 'Create Promo'}
+            </button>
+          </div>
+        </form>
+      </AppPopup>
+
+      {/* Credit Promo Cash AppPopup */}
+      <AppPopup
+        isOpen={showCash}
+        title="Credit Promo Cash"
+        subtitle={`Current balance: ${cashBalance !== null ? fmtRs(cashBalance) : '--'}`}
+        icon={<Wallet size={22} strokeWidth={2.2} />}
+        iconTone="teal"
+        maxWidth={460}
+        onClose={() => setShowCash(false)}
+      >
+        {cashError && <div className="login-error">{cashError}</div>}
+        {cashDone  && <div className="banner-success ppromo-mb-16">{cashDone}</div>}
+
+        <form onSubmit={creditCash}>
+          <AppInput
+            label="Amount to Credit (Rs)"
+            type="number" min="1" required
+            value={cashAmount}
+            onChange={e => setCashAmount(e.target.value)}
+            placeholder="5000"
+          />
+
+          <AppInput
+            label="Note (optional)"
+            value={cashNote}
+            onChange={e => setCashNote(e.target.value)}
+            placeholder="Promotion for Q3 campaign"
+          />
+
+          <AppInput
+            label="Expires At (optional)"
+            type="date"
+            value={cashExpiry}
+            onChange={e => setCashExpiry(e.target.value)}
+          />
+
+          <div className="app-popup-footer">
+            <button type="button" className="confirm-modal-btn confirm-modal-btn-cancel" onClick={() => setShowCash(false)}>
+              Close
+            </button>
+            <button type="submit" className="confirm-modal-btn confirm-modal-btn-success" disabled={cashBusy}>
+              {cashBusy ? 'Crediting…' : 'Credit Promo Cash'}
+            </button>
+          </div>
+        </form>
+      </AppPopup>
     </div>
   )
 }

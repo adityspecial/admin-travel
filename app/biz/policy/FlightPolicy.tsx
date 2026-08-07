@@ -38,26 +38,25 @@ const DFLT: S = {
 }
 
 const TITLES: Record<string, string> = { domestic_flight: 'Flight' }
-const SEL = { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid #E5E7EB', fontSize: 13, outline: 'none' as const, background: '#fff' }
 
 function Tog({ v, set }: { v: boolean; set: (x: boolean) => void }) {
   return (
-    <button onClick={() => set(!v)} style={{ width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', background: v ? '#E31E24' : '#D1D5DB', position: 'relative', flexShrink: 0 as const }}>
-      <span style={{ position: 'absolute', top: 3, left: v ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.15s' }} />
+    <button onClick={() => set(!v)} className={`pol-toggle ${v ? 'pol-toggle--on' : ''}`}>
+      <span className={`pol-toggle-knob ${v ? 'pol-toggle-knob--on' : ''}`} />
     </button>
   )
 }
 
 function Sec({ t }: { t: string }) {
-  return <div style={{ fontSize: 11, fontWeight: 800, color: '#6B7280', letterSpacing: '0.08em', padding: '12px 24px', background: '#F9FAFB', borderBottom: '1px solid #F3F4F6' }}>{t}</div>
+  return <div className="pol-sec">{t}</div>
 }
 
 function TRow({ label, desc, v, set }: { label: string; desc?: string; v: boolean; set: (x: boolean) => void }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 24px', borderBottom: '1px solid #F9FAFB', gap: 20 }}>
+    <div className="pol-trow">
       <div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{label}</div>
-        {desc && <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{desc}</div>}
+        <div className="pol-trow-label">{label}</div>
+        {desc && <div className="pol-trow-desc">{desc}</div>}
       </div>
       <Tog v={v} set={set} />
     </div>
@@ -126,35 +125,33 @@ export function FlightPolicy({ type }: { type: string }) {
     setTimeout(() => setSaved(false), 2500)
   }
 
-  if (loading) return <div style={{ padding: 40, fontSize: 14, color: '#9CA3AF' }}>Loading…</div>
-
-  const card = { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' as const, marginBottom: 20 }
+  if (loading) return <div className="pol-loading">Loading…</div>
 
   const RadioRow = (k: keyof S, val: string, label: string) => (
-    <label key={val} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer', fontSize: 13, color: '#374151' }}>
-      <input type="radio" checked={s[k] === val} onChange={() => setS(p => ({ ...p, [k]: val }))} style={{ accentColor: '#E31E24' }} />
+    <label key={val} className="pol-radio-row">
+      <input type="radio" checked={s[k] === val} onChange={() => setS(p => ({ ...p, [k]: val }))} className="pol-radio-input" />
       {label}
     </label>
   )
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div className="pol-header-row">
         <div>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#1a1a2e' }}>Edit {TITLES[type]} Policy</h1>
-          <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>Default Policy · General rules applicable to all employees.</div>
+          <h1 className="pol-header-title">Edit {TITLES[type]} Policy</h1>
+          <div className="pol-header-sub">Default Policy · General rules applicable to all employees.</div>
         </div>
-        <button onClick={save} disabled={saving} style={{ padding: '10px 26px', background: saved ? '#16A34A' : '#E31E24', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+        <button onClick={save} disabled={saving} className={`pol-save-btn ${saved ? 'pol-save-btn--saved' : ''}`}>
           {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save Policy'}
         </button>
       </div>
 
       {/* BOOKING AND ELIGIBILITY */}
-      <div style={card}>
+      <div className="pol-card">
         <Sec t="BOOKING AND ELIGIBILITY" />
         <TRow label="Require Travel Request Form" desc="Employees must submit a request form before making official bookings." v={s.require_request_form} set={upd('require_request_form')} />
-        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 10 }}>Colleague / Guest Booking Eligibility</div>
+        <div className="pol-block">
+          <div className="pol-label-13 pol-mb-10">Colleague / Guest Booking Eligibility</div>
           {RadioRow('colleague_booking', 'all', 'Employee can book for Colleagues and Guests')}
           {RadioRow('colleague_booking', 'colleagues_only', 'Employee can book for Colleagues but not Guests')}
           {RadioRow('colleague_booking', 'self_only', 'Employee can only book for self')}
@@ -164,77 +161,77 @@ export function FlightPolicy({ type }: { type: string }) {
       </div>
 
       {/* BUDGET AND PAYMENT */}
-      <div style={card}>
+      <div className="pol-card">
         <Sec t="BUDGET AND PAYMENT" />
-        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+        <div className="pol-block" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Maximum Price per Person per Segment</div>
-            <div style={{ fontSize: 12, color: '#6B7280' }}>Set on the <strong>Caps</strong> page — the same value used for the flat cap and the approval tiers below.</div>
+            <div className="pol-label-13 pol-mb-4">Maximum Price per Person per Segment</div>
+            <div className="pol-desc-12">Set on the <strong>Caps</strong> page — the same value used for the flat cap and the approval tiers below.</div>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: '#111827' }}>{orgCap != null ? `₹${orgCap.toLocaleString('en-IN')}` : 'No limit'}</div>
             {orgCapBuffer > 0 && <div style={{ fontSize: 11, color: '#9CA3AF' }}>+ ₹{orgCapBuffer.toLocaleString('en-IN')} buffer</div>}
           </div>
         </div>
-        <div style={{ padding: '14px 24px' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 10 }}>Policy Basis Dynamic Pricing</div>
+        <div className="pol-block--plain">
+          <div className="pol-label-13 pol-mb-10">Policy Basis Dynamic Pricing</div>
           {RadioRow('dynamic_pricing', 'no_restriction', 'No restriction based on cheapest fare')}
           {RadioRow('dynamic_pricing', 'cheapest_only', 'Only cheapest flight is in policy')}
           {RadioRow('dynamic_pricing', 'within_range', 'Flights within a % range of cheapest flight are in policy')}
           {s.dynamic_pricing === 'within_range' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, marginLeft: 22 }}>
-              <input type="number" min="1" max="100" value={s.dynamic_range} onChange={e => setS(p => ({ ...p, dynamic_range: e.target.value }))} style={{ ...SEL, width: 72 }} />
-              <span style={{ fontSize: 13, color: '#6B7280' }}>% above cheapest fare</span>
+            <div className="pol-subrow">
+              <input type="number" min="1" max="100" value={s.dynamic_range} onChange={e => setS(p => ({ ...p, dynamic_range: e.target.value }))} className="pol-select pol-input-w72" />
+              <span className="pol-desc-12">% above cheapest fare</span>
             </div>
           )}
         </div>
       </div>
 
       {/* COMFORT AND CONVENIENCE */}
-      <div style={card}>
+      <div className="pol-card">
         <Sec t="COMFORT AND CONVENIENCE" />
-        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 10 }}>Cabin Type</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 20 }}>
+        <div className="pol-block">
+          <div className="pol-label-13 pol-mb-10">Cabin Type</div>
+          <div className="pol-checkbox-wrap">
             {([['cabin_economy', 'Economy'], ['cabin_premium', 'Premium Economy'], ['cabin_business', 'Business Class'], ['cabin_first', 'First Class']] as [keyof S, string][]).map(([k, l]) => (
-              <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
-                <input type="checkbox" checked={s[k] as boolean} onChange={e => setS(p => ({ ...p, [k]: e.target.checked }))} style={{ accentColor: '#E31E24' }} />
+              <label key={k} className="pol-checkbox-label">
+                <input type="checkbox" checked={s[k] as boolean} onChange={e => setS(p => ({ ...p, [k]: e.target.checked }))} className="pol-checkbox-input" />
                 {l}
               </label>
             ))}
           </div>
-          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 8 }}>Flights of selected classes will only be bookable.</div>
+          <div className="pol-desc-12 pol-mt-8">Flights of selected classes will only be bookable.</div>
         </div>
-        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 6 }}>Preferred Airlines</div>
+        <div className="pol-block">
+          <div className="pol-label-13 pol-mb-6">Preferred Airlines</div>
           <input
             value={s.preferred_airlines}
             onChange={e => setS(p => ({ ...p, preferred_airlines: e.target.value }))}
             placeholder="e.g. AI,6E,UK (IATA codes, comma-separated)"
-            style={SEL}
+            className="pol-select"
           />
-          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 8 }}>
+          <div className="pol-desc-12 pol-mt-8">
             Not yet enforced at booking time — saved here for a future search-results filter. Hotels aren't covered by this setting.
           </div>
         </div>
-        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 14 }}>Airline Add-ons</div>
+        <div className="pol-block">
+          <div className="pol-subsection-title">Airline Add-ons</div>
           {([['addon_meals', 'Meals on Flight', 'Allow paid meal selection on regular fares.'],
              ['addon_seats', 'Seats', 'Allow selection of paid seats and Priority Check-in.'],
              ['addon_baggage', 'Extra Baggage', 'Over and above the baggage provided by airline.']] as [keyof S, string, string][]).map(([k, l, d]) => (
-            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div><div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{l}</div><div style={{ fontSize: 12, color: '#6B7280' }}>{d}</div></div>
+            <div key={k} className="pol-addon-row">
+              <div><div className="pol-trow-label">{l}</div><div className="pol-desc-12">{d}</div></div>
               <Tog v={s[k] as boolean} set={upd(k)} />
             </div>
           ))}
         </div>
-        <div style={{ padding: '14px 24px' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 14 }}>Corporate Value Add-ons</div>
+        <div className="pol-block--plain">
+          <div className="pol-subsection-title">Corporate Value Add-ons</div>
           {([['addon_fast_forward', '6E Fast Forward', 'Priority Checkin, Baggage Drop and Pickup.'],
              ['addon_cabs', 'Cabs', 'Pre-book airport cabs at great prices.'],
              ['addon_insurance', 'Travel Insurance', 'Comprehensive travel protection.']] as [keyof S, string, string][]).map(([k, l, d]) => (
-            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div><div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{l}</div><div style={{ fontSize: 12, color: '#6B7280' }}>{d}</div></div>
+            <div key={k} className="pol-addon-row">
+              <div><div className="pol-trow-label">{l}</div><div className="pol-desc-12">{d}</div></div>
               <Tog v={s[k] as boolean} set={upd(k)} />
             </div>
           ))}
@@ -242,7 +239,7 @@ export function FlightPolicy({ type }: { type: string }) {
       </div>
 
       {/* DATE CHANGE */}
-      <div style={card}>
+      <div className="pol-card">
         <Sec t="DATE CHANGE" />
         <TRow label="Date Change Allowed" desc="Allow employees to change flight dates post-booking." v={s.date_change} set={upd('date_change')} />
         {s.date_change && <>
@@ -252,16 +249,16 @@ export function FlightPolicy({ type }: { type: string }) {
       </div>
 
       {/* APPROVAL AND WALLET */}
-      <div style={card}>
+      <div className="pol-card">
         <Sec t="APPROVAL AND WALLET POLICY" />
-        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Booking and Approval</div>
-          <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>Route approval by total booking amount — add tiers for auto-approve, manager, and HOD thresholds.</div>
+        <div className="pol-block">
+          <div className="pol-label-13 pol-mb-4">Booking and Approval</div>
+          <div className="pol-desc-12 pol-mb-12">Route approval by total booking amount — add tiers for auto-approve, manager, and HOD thresholds.</div>
           <ApprovalTiersEditor tiers={s.approval_tiers ?? []} onChange={tiers => setS(p => ({ ...p, approval_tiers: tiers }))} baseCap={orgCap} />
         </div>
-        <div style={{ padding: '14px 24px', borderBottom: '1px solid #F9FAFB' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 6 }}>Wallet Allowed For</div>
-          <select value={s.wallet_for} onChange={e => setS(p => ({ ...p, wallet_for: e.target.value }))} style={{ ...SEL, maxWidth: 300 }}>
+        <div className="pol-block">
+          <div className="pol-label-13 pol-mb-6">Wallet Allowed For</div>
+          <select value={s.wallet_for} onChange={e => setS(p => ({ ...p, wallet_for: e.target.value }))} className="pol-select pol-select-w300">
             <option value="none">None of the Bookings</option>
             <option value="in_policy">In-Policy Bookings Only</option>
             <option value="out_policy">Out-of-Policy Bookings Only</option>

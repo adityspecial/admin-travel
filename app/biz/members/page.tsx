@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { Pagination, usePagination } from '@/components/Pagination'
 import { FilterSidebar, FilterSidebarBlock } from '../_components/FilterSidebar'
+import './members.css'
 import {
   Users,
   UserPlus,
@@ -174,201 +175,12 @@ export default function MembersPage() {
   const toggleAll = () =>
     setSelected((prev) => (prev.size === pageMembers.length ? new Set() : new Set(pageMembers.map((m) => m.id))))
 
-  const ROLE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
-    admin: { bg: '#FEF2F2', color: '#DC2626', border: '#FCA5A5' },
-    manager: { bg: '#EFF6FF', color: '#1D4ED8', border: '#93C5FD' },
-    employee: { bg: '#ECFDF5', color: '#047857', border: '#6EE7B7' },
-  }
-
   const verifiedCount = members.filter((m) => m.status !== 'invited').length
   const invitedCount = members.filter((m) => m.status === 'invited').length
   const adminCount = members.filter((m) => m.role === 'admin' || m.role === 'manager').length
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 54px)', background: '#F5F6FA', width: '100%', overflowX: 'hidden' }}>
-      <style>{`
-        .members-wrapper {
-          display: flex;
-          min-height: calc(100vh - 54px);
-        }
-        .filter-sidebar {
-          width: 280px;
-          flex-shrink: 0;
-          background: linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%);
-          border-right: 1px solid #E5E7EB;
-          box-shadow: 2px 0 12px rgba(0, 0, 0, 0.02);
-        }
-        .filter-sidebar__scroll::-webkit-scrollbar { width: 5px; }
-        .filter-sidebar__scroll::-webkit-scrollbar-track { background: transparent; }
-        .filter-sidebar__scroll::-webkit-scrollbar-thumb {
-          background: rgba(209,213,219,0.85);
-          border-radius: 99px;
-        }
-        .filter-sidebar__scroll::-webkit-scrollbar-thumb:hover {
-          background: rgba(156,163,175,1);
-        }
-        .filter-card-block {
-          background: #ffffff;
-          border: 1px solid #E5E7EB;
-          border-radius: 14px;
-          padding: 16px;
-          margin-bottom: 16px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-          transition: all 0.2s ease;
-        }
-        .filter-card-block:hover {
-          border-color: #D1D5DB;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.04);
-        }
-        .filter-label {
-          fontSize: 12px;
-          fontWeight: 800;
-          color: #111827;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 10px;
-        }
-        .filter-icon-badge {
-          width: 24px;
-          height: 24px;
-          border-radius: 7px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .role-chip {
-          padding: 6px 12px;
-          border-radius: 8px;
-          font-size: 12px;
-          font-weight: 700;
-          cursor: pointer;
-          border: 1px solid #E5E7EB;
-          background: #F9FAFB;
-          color: #4B5563;
-          transition: all 0.2s ease;
-          text-align: center;
-          user-select: none;
-        }
-        .role-chip.active {
-          background: var(--accent, #E31E24);
-          color: #ffffff;
-          border-color: var(--accent, #E31E24);
-          box-shadow: 0 4px 12px var(--accent, rgba(227, 30, 36, 0.25));
-        }
-        .main-content {
-          flex: 1;
-          padding: 32px 32px 48px;
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-          min-width: 0;
-        }
-        .hero-banner-box {
-          background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
-          border-radius: 24px;
-          padding: 32px;
-          color: #ffffff;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 16px 36px -10px rgba(49, 46, 129, 0.25);
-        }
-        .card-shell {
-          background: #ffffff;
-          border: 1px solid #E5E7EB;
-          border-radius: 20px;
-          padding: 26px;
-          box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.03), 0 2px 6px rgba(0, 0, 0, 0.02);
-        }
-        .input-field {
-          padding: 10px 14px;
-          border-radius: 10px;
-          border: 1.5px solid #E5E7EB;
-          font-size: 13px;
-          outline: none;
-          box-sizing: border-box;
-          transition: all 0.2s ease;
-        }
-        .input-field:focus {
-          border-color: var(--accent, #E31E24);
-          box-shadow: 0 0 0 3px rgba(227, 30, 36, 0.1);
-        }
-        .btn-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 20px;
-          background: linear-gradient(135deg, var(--accent, #E31E24) 0%, #B91C1C 100%);
-          color: #ffffff;
-          border: none;
-          border-radius: 12px;
-          font-weight: 600;
-          font-size: 13px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
-          white-space: nowrap;
-        }
-        .btn-primary:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 18px var(--accent, rgba(227, 30, 36, 0.35));
-        }
-        .btn-secondary {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 10px 18px;
-          background: #F3F4F6;
-          color: #374151;
-          border: 1px solid #E5E7EB;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 13px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          white-space: nowrap;
-        }
-        .btn-secondary:hover {
-          background: #E5E7EB;
-        }
-        .mobile-filter-toggle {
-          display: none;
-        }
-        @media (max-width: 1024px) {
-          .members-wrapper {
-            flex-direction: column;
-          }
-          .filter-sidebar {
-            width: 100%;
-            position: relative;
-            top: 0;
-            height: auto;
-            border-right: none;
-            border-bottom: 1px solid #E5E7EB;
-            display: ${showMobileFilters ? 'block' : 'none'};
-          }
-          .mobile-filter-toggle {
-            display: inline-flex;
-          }
-          .main-content {
-            padding: 20px 16px 36px;
-          }
-          .hero-banner-box {
-            padding: 24px;
-            border-radius: 20px;
-          }
-        }
-        @media (max-width: 640px) {
-          .main-content {
-            padding: 14px 10px 28px;
-          }
-          .card-shell {
-            padding: 18px 14px;
-            border-radius: 16px;
-          }
-        }
-      `}</style>
-
+    <div className="mem-page">
       <div className="members-wrapper">
         {/* Left Filter Sidebar */}
         <FilterSidebar
@@ -390,8 +202,7 @@ export default function MembersPage() {
             <select
               value={filterGroup}
               onChange={(e) => setFilterGroup(e.target.value)}
-              className="input-field"
-              style={{ width: '100%', fontSize: '12px', fontWeight: 600, color: '#111827' }}
+              className="input-field mem-filter-select"
             >
               <option value="">All Departments…</option>
               {groups.map((g) => (
@@ -407,8 +218,7 @@ export default function MembersPage() {
             <select
               value={filterReporting}
               onChange={(e) => setFilterReporting(e.target.value)}
-              className="input-field"
-              style={{ width: '100%', fontSize: '12px', fontWeight: 600, color: '#111827' }}
+              className="input-field mem-filter-select"
             >
               <option value="">All Managers…</option>
               {reportingTos.map((r) => (
@@ -424,8 +234,7 @@ export default function MembersPage() {
             <select
               value={filterDesignation}
               onChange={(e) => setFilterDesignation(e.target.value)}
-              className="input-field"
-              style={{ width: '100%', fontSize: '12px', fontWeight: 600, color: '#111827' }}
+              className="input-field mem-filter-select"
             >
               <option value="">All Designations…</option>
               {designations.map((d) => (
@@ -438,7 +247,7 @@ export default function MembersPage() {
 
           {/* Filter Block 4: Governance Role */}
           <FilterSidebarBlock title="Governance Role" icon={<Crown size={14} color="var(--accent, #E31E24)" />}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+            <div className="mem-role-chip-grid">
               <div
                 className={`role-chip ${filterRole === '' ? 'active' : ''}`}
                 onClick={() => setFilterRole('')}
@@ -448,9 +257,8 @@ export default function MembersPage() {
               {ROLES.map((r) => (
                 <div
                   key={r}
-                  className={`role-chip ${filterRole === r ? 'active' : ''}`}
+                  className={`role-chip mem-role-chip-capitalize ${filterRole === r ? 'active' : ''}`}
                   onClick={() => setFilterRole(filterRole === r ? '' : r)}
-                  style={{ textTransform: 'capitalize' }}
                 >
                   {r}
                 </div>
@@ -460,37 +268,27 @@ export default function MembersPage() {
 
           {/* Filter Block 5: Employee Status */}
           <FilterSidebarBlock title="Onboarding Status" icon={<CheckCircle2 size={14} color="#7C3AED" />}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="mem-status-list">
               {STATUS_OPTIONS.map((s) => {
                 const count = s === 'Verified' ? verifiedCount : s === 'Invited' ? invitedCount : 0
                 const isChecked = filterStatus.includes(s)
                 return (
                   <label
                     key={s}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      background: isChecked ? '#FEF2F2' : '#F9FAFB',
-                      border: isChecked ? '1px solid #FCA5A5' : '1px solid #F3F4F6',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
+                    className={`mem-status-option ${isChecked ? 'mem-status-option--checked' : ''}`}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="mem-status-option-left">
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={(e) =>
                           setFilterStatus((prev) => (e.target.checked ? [...prev, s] : prev.filter((x) => x !== s)))
                         }
-                        style={{ accentColor: 'var(--accent, #E31E24)', width: '15px', height: '15px', cursor: 'pointer' }}
+                        className="mem-status-checkbox"
                       />
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>{s}</span>
+                      <span className="mem-status-label">{s}</span>
                     </div>
-                    <span style={{ fontSize: '11px', fontWeight: 800, color: isChecked ? 'var(--accent, #E31E24)' : '#9CA3AF' }}>
+                    <span className={`mem-status-count ${isChecked ? 'mem-status-count--checked' : ''}`}>
                       {count}
                     </span>
                   </label>
@@ -503,11 +301,11 @@ export default function MembersPage() {
         {/* Main Content Area */}
         <main className="main-content">
           {/* Breadcrumb Navigation & Mobile Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>
+          <div className="mem-breadcrumb-row">
+            <div className="mem-breadcrumb">
               <span>Admin</span>
               <ChevronRight size={13} color="#9CA3AF" />
-              <span style={{ color: 'var(--accent, #E31E24)', fontWeight: 700 }}>Workforce & Directory</span>
+              <span className="mem-breadcrumb-active">Workforce & Directory</span>
             </div>
 
             <button onClick={() => setShowMobileFilters((v) => !v)} className="btn-secondary mobile-filter-toggle">
@@ -518,43 +316,18 @@ export default function MembersPage() {
           {/* Hero Header Banner */}
           <div className="hero-banner-box">
             {/* Ambient Background Glow */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '-40px',
-                right: '-40px',
-                width: '240px',
-                height: '240px',
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(227, 30, 36, 0.25) 0%, rgba(0, 0, 0, 0) 70%)',
-                pointerEvents: 'none',
-              }}
-            />
+            <div className="mem-hero-glow" />
 
-            <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-                <div
-                  style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '18px',
-                    background: 'rgba(255, 255, 255, 0.15)',
-                    backdropFilter: 'blur(16px)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#ffffff',
-                    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)',
-                  }}
-                >
+            <div className="mem-hero-content">
+              <div className="mem-hero-left">
+                <div className="mem-hero-icon">
                   <Users size={28} />
                 </div>
                 <div>
-                  <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h1 className="mem-hero-title">
                     Workforce Management <Sparkles size={18} color="#F59E0B" />
                   </h1>
-                  <p style={{ fontSize: '13.5px', color: 'rgba(255, 255, 255, 0.85)', marginTop: '4px', margin: 0, fontWeight: 500 }}>
+                  <p className="mem-hero-subtitle">
                     Invite employees, assign corporate travel roles, and structure departmental policy groups.
                   </p>
                 </div>
@@ -562,59 +335,47 @@ export default function MembersPage() {
             </div>
 
             {/* Quick Metrics Bar Inside Hero */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px', marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.15)' }}>
+            <div className="mem-hero-metrics">
               <div>
-                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Total Employees</div>
-                <div style={{ fontSize: '20px', fontWeight: 900, color: '#ffffff', marginTop: '2px' }}>{members.length}</div>
+                <div className="mem-metric-label">Total Employees</div>
+                <div className="mem-metric-value mem-metric-value--total">{members.length}</div>
               </div>
               <div>
-                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Verified Team</div>
-                <div style={{ fontSize: '20px', fontWeight: 900, color: '#34D399', marginTop: '2px' }}>{verifiedCount}</div>
+                <div className="mem-metric-label">Verified Team</div>
+                <div className="mem-metric-value mem-metric-value--verified">{verifiedCount}</div>
               </div>
               <div>
-                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Pending Invites</div>
-                <div style={{ fontSize: '20px', fontWeight: 900, color: '#FBBF24', marginTop: '2px' }}>{invitedCount}</div>
+                <div className="mem-metric-label">Pending Invites</div>
+                <div className="mem-metric-value mem-metric-value--pending">{invitedCount}</div>
               </div>
               <div>
-                <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Managers & Admins</div>
-                <div style={{ fontSize: '20px', fontWeight: 900, color: '#60A5FA', marginTop: '2px' }}>{adminCount}</div>
+                <div className="mem-metric-label">Managers & Admins</div>
+                <div className="mem-metric-value mem-metric-value--admins">{adminCount}</div>
               </div>
             </div>
           </div>
 
           {/* Add Employees / Invite Box */}
           <div className="card-shell">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: '#EFF6FF',
-                  color: '#2563EB',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+            <div className="mem-form-header">
+              <div className="mem-form-icon">
                 <UserPlus size={18} />
               </div>
               <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: 0 }}>Onboard & Invite Employees</h3>
-                <span style={{ fontSize: '12px', color: '#6B7280' }}>Add individual work emails or upload bulk CSV employee directories</span>
+                <h3 className="mem-card-title">Onboard & Invite Employees</h3>
+                <span className="mem-card-subtitle">Add individual work emails or upload bulk CSV employee directories</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="mem-invite-row">
               {/* Single Invite Form */}
-              <form onSubmit={handleInvite} style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '280px' }}>
+              <form onSubmit={handleInvite} className="mem-invite-form">
                 <input
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="e.g. employee@company.com"
                   type="email"
-                  className="input-field"
-                  style={{ flex: 1 }}
+                  className="input-field mem-invite-input"
                 />
                 <button type="submit" disabled={inviting} className="btn-primary">
                   <UserPlus size={14} /> {inviting ? 'Inviting…' : 'Invite via EMAIL'}
@@ -622,32 +383,32 @@ export default function MembersPage() {
               </form>
 
               {/* Bulk CSV Upload */}
-              <input ref={csvInputRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleCsvFile} />
+              <input ref={csvInputRef} type="file" accept=".csv" className="mem-hidden-input" onChange={handleCsvFile} />
               <button onClick={() => csvInputRef.current?.click()} className="btn-secondary">
                 <FileSpreadsheet size={15} color="#10B981" /> Bulk Upload (CSV)
               </button>
             </div>
 
             {inviteMsg && (
-              <div style={{ fontSize: '12.5px', color: '#047857', marginTop: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div className="mem-invite-msg">
                 <CheckCircle2 size={15} /> {inviteMsg}
               </div>
             )}
 
             {/* CSV Preview Box */}
             {csvPreview.length > 0 && (
-              <div style={{ marginTop: '14px', padding: '14px 16px', background: '#EFF6FF', borderRadius: '14px', border: '1px solid #BFDBFE' }}>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: '#1D4ED8', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div className="mem-csv-preview">
+                <div className="mem-csv-preview-title">
                   <FileSpreadsheet size={15} /> Found {csvPreview.length} employee email{csvPreview.length !== 1 ? 's' : ''} in CSV
                 </div>
-                <div style={{ maxHeight: '90px', overflowY: 'auto', marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div className="mem-csv-list">
                   {csvPreview.map((e) => (
-                    <div key={e} style={{ fontSize: '12px', color: '#374151', fontWeight: 500 }}>
+                    <div key={e} className="mem-csv-item">
                       • {e}
                     </div>
                   ))}
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="mem-csv-actions">
                   <button onClick={confirmCsvUpload} disabled={csvUploading} className="btn-primary">
                     {csvUploading ? 'Inviting…' : `Confirm & Invite ${csvPreview.length} Employees`}
                   </button>
@@ -660,49 +421,36 @@ export default function MembersPage() {
           </div>
 
           {/* Employee Directory Table Container */}
-          <div className="card-shell" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card-shell mem-table-card">
             {/* Table Top Header Bar */}
-            <div style={{ padding: '18px 24px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: 0 }}>
+            <div className="mem-table-header">
+              <div className="mem-table-header-left">
+                <h3 className="mem-card-title">
                   {loading ? 'Employees' : `Employees Directory (${filtered.length})`}
                 </h3>
-                <span style={{ fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '99px', background: '#7C3AED', color: '#ffffff', letterSpacing: '0.04em' }}>
+                <span className="mem-live-badge">
                   LIVE
                 </span>
               </div>
 
               {/* Search Bar */}
-              <div style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
-                <Search size={15} color="#9CA3AF" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+              <div className="mem-search-wrap">
+                <Search size={15} color="#9CA3AF" className="mem-search-icon" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search name, email, department..."
-                  className="input-field"
-                  style={{ paddingLeft: '36px', width: '100%', fontSize: '12.5px' }}
+                  className="input-field mem-search-input"
                 />
               </div>
             </div>
 
             {/* Bulk Selection Action Bar */}
             {selected.size > 0 && (
-              <div style={{ padding: '12px 24px', background: '#FFF7ED', borderBottom: '1px solid #FED7AA', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#92400E' }}>{selected.size} employee(s) selected</span>
+              <div className="mem-bulk-bar">
+                <span className="mem-bulk-text">{selected.size} employee(s) selected</span>
                 <button
-                  style={{
-                    fontSize: '12px',
-                    color: '#DC2626',
-                    fontWeight: 800,
-                    background: '#FEF2F2',
-                    border: '1px solid #FCA5A5',
-                    borderRadius: '8px',
-                    padding: '6px 14px',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
+                  className="mem-btn-bulk-remove"
                   onClick={() => {
                     if (confirm(`Remove ${selected.size} member(s) from your organisation?`))
                       selected.forEach((id) => {
@@ -717,20 +465,20 @@ export default function MembersPage() {
             )}
 
             {/* Table */}
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="mem-table-scroll">
+              <table className="mem-table">
                 <thead>
-                  <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                    <th style={{ width: 40, padding: '14px 16px' }}>
+                  <tr className="mem-thead-row">
+                    <th className="mem-th-checkbox">
                       <input
                         type="checkbox"
                         checked={selected.size === pageMembers.length && pageMembers.length > 0}
                         onChange={toggleAll}
-                        style={{ accentColor: 'var(--accent, #E31E24)', width: '16px', height: '16px', cursor: 'pointer' }}
+                        className="mem-checkbox"
                       />
                     </th>
                     {['EMPLOYEE', 'EMAIL', 'ROLE', 'GROUP / DEPT', 'JOINED DATE', 'ACTIONS'].map((h) => (
-                      <th key={h} style={{ textAlign: 'left', padding: '12px 14px', fontSize: '11px', fontWeight: 700, color: '#6B7280', letterSpacing: '0.04em' }}>
+                      <th key={h} className="mem-th">
                         {h}
                       </th>
                     ))}
@@ -739,87 +487,58 @@ export default function MembersPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={7} style={{ padding: '48px', textAlign: 'center', color: '#9CA3AF', fontSize: '13.5px', fontWeight: 600 }}>
+                      <td colSpan={7} className="mem-loading-cell">
                         Loading employees directory…
                       </td>
                     </tr>
                   ) : filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={7} style={{ padding: '60px 20px', textAlign: 'center' }}>
-                        <Users size={32} color="#9CA3AF" style={{ margin: '0 auto 8px' }} />
-                        <div style={{ fontSize: '15px', fontWeight: 800, color: '#111827', marginBottom: '4px' }}>No Employee(s) found</div>
-                        <div style={{ fontSize: '13px', color: '#9CA3AF' }}>Try clearing filters or searching another keyword.</div>
+                      <td colSpan={7} className="mem-empty-cell">
+                        <Users size={32} color="#9CA3AF" className="mem-empty-icon" />
+                        <div className="mem-empty-title">No Employee(s) found</div>
+                        <div className="mem-empty-sub">Try clearing filters or searching another keyword.</div>
                       </td>
                     </tr>
                   ) : (
                     pageMembers.map((m) => {
-                      const rc = ROLE_COLORS[m.role] ?? { bg: '#F3F4F6', color: '#374151', border: '#E5E7EB' }
                       const initials = (m.work_email ?? '?')[0].toUpperCase()
                       const isSelected = selected.has(m.id)
+                      const roleClass = m.role === 'admin' ? 'mem-role-select--admin' : m.role === 'manager' ? 'mem-role-select--manager' : m.role === 'employee' ? 'mem-role-select--employee' : ''
 
                       return (
                         <tr
                           key={m.id}
-                          style={{
-                            borderTop: '1px solid #F3F4F6',
-                            background: isSelected ? '#FEF2F2' : 'transparent',
-                            transition: 'background 0.15s ease',
-                          }}
+                          className={`mem-tr ${isSelected ? 'mem-tr--selected' : ''}`}
                         >
-                          <td style={{ padding: '14px 16px' }}>
+                          <td className="mem-td-checkbox">
                             <input
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => toggleSelect(m.id)}
-                              style={{ accentColor: 'var(--accent, #E31E24)', width: '16px', height: '16px', cursor: 'pointer' }}
+                              className="mem-checkbox"
                             />
                           </td>
-                          <td style={{ padding: '14px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div
-                                style={{
-                                  width: '36px',
-                                  height: '36px',
-                                  borderRadius: '50%',
-                                  background: 'linear-gradient(135deg, var(--accent, #E31E24) 0%, #B91C1C 100%)',
-                                  color: '#ffffff',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '13.5px',
-                                  fontWeight: 900,
-                                  flexShrink: 0,
-                                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                                }}
-                              >
+                          <td className="mem-td">
+                            <div className="mem-employee-row">
+                              <div className="mem-avatar">
                                 {initials}
                               </div>
                               <div>
-                                <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#111827' }}>
+                                <div className="mem-employee-name">
                                   {m.work_email?.split('@')[0] ?? '—'}
                                 </div>
-                                <div style={{ fontSize: '11px', color: '#6B7280' }}>
+                                <div className="mem-employee-status">
                                   {m.status === 'invited' ? 'Pending Acceptance' : 'Active Employee'}
                                 </div>
                               </div>
                             </div>
                           </td>
-                          <td style={{ padding: '14px', fontSize: '13px', color: '#4B5563', fontWeight: 500 }}>{m.work_email}</td>
-                          <td style={{ padding: '14px' }}>
+                          <td className="mem-td-email">{m.work_email}</td>
+                          <td className="mem-td">
                             <select
                               value={m.role}
                               onChange={(e) => changeRole(m.id, e.target.value)}
-                              style={{
-                                padding: '6px 12px',
-                                borderRadius: '8px',
-                                border: `1px solid ${rc.border}`,
-                                fontSize: '12px',
-                                fontWeight: 800,
-                                color: rc.color,
-                                background: rc.bg,
-                                outline: 'none',
-                                cursor: 'pointer',
-                              }}
+                              className={`mem-role-select ${roleClass}`}
                             >
                               {ROLES.map((r) => (
                                 <option key={r} value={r}>
@@ -828,24 +547,14 @@ export default function MembersPage() {
                               ))}
                             </select>
                           </td>
-                          <td style={{ padding: '14px', fontSize: '13px', color: '#4B5563', fontWeight: 600 }}>{m.dept || 'Unassigned'}</td>
-                          <td style={{ padding: '14px', fontSize: '12.5px', color: '#6B7280' }}>
+                          <td className="mem-td-dept">{m.dept || 'Unassigned'}</td>
+                          <td className="mem-td-joined">
                             {new Date(m.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </td>
-                          <td style={{ padding: '14px' }}>
+                          <td className="mem-td">
                             <button
                               onClick={() => removeMember(m.id, m.work_email)}
-                              style={{
-                                fontSize: '12.5px',
-                                color: '#DC2626',
-                                fontWeight: 700,
-                                background: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                              }}
+                              className="mem-btn-remove"
                             >
                               <Trash2 size={14} /> Remove
                             </button>
@@ -859,7 +568,7 @@ export default function MembersPage() {
             </div>
 
             {/* Pagination Footer */}
-            <div style={{ padding: '14px 24px', borderTop: '1px solid #F3F4F6', background: '#FAFAFA' }}>
+            <div className="mem-pagination-footer">
               <Pagination total={total} page={page} perPage={25} onPage={setPage} />
             </div>
           </div>

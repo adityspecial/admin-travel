@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { adminFetch } from '@/lib/api'
+import { Percent, Plane, Receipt } from 'lucide-react'
 
 const SEGMENTS = [
   { key: 'flight_domestic',      label: 'Flight — Domestic',      color: '#2563EB', bg: '#EFF6FF' },
@@ -65,22 +66,12 @@ function RatesGrid({ rates, showCaps, onUpdate }: {
   onUpdate: (seg: string, comp: string, field: string, value: string) => void
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div className="consumer-rates-grid">
       {SEGMENTS.map(seg => (
-        <div key={seg.key} style={{
-          borderRadius: 10, overflow: 'hidden',
-          border: `1.5px solid ${seg.color}30`,
-        }}>
-          <div style={{
-            background: seg.bg, padding: '9px 16px',
-            borderBottom: `1px solid ${seg.color}20`,
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            <span style={{
-              width: 8, height: 8, borderRadius: '50%',
-              background: seg.color, display: 'inline-block', flexShrink: 0,
-            }} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: seg.color }}>{seg.label}</span>
+        <div key={seg.key} className={`consumer-segment-card consumer-segment--${seg.key}`}>
+          <div className="consumer-segment-header">
+            <span className="consumer-segment-dot" />
+            <span className="consumer-segment-label">{seg.label}</span>
           </div>
           {COMPONENTS.map((comp, ci) => {
             const row = rates.get(rateKey(seg.key, comp.key, null)) ?? {
@@ -88,43 +79,34 @@ function RatesGrid({ rates, showCaps, onUpdate }: {
               pct: 0, flat: 0, min_pct: null, max_pct: null,
             }
             return (
-              <div key={comp.key} style={{
-                display: 'flex', alignItems: 'center', gap: 0,
-                padding: '10px 16px',
-                background: ci % 2 === 0 ? '#fff' : '#FAFAFA',
-                borderTop: ci > 0 ? '1px solid #F3F4F6' : 'none',
-              }}>
-                <span style={{ width: 110, fontSize: 12, color: '#6B7280', fontWeight: 500, flexShrink: 0 }}>
+              <div key={comp.key} className={`consumer-component-row ${ci % 2 !== 0 ? 'consumer-component-row--alt' : ''}`}>
+                <span className="consumer-comp-label">
                   {comp.label}
                 </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 20 }}>
-                  <input className="form-input" type="number" step="0.1" min="0"
-                    style={{ width: 90, textAlign: 'right' }}
+                <div className="consumer-field-group">
+                  <input className="form-input consumer-input-narrow" type="number" step="0.1" min="0"
                     value={row.pct}
                     onChange={e => onUpdate(seg.key, comp.key, 'pct', e.target.value)} />
-                  <span style={{ fontSize: 12, color: '#9CA3AF', width: 12 }}>%</span>
+                  <span className="consumer-unit-pct">%</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 20 }}>
-                  <span style={{ fontSize: 12, color: '#9CA3AF' }}>₹</span>
-                  <input className="form-input" type="number" step="1" min="0"
-                    style={{ width: 90, textAlign: 'right' }}
+                <div className="consumer-field-group">
+                  <span className="consumer-currency-symbol">₹</span>
+                  <input className="form-input consumer-input-narrow" type="number" step="1" min="0"
                     value={row.flat}
                     onChange={e => onUpdate(seg.key, comp.key, 'flat', e.target.value)} />
-                  <span style={{ fontSize: 11, color: '#9CA3AF' }}>flat</span>
+                  <span className="consumer-unit-label">flat</span>
                 </div>
                 {showCaps && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-                    <span style={{ fontSize: 11, color: '#9CA3AF' }}>Agent cap:</span>
-                    <input className="form-input" type="number" step="0.1" placeholder="min"
-                      style={{ width: 70, textAlign: 'right' }}
+                  <div className="consumer-caps-group">
+                    <span className="consumer-unit-label">Agent cap:</span>
+                    <input className="form-input consumer-input-cap" type="number" step="0.1" placeholder="min"
                       value={row.min_pct ?? ''}
                       onChange={e => onUpdate(seg.key, comp.key, 'min_pct', e.target.value)} />
-                    <span style={{ fontSize: 11, color: '#D1D5DB' }}>–</span>
-                    <input className="form-input" type="number" step="0.1" placeholder="max"
-                      style={{ width: 70, textAlign: 'right' }}
+                    <span className="consumer-cap-sep">–</span>
+                    <input className="form-input consumer-input-cap" type="number" step="0.1" placeholder="max"
                       value={row.max_pct ?? ''}
                       onChange={e => onUpdate(seg.key, comp.key, 'max_pct', e.target.value)} />
-                    <span style={{ fontSize: 11, color: '#9CA3AF' }}>%</span>
+                    <span className="consumer-unit-label">%</span>
                   </div>
                 )}
               </div>
@@ -146,88 +128,63 @@ function AirlineOverridesTable({ rows, onChange, onAdd, onRemove }: {
   return (
     <div>
       {rows.length === 0 ? (
-        <div style={{
-          padding: '20px 16px', borderRadius: 8, border: '1.5px dashed #E5E7EB',
-          textAlign: 'center', marginBottom: 12,
-        }}>
-          <div style={{ fontSize: 13, color: '#9CA3AF' }}>No airline overrides set</div>
-          <div style={{ fontSize: 12, color: '#D1D5DB', marginTop: 4 }}>Add one to charge a different rate for a specific carrier</div>
+        <div className="consumer-empty-box">
+          <div className="consumer-empty-title">No airline overrides set</div>
+          <div className="consumer-empty-sub">Add one to charge a different rate for a specific carrier</div>
         </div>
       ) : (
-        <div style={{ marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1.6fr 1.2fr 100px 90px 90px 60px',
-            gap: 0, background: '#F9FAFB',
-            padding: '8px 14px', borderBottom: '1px solid #E5E7EB',
-          }}>
+        <div className="consumer-table-wrap">
+          <div className="consumer-airline-header-row">
             {['Segment', 'Component', 'Airline', '%', 'Flat ₹', ''].map(h => (
-              <span key={h} style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', letterSpacing: '0.04em' }}>{h}</span>
+              <span key={h} className="consumer-airline-header-cell">{h}</span>
             ))}
           </div>
           {rows.map((r, i) => (
-            <div key={i} style={{
-              display: 'grid',
-              gridTemplateColumns: '1.6fr 1.2fr 100px 90px 90px 60px',
-              gap: 0, alignItems: 'center',
-              padding: '8px 14px',
-              background: i % 2 === 0 ? '#fff' : '#FAFAFA',
-              borderBottom: i < rows.length - 1 ? '1px solid #F3F4F6' : 'none',
-            }}>
-              <select className="form-input" style={{ width: '90%', fontSize: 12 }}
+            <div key={i} className={`consumer-airline-row ${i % 2 !== 0 ? 'consumer-airline-row--alt' : ''}`}>
+              <select className="form-input consumer-airline-select"
                 value={r.segment} onChange={e => onChange(i, 'segment', e.target.value)}>
                 {SEGMENTS.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
               </select>
-              <select className="form-input" style={{ width: '90%', fontSize: 12 }}
+              <select className="form-input consumer-airline-select"
                 value={r.component} onChange={e => onChange(i, 'component', e.target.value)}>
                 {COMPONENTS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
               </select>
-              <input className="form-input" placeholder="e.g. 6E" style={{ width: 80, textTransform: 'uppercase', fontSize: 12 }}
+              <input className="form-input consumer-airline-code-input" placeholder="e.g. 6E"
                 value={r.airline_code ?? ''} onChange={e => onChange(i, 'airline_code', e.target.value.toUpperCase())} />
-              <input className="form-input" type="number" step="0.1" min="0" style={{ width: 72, textAlign: 'right', fontSize: 12 }}
+              <input className="form-input consumer-airline-num-input" type="number" step="0.1" min="0"
                 value={r.pct} onChange={e => onChange(i, 'pct', e.target.value)} />
-              <input className="form-input" type="number" step="1" min="0" style={{ width: 72, textAlign: 'right', fontSize: 12 }}
+              <input className="form-input consumer-airline-num-input" type="number" step="1" min="0"
                 value={r.flat} onChange={e => onChange(i, 'flat', e.target.value)} />
-              <button onClick={() => onRemove(i)} style={{
-                fontSize: 11, fontWeight: 600, color: '#DC2626',
-                background: '#FEF2F2',
-                borderTop: '1px solid #FECACA', borderBottom: '1px solid #FECACA',
-                borderLeft: '1px solid #FECACA', borderRight: '1px solid #FECACA',
-                borderRadius: 6, padding: '4px 8px', cursor: 'pointer',
-              }}>✕</button>
+              <button onClick={() => onRemove(i)} className="consumer-btn-remove-row">✕</button>
             </div>
           ))}
         </div>
       )}
-      <button onClick={onAdd} style={{
-        fontSize: 12, fontWeight: 600, color: '#2563EB',
-        background: '#EFF6FF',
-        borderTop: '1px solid #BFDBFE', borderBottom: '1px solid #BFDBFE',
-        borderLeft: '1px solid #BFDBFE', borderRight: '1px solid #BFDBFE',
-        borderRadius: 7, padding: '7px 16px', cursor: 'pointer',
-        display: 'flex', alignItems: 'center', gap: 6,
-      }}>
-        <span style={{ fontSize: 15, lineHeight: 1 }}>+</span> Add Airline Override
+      <button onClick={onAdd} className="consumer-btn-add">
+        <span className="consumer-plus-icon">+</span> Add Airline Override
       </button>
     </div>
   )
 }
 
 // ── Section wrapper ────────────────────────────────────────────────────────
-function Section({ title, sub, children, action }: {
+function Section({ title, sub, children, action, icon, tone = 'blue' }: {
   title: string; sub?: string; children: React.ReactNode; action?: React.ReactNode
+  icon?: React.ReactNode; tone?: 'blue' | 'teal' | 'orange'
 }) {
   return (
-    <div style={{
-      background: '#fff', borderRadius: 12,
-      border: '1px solid #E5E7EB',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      padding: '18px 20px', marginBottom: 16,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{title}</div>
-          {sub && <div style={{ fontSize: 12, color: '#6B7280', marginTop: 3 }}>{sub}</div>}
+    <div className="dashboard-card-lucrative" style={{ marginBottom: 16 }}>
+      <div className="dashboard-card-header">
+        <div className="dashboard-card-title-group">
+          {icon && (
+            <div className={`dashboard-card-icon-icon dashboard-card-icon-${tone}`}>
+              {icon}
+            </div>
+          )}
+          <div>
+            <h3 className="dashboard-card-title">{title}</h3>
+            {sub && <p className="dashboard-card-subtitle">{sub}</p>}
+          </div>
         </div>
         {action}
       </div>
@@ -238,23 +195,15 @@ function Section({ title, sub, children, action }: {
 
 // ── Save bar ───────────────────────────────────────────────────────────────
 function SaveBar({ msg, saving, onClick }: { msg: string; saving: boolean; onClick: () => void }) {
+  const isOk = msg.startsWith('✓')
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 4 }}>
-      <button onClick={onClick} disabled={saving} style={{
-        padding: '10px 28px', borderRadius: 8, fontSize: 13, fontWeight: 700,
-        background: saving ? '#93C5FD' : '#2563EB', color: '#fff',
-        borderTop: 'none', borderLeft: 'none', borderRight: 'none',
-        borderBottom: saving ? '2px solid #60A5FA' : '2px solid #1D4ED8',
-        cursor: saving ? 'not-allowed' : 'pointer',
-        transition: 'background 0.15s',
-      }}>{saving ? 'Saving…' : 'Save Changes'}</button>
+    <div className="consumer-savebar">
+      <button onClick={onClick} disabled={saving} className={`consumer-save-btn ${saving ? 'consumer-save-btn--saving' : ''}`}>
+        {saving ? 'Saving…' : 'Save Changes'}
+      </button>
       {msg && (
-        <span style={{
-          fontSize: 13, fontWeight: 600,
-          color: msg.startsWith('✓') ? '#16A34A' : '#DC2626',
-          display: 'flex', alignItems: 'center', gap: 6,
-        }}>
-          {msg.startsWith('✓') ? '✓' : '⚠'} {msg.replace(/^[✓⚠]\s*/, '')}
+        <span className={`consumer-savebar-msg ${isOk ? 'consumer-savebar-msg--ok' : 'consumer-savebar-msg--err'}`}>
+          {isOk ? '✓' : '⚠'} {msg.replace(/^[✓⚠]\s*/, '')}
         </span>
       )}
     </div>
@@ -337,16 +286,16 @@ function GlobalTab() {
   const tAmt  = tier ? Math.round(previewBase * tier.gst_pct / 100) : 0
   const fee   = mAmt + gAmt + tAmt
 
-  if (loading) return <p style={{ color: '#6B7280', padding: 32 }}>Loading…</p>
+  if (loading) return <p className="consumer-loading-text">Loading…</p>
 
   return (
-    <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-      <div style={{ flex: '1 1 580px', minWidth: 0 }}>
-        <Section title="Segment Rates" sub="Base % charged on every booking by segment. Agent Min/Max cap what agents can add on top.">
+    <div className="consumer-tab-layout">
+      <div className="consumer-tab-main">
+        <Section title="Segment Rates" sub="Base % charged on every booking by segment. Agent Min/Max cap what agents can add on top." icon={<Percent size={19} strokeWidth={2.2} />} tone="blue">
           <RatesGrid rates={rates} showCaps onUpdate={updateRate} />
         </Section>
 
-        <Section title="Airline-Specific Overrides" sub="Override the segment rate above for a specific carrier — applies globally unless the org/agent has their own override.">
+        <Section title="Airline-Specific Overrides" sub="Override the segment rate above for a specific carrier — applies globally unless the org/agent has their own override." icon={<Plane size={19} strokeWidth={2.2} />} tone="teal">
           <AirlineOverridesTable
             rows={airlineRows}
             onChange={(i, f, v) => setAirlineRows(prev => prev.map((r, j) => j !== i ? r : { ...r, [f]: f === 'pct' || f === 'flat' ? Number(v) : v }))}
@@ -355,74 +304,59 @@ function GlobalTab() {
           />
         </Section>
 
-        <Section title="GST Tiers" sub="Statutory rate applied on base fare by price band. Global only — not overridable per org or agent.">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+        <Section title="GST Tiers" sub="Statutory rate applied on base fare by price band. Global only — not overridable per org or agent." icon={<Receipt size={19} strokeWidth={2.2} />} tone="orange">
+          <div className="consumer-gst-list">
             {gstTiers.map((t, i) => (
-              <div key={i} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 14px', borderRadius: 8,
-                background: i % 2 === 0 ? '#F9FAFB' : '#fff',
-                border: '1px solid #F3F4F6',
-              }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', width: 44, flexShrink: 0 }}>TIER {i + 1}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
-                  <span style={{ fontSize: 12, color: '#6B7280' }}>₹</span>
-                  <input className="form-input" type="number" min="0" style={{ width: 90 }}
+              <div key={i} className="consumer-gst-row">
+                <span className="consumer-gst-tier-label">TIER {i + 1}</span>
+                <div className="consumer-gst-fields">
+                  <span className="consumer-gst-currency">₹</span>
+                  <input className="form-input consumer-gst-input" type="number" min="0"
                     value={t.min_amount} onChange={e => setGstTiers(p => p.map((x, j) => j !== i ? x : { ...x, min_amount: Number(e.target.value) }))} />
-                  <span style={{ fontSize: 12, color: '#9CA3AF' }}>—</span>
-                  <input className="form-input" type="number" min="0" style={{ width: 90 }}
+                  <span className="consumer-gst-dash">—</span>
+                  <input className="form-input consumer-gst-input" type="number" min="0"
                     placeholder="∞" value={t.max_amount ?? ''} onChange={e => setGstTiers(p => p.map((x, j) => j !== i ? x : { ...x, max_amount: e.target.value === '' ? null : Number(e.target.value) }))} />
-                  <span style={{ fontSize: 12, color: '#6B7280', marginLeft: 8 }}>GST</span>
-                  <input className="form-input" type="number" step="0.1" min="0" style={{ width: 72, textAlign: 'right' }}
+                  <span className="consumer-gst-label-inline">GST</span>
+                  <input className="form-input consumer-gst-pct-input" type="number" step="0.1" min="0"
                     value={t.gst_pct} onChange={e => setGstTiers(p => p.map((x, j) => j !== i ? x : { ...x, gst_pct: Number(e.target.value) }))} />
-                  <span style={{ fontSize: 12, color: '#6B7280' }}>%</span>
+                  <span className="consumer-gst-pct-symbol">%</span>
                 </div>
-                <button onClick={() => setGstTiers(p => p.filter((_, j) => j !== i).map((x, j) => ({ ...x, sort_order: j })))} style={{
-                  fontSize: 11, fontWeight: 600, color: '#DC2626', background: '#FEF2F2',
-                  borderTop: '1px solid #FECACA', borderBottom: '1px solid #FECACA',
-                  borderLeft: '1px solid #FECACA', borderRight: '1px solid #FECACA',
-                  borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
-                }}>Remove</button>
+                <button onClick={() => setGstTiers(p => p.filter((_, j) => j !== i).map((x, j) => ({ ...x, sort_order: j })))} className="consumer-btn-remove-tier">Remove</button>
               </div>
             ))}
           </div>
           <button onClick={() => {
             const last = gstTiers[gstTiers.length - 1]
             setGstTiers(p => [...p, { min_amount: last?.max_amount ?? 0, max_amount: null, gst_pct: 18, sort_order: p.length }])
-          }} style={{
-            fontSize: 12, fontWeight: 600, color: '#059669', background: '#ECFDF5',
-            borderTop: '1px solid #A7F3D0', borderBottom: '1px solid #A7F3D0',
-            borderLeft: '1px solid #A7F3D0', borderRight: '1px solid #A7F3D0',
-            borderRadius: 7, padding: '7px 16px', cursor: 'pointer',
-          }}>+ Add Tier</button>
+          }} className="consumer-btn-add-tier">+ Add Tier</button>
         </Section>
 
         <SaveBar msg={msg} saving={saving} onClick={save} />
       </div>
 
       {/* Live preview card */}
-      <div style={{ width: 272, flexShrink: 0, position: 'sticky', top: 80 }}>
-        <div style={{ background: '#0F2942', borderRadius: 14, overflow: 'hidden' }}>
-          <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#93C5FD', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Live Preview</div>
-            <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Flight Domestic · ₹5,000 base</div>
+      <div className="consumer-preview-wrap">
+        <div className="consumer-preview-card">
+          <div className="consumer-preview-header">
+            <div className="consumer-preview-eyebrow">Live Preview</div>
+            <div className="consumer-preview-subtitle">Flight Domestic · ₹5,000 base</div>
           </div>
-          <div style={{ padding: '14px 18px' }}>
+          <div className="consumer-preview-body">
             <PreviewRow label="Base Fare" value={`₹${previewBase.toLocaleString('en-IN')}`} />
             <PreviewRow label="Convenience Fee & Taxes" value={`₹${fee.toLocaleString('en-IN')}`} />
-            <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '10px 0' }} />
+            <div className="consumer-preview-divider" />
             <PreviewRow label="Total Payable" value={`₹${(previewBase + fee).toLocaleString('en-IN')}`} bold />
           </div>
-          <div style={{ margin: '0 18px 18px', padding: '12px 14px', background: 'rgba(255,255,255,0.06)', borderRadius: 9 }}>
-            <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 600, letterSpacing: '0.05em', marginBottom: 8 }}>BREAKDOWN</div>
+          <div className="consumer-breakdown-box">
+            <div className="consumer-breakdown-title">BREAKDOWN</div>
             {[
               { label: `Markup (${mRow?.pct ?? 0}%)`, value: mAmt },
               { label: `Gateway (${gRow?.pct ?? 0}%)`, value: gAmt },
               { label: `GST (${tier?.gst_pct ?? 0}%)`, value: tAmt },
             ].map(r => (
-              <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                <span style={{ fontSize: 12, color: '#9CA3AF' }}>{r.label}</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#E5E7EB' }}>₹{r.value}</span>
+              <div key={r.label} className="consumer-breakdown-row">
+                <span className="consumer-breakdown-label">{r.label}</span>
+                <span className="consumer-breakdown-value">₹{r.value}</span>
               </div>
             ))}
           </div>
@@ -434,9 +368,9 @@ function GlobalTab() {
 
 function PreviewRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-      <span style={{ fontSize: 13, color: bold ? '#fff' : '#9CA3AF', fontWeight: bold ? 700 : 400 }}>{label}</span>
-      <span style={{ fontSize: 13, fontWeight: 800, color: bold ? '#60A5FA' : '#E5E7EB' }}>{value}</span>
+    <div className="consumer-preview-item-row">
+      <span className={`consumer-preview-item-label ${bold ? 'consumer-preview-item-label--bold' : ''}`}>{label}</span>
+      <span className={`consumer-preview-item-value ${bold ? 'consumer-preview-item-value--bold' : ''}`}>{value}</span>
     </div>
   )
 }
@@ -518,45 +452,30 @@ function ScopedTab({ feeScope, listKey, labelKey, codeKey, listUrl, emptyLabel }
   )
 
   return (
-    <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+    <div className="consumer-scoped-layout">
       {/* Sidebar */}
-      <div style={{ width: 256, flexShrink: 0 }}>
-        <div style={{ position: 'relative', marginBottom: 10 }}>
-          <input className="form-input" placeholder={`Search ${emptyLabel.toLowerCase()}s…`}
-            value={search} onChange={e => setSearch(e.target.value)}
-            style={{ width: '100%', paddingLeft: 32 }} />
-          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#9CA3AF' }}>🔍</span>
+      <div className="consumer-sidebar">
+        <div className="consumer-search-wrap">
+          <input className="form-input consumer-search-input" placeholder={`Search ${emptyLabel.toLowerCase()}s…`}
+            value={search} onChange={e => setSearch(e.target.value)} />
+          <span className="consumer-search-icon">🔍</span>
         </div>
-        <div style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 6, paddingLeft: 2 }}>
+        <div className="consumer-count-label">
           {filtered.length} {emptyLabel}{filtered.length !== 1 ? 's' : ''}
         </div>
-        <div style={{ borderRadius: 10, border: '1px solid #E5E7EB', background: '#fff', overflow: 'hidden', maxHeight: 560, overflowY: 'auto' }}>
+        <div className="consumer-list-wrap">
           {filtered.length === 0 && (
-            <div style={{ padding: '20px 14px', textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No results</div>
+            <div className="consumer-no-results">No results</div>
           )}
           {filtered.map(it => {
             const active = selected?.id === it.id
             const initials = (it[labelKey] ?? '?').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
             return (
-              <button key={it.id} onClick={() => loadRates(it)} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                width: '100%', textAlign: 'left', padding: '11px 14px',
-                cursor: 'pointer', background: active ? '#EFF6FF' : 'transparent',
-                borderTop: 'none', borderRight: 'none',
-                borderBottom: '1px solid #F3F4F6',
-                borderLeft: active ? '3px solid #2563EB' : '3px solid transparent',
-                transition: 'background 0.1s',
-              }}>
-                <div style={{
-                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                  background: active ? '#2563EB' : '#F3F4F6',
-                  color: active ? '#fff' : '#6B7280',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 800,
-                }}>{initials}</div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: active ? '#1D4ED8' : '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it[labelKey]}</div>
-                  <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>{it[codeKey]}</div>
+              <button key={it.id} onClick={() => loadRates(it)} className={`consumer-list-item ${active ? 'consumer-list-item--active' : ''}`}>
+                <div className={`consumer-avatar ${active ? 'consumer-avatar--active' : ''}`}>{initials}</div>
+                <div className="consumer-item-text">
+                  <div className={`consumer-item-name ${active ? 'consumer-item-name--active' : ''}`}>{it[labelKey]}</div>
+                  <div className="consumer-item-code">{it[codeKey]}</div>
                 </div>
               </button>
             )
@@ -565,58 +484,42 @@ function ScopedTab({ feeScope, listKey, labelKey, codeKey, listUrl, emptyLabel }
       </div>
 
       {/* Editor */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="consumer-editor">
         {!selected && (
-          <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            padding: '64px 24px', background: '#fff', borderRadius: 12,
-            border: '1.5px dashed #E5E7EB',
-          }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: 12, background: '#EFF6FF',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 22, marginBottom: 14,
-            }}>₹</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
+          <div className="consumer-editor-empty">
+            <div className="consumer-editor-empty-icon">₹</div>
+            <div className="consumer-editor-empty-title">
               Select a {emptyLabel.toLowerCase()}
             </div>
-            <div style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center', maxWidth: 280 }}>
+            <div className="consumer-editor-empty-sub">
               Pick one from the list to set custom rates. Leave any value at 0 to inherit the global default.
             </div>
           </div>
         )}
 
         {selected && loading && (
-          <div style={{ padding: 32, textAlign: 'center', color: '#9CA3AF' }}>Loading rates…</div>
+          <div className="consumer-editor-loading">Loading rates…</div>
         )}
 
         {selected && !loading && (
           <>
-            <div style={{
-              background: '#fff', borderRadius: 12, border: '1px solid #E5E7EB',
-              padding: '14px 18px', marginBottom: 16,
-              display: 'flex', alignItems: 'center', gap: 14,
-            }}>
-              <div style={{
-                width: 42, height: 42, borderRadius: 10, background: '#2563EB',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontSize: 14, fontWeight: 800, flexShrink: 0,
-              }}>
+            <div className="consumer-selected-card">
+              <div className="consumer-selected-avatar">
                 {(selected[labelKey] ?? '?').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()}
               </div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#111827' }}>{selected[labelKey]}</div>
-                <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
+                <div className="consumer-selected-name">{selected[labelKey]}</div>
+                <div className="consumer-selected-meta">
                   {selected[codeKey]} · Rates below override global defaults for this {emptyLabel.toLowerCase()} only
                 </div>
               </div>
             </div>
 
-            <Section title="Segment Rates" sub="Non-zero values override the global rate for this entity. Leave at 0 to fall back to global.">
+            <Section title="Segment Rates" sub="Non-zero values override the global rate for this entity. Leave at 0 to fall back to global." icon={<Percent size={19} strokeWidth={2.2} />} tone="blue">
               <RatesGrid rates={rates} showCaps={false} onUpdate={updateRate} />
             </Section>
 
-            <Section title="Airline-Specific Overrides" sub="Override for a specific carrier within this entity. Takes priority over the segment rate above.">
+            <Section title="Airline-Specific Overrides" sub="Override for a specific carrier within this entity. Takes priority over the segment rate above." icon={<Plane size={19} strokeWidth={2.2} />} tone="teal">
               <AirlineOverridesTable
                 rows={airlineRows}
                 onChange={(i, f, v) => setAirlineRows(prev => prev.map((r, j) => j !== i ? r : { ...r, [f]: f === 'pct' || f === 'flat' ? Number(v) : v }))}
@@ -645,42 +548,37 @@ export default function FeeSettingsPage() {
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">Fee Settings</h1>
-        <p className="page-sub">
-          Markup, gateway fee, and GST across all surfaces. Org/agent rates override global for that entity; partner agents add their own increment on top.
-        </p>
+      <div className="admin-topbar">
+        <h2>Fee Settings</h2>
+        <span className="topbar-meta">Markup, gateway fee, and GST across all surfaces</span>
       </div>
 
-      {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 24, padding: '4px', background: '#F3F4F6', borderRadius: 12, width: 'fit-content' }}>
-        {tabs.map(t => {
-          const active = tab === t.key
-          return (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{
-              padding: '8px 18px', borderRadius: 9, cursor: 'pointer',
-              background: active ? '#fff' : 'transparent',
-              boxShadow: active ? '0 1px 4px rgba(0,0,0,0.10)' : 'none',
-              borderTop: 'none', borderLeft: 'none', borderRight: 'none',
-              borderBottom: 'none',
-              transition: 'background 0.15s, box-shadow 0.15s',
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: active ? '#111827' : '#6B7280', whiteSpace: 'nowrap' }}>{t.label}</div>
-              <div style={{ fontSize: 11, color: active ? '#2563EB' : '#9CA3AF', marginTop: 1 }}>{t.desc}</div>
-            </button>
-          )
-        })}
-      </div>
+      <div className="admin-content">
+        <div className="page-stack">
+          {/* Tab bar */}
+          <div className="consumer-tab-bar">
+            {tabs.map(t => {
+              const active = tab === t.key
+              return (
+                <button key={t.key} onClick={() => setTab(t.key)} className={`consumer-tab-btn ${active ? 'consumer-tab-btn--active' : ''}`}>
+                  <div className={`consumer-tab-btn-label ${active ? 'consumer-tab-btn-label--active' : ''}`}>{t.label}</div>
+                  <div className={`consumer-tab-btn-desc ${active ? 'consumer-tab-btn-desc--active' : ''}`}>{t.desc}</div>
+                </button>
+              )
+            })}
+          </div>
 
-      {tab === 'global' && <GlobalTab />}
-      {tab === 'org' && (
-        <ScopedTab feeScope="biz_org" listKey="orgs" labelKey="name" codeKey="orgCode"
-          listUrl="/api/admin/super/orgs" emptyLabel="Organisation" />
-      )}
-      {tab === 'agent' && (
-        <ScopedTab feeScope="sa_agent" listKey="agents" labelKey="agency_name" codeKey="agent_code"
-          listUrl="/api/admin/super/agents" emptyLabel="Agent" />
-      )}
+          {tab === 'global' && <GlobalTab />}
+          {tab === 'org' && (
+            <ScopedTab feeScope="biz_org" listKey="orgs" labelKey="name" codeKey="orgCode"
+              listUrl="/api/admin/super/orgs" emptyLabel="Organisation" />
+          )}
+          {tab === 'agent' && (
+            <ScopedTab feeScope="sa_agent" listKey="agents" labelKey="agency_name" codeKey="agent_code"
+              listUrl="/api/admin/super/agents" emptyLabel="Agent" />
+          )}
+        </div>
+      </div>
     </div>
   )
 }

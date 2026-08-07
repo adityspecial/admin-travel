@@ -145,34 +145,29 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
   ] as const
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
-      <div style={{ background:'#fff', borderRadius:14, width:'100%', maxWidth:700, maxHeight:'92vh', display:'flex', flexDirection:'column', boxShadow:'0 24px 64px rgba(0,0,0,0.18)' }}>
+    <div className="pkg-modal-overlay">
+      <div className="pkg-modal-box">
 
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'18px 24px', borderBottom:'1px solid #E5E7EB', flexShrink:0 }}>
+        <div className="pkg-modal-header">
           <div>
-            <h2 style={{ margin:0, fontSize:17, fontWeight:700 }}>Edit Package</h2>
-            {pkgName && <p style={{ margin:'2px 0 0', fontSize:12, color:'#6B7280' }}>{pkgName}</p>}
+            <h2 className="pkg-modal-title">Edit Package</h2>
+            {pkgName && <p className="pkg-modal-subtitle">{pkgName}</p>}
           </div>
-          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', fontSize:22, color:'#9CA3AF' }}>✕</button>
+          <button onClick={onClose} className="pkg-modal-close-btn">✕</button>
         </div>
 
-        <div style={{ display:'flex', borderBottom:'1px solid #E5E7EB', overflowX:'auto', flexShrink:0 }}>
+        <div className="pkg-modal-tabs">
           {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id as any)} style={{
-              padding:'10px 16px', border:'none', background:'none', cursor:'pointer', whiteSpace:'nowrap',
-              fontSize:13, fontWeight: tab===t.id ? 700 : 500,
-              color: tab===t.id ? '#2563EB' : '#6B7280',
-              borderBottom: tab===t.id ? '2px solid #2563EB' : '2px solid transparent',
-            }}>{t.label}</button>
+            <button key={t.id} onClick={() => setTab(t.id as any)} className={`pkg-modal-tab ${tab === t.id ? 'pkg-modal-tab--active' : ''}`}>{t.label}</button>
           ))}
         </div>
 
-        <div style={{ flex:1, overflowY:'auto', padding:24 }}>
-          {loading ? <div style={{ textAlign:'center', padding:40, color:'#6B7280' }}>Loading…</div> : <>
+        <div className="pkg-modal-body">
+          {loading ? <div className="pkg-modal-loading">Loading…</div> : <>
 
             {tab === 'basic' && (
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
-                <div style={{ gridColumn:'1/-1' }}><F label="Package Name" value={name} onChange={setName} /></div>
+              <div className="pkg-form-grid">
+                <div className="pkg-span-2"><F label="Package Name" value={name} onChange={setName} /></div>
                 <F label="Destination" value={destination} onChange={setDestination} />
                 <F label="Operator / DMC" value={operator} onChange={setOperator} placeholder="e.g. Nexus DMC" />
                 <F label="Duration — Nights" value={nights} onChange={setNights} type="number" />
@@ -181,7 +176,7 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
                 <F label="Currency" value={currency} onChange={setCurrency} />
                 <F label="Group Size" value={groupSize} onChange={setGroupSize} placeholder="e.g. 2–15 pax" />
                 <F label="Rating (0–5)" value={rating} onChange={setRating} type="number" placeholder="4.5" />
-                <div style={{ gridColumn:'1/-1', display:'flex', gap:24, paddingTop:4 }}>
+                <div className="pkg-checkbox-row">
                   <Chk label="Featured"        checked={featured}       onChange={setFeatured} />
                   <Chk label="Active (visible)" checked={active}         onChange={setActive} />
                   <Chk label="Commissionable"   checked={commissionable} onChange={setCommissionable} />
@@ -190,16 +185,16 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
             )}
 
             {tab === 'media' && (
-              <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              <div className="pkg-stack-20">
                 <F label="Thumbnail / Cover Image URL" value={thumbnail} onChange={setThumbnail} placeholder="https://…" />
-                {thumbnail && <img src={thumbnail} alt="" style={{ width:'100%', maxHeight:200, objectFit:'cover', borderRadius:8, border:'1px solid #E5E7EB' }} />}
+                {thumbnail && <img src={thumbnail} alt="" className="pkg-thumb-preview" />}
                 <LineList label="Gallery Images" value={images} onChange={setImages} placeholder="https://…/photo.jpg" />
-                <p style={{ margin:0, fontSize:11, color:'#9CA3AF' }}>First gallery image is used as cover if the URL above is empty.</p>
+                <p className="pkg-hint-text">First gallery image is used as cover if the URL above is empty.</p>
               </div>
             )}
 
             {tab === 'content' && (
-              <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              <div className="pkg-stack-20">
                 <TA label="Description" value={description} onChange={setDescription} rows={4} placeholder="Full package description shown to customers…" />
                 <TA label="What to Expect" value={whatToExpect} onChange={setWhatToExpect} rows={3} placeholder="Overview of the experience…" />
                 <LineList label="Highlights" value={highlights} onChange={setHighlights} placeholder="e.g. Sunset cruise in Santorini" />
@@ -210,15 +205,15 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
             )}
 
             {tab === 'itinerary' && (
-              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                <p style={{ margin:'0 0 4px', fontSize:12, color:'#6B7280' }}>One card per day. Meals: e.g. <em>Breakfast, Dinner</em></p>
+              <div className="pkg-stack-12">
+                <p className="pkg-tab-hint">One card per day. Meals: e.g. <em>Breakfast, Dinner</em></p>
                 {itinerary.map((d, i) => (
-                  <div key={i} style={{ border:'1px solid #E5E7EB', borderRadius:10, padding:14, display:'flex', flexDirection:'column', gap:10 }}>
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                      <span style={{ fontSize:13, fontWeight:700, color:'#2563EB' }}>Day {d.day}</span>
-                      <button onClick={() => setItinerary(it => it.filter((_,j) => j!==i))} style={removeBtn()}>✕ Remove</button>
+                  <div key={i} className="pkg-card">
+                    <div className="pkg-card-row">
+                      <span className="pkg-card-label-blue">Day {d.day}</span>
+                      <button onClick={() => setItinerary(it => it.filter((_,j) => j!==i))} className="pkg-btn-remove">✕ Remove</button>
                     </div>
-                    <div style={{ display:'grid', gridTemplateColumns:'70px 1fr', gap:10 }}>
+                    <div className="pkg-day-grid">
                       <F label="Day #" value={String(d.day)} type="number"
                         onChange={v => setItinerary(it => it.map((x,j) => j===i ? {...x, day:Number(v)||i+1} : x))} />
                       <F label="Title" value={d.title}
@@ -234,20 +229,20 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
                   </div>
                 ))}
                 <button onClick={() => setItinerary(it => [...it, { day:it.length+1, title:'', description:'', meals:'' }])}
-                  style={addBtn()}>+ Add Day</button>
+                  className="pkg-btn-add">+ Add Day</button>
               </div>
             )}
 
             {tab === 'stays' && (
-              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                <p style={{ margin:'0 0 4px', fontSize:12, color:'#6B7280' }}>Add every hotel or property included in this package.</p>
+              <div className="pkg-stack-12">
+                <p className="pkg-tab-hint">Add every hotel or property included in this package.</p>
                 {accommodations.map((a, i) => (
-                  <div key={i} style={{ border:'1px solid #E5E7EB', borderRadius:10, padding:14, display:'flex', flexDirection:'column', gap:10 }}>
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                      <span style={{ fontSize:13, fontWeight:700, color:'#374151' }}>Stay {i+1}</span>
-                      <button onClick={() => setAccommodations(ac => ac.filter((_,j) => j!==i))} style={removeBtn()}>✕ Remove</button>
+                  <div key={i} className="pkg-card">
+                    <div className="pkg-card-row">
+                      <span className="pkg-card-label-dark">Stay {i+1}</span>
+                      <button onClick={() => setAccommodations(ac => ac.filter((_,j) => j!==i))} className="pkg-btn-remove">✕ Remove</button>
                     </div>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                    <div className="pkg-stay-grid">
                       <F label="Hotel / Property Name" value={a.name}
                         onChange={v => setAccommodations(ac => ac.map((x,j) => j===i ? {...x, name:v} : x))} placeholder="e.g. Taj Beachfront Goa" />
                       <F label="Location / City" value={a.location}
@@ -263,33 +258,33 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
                   </div>
                 ))}
                 <button onClick={() => setAccommodations(ac => [...ac, { name:'', location:'', nights:'1', roomType:'', mealsIncluded:'' }])}
-                  style={addBtn()}>+ Add Hotel / Stay</button>
+                  className="pkg-btn-add">+ Add Hotel / Stay</button>
               </div>
             )}
 
             {tab === 'policies' && (
-              <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              <div className="pkg-stack-20">
                 <LineList label="Terms & Conditions" value={terms} onChange={setTerms}
                   placeholder="e.g. Cancellation within 24 hours: full refund" />
 
                 <div>
-                  <label style={labelStyle}>Policy Rules</label>
-                  <p style={{ margin:'2px 0 8px', fontSize:11, color:'#9CA3AF' }}>
+                  <label className="pkg-field-label">Policy Rules</label>
+                  <p className="pkg-policy-hint">
                     E.g. cancellation, visa requirements, health & safety, insurance…
                   </p>
-                  <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  <div className="pkg-stack-8">
                     {policies.map((p, i) => (
-                      <div key={i} style={{ display:'grid', gridTemplateColumns:'160px 1fr auto', gap:8, alignItems:'center' }}>
+                      <div key={i} className="pkg-policy-row">
                         <input value={p.key} placeholder="Policy name"
                           onChange={e => setPolicies(ps => ps.map((x,j) => j===i ? {...x, key:e.target.value} : x))}
-                          style={inputStyle()} />
+                          className="pkg-field-input" />
                         <input value={p.value} placeholder="Policy details"
                           onChange={e => setPolicies(ps => ps.map((x,j) => j===i ? {...x, value:e.target.value} : x))}
-                          style={inputStyle()} />
-                        <button onClick={() => setPolicies(ps => ps.filter((_,j) => j!==i))} style={removeBtn()}>✕</button>
+                          className="pkg-field-input" />
+                        <button onClick={() => setPolicies(ps => ps.filter((_,j) => j!==i))} className="pkg-btn-remove">✕</button>
                       </div>
                     ))}
-                    <button onClick={() => setPolicies(ps => [...ps, { key:'', value:'' }])} style={addBtn()}>+ Add Policy</button>
+                    <button onClick={() => setPolicies(ps => [...ps, { key:'', value:'' }])} className="pkg-btn-add">+ Add Policy</button>
                   </div>
                 </div>
               </div>
@@ -297,10 +292,10 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
           </>}
         </div>
 
-        <div style={{ padding:'14px 24px', borderTop:'1px solid #E5E7EB', display:'flex', alignItems:'center', gap:12, flexShrink:0 }}>
-          {err ? <span style={{ flex:1, fontSize:13, color:'#dc2626' }}>{err}</span> : <span style={{ flex:1 }} />}
-          <button onClick={onClose} style={footerBtn('#6B7280')}>Cancel</button>
-          <button onClick={save} disabled={saving||loading} style={{ ...footerBtn('#2563EB'), opacity:(saving||loading)?0.6:1, minWidth:140 }}>
+        <div className="pkg-modal-footer">
+          {err ? <span className="pkg-modal-err">{err}</span> : <span className="pkg-flex-1" />}
+          <button onClick={onClose} className="pkg-btn-footer pkg-btn-footer--cancel">Cancel</button>
+          <button onClick={save} disabled={saving||loading} className="pkg-btn-footer pkg-btn-footer--save">
             {saving ? 'Saving…' : 'Save All Changes'}
           </button>
         </div>
@@ -309,30 +304,14 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
   )
 }
 
-// ── Shared helpers ─────────────────────────────────────────────────────────────
-const labelStyle: React.CSSProperties = { fontSize:12, fontWeight:600, color:'#374151', display:'block', marginBottom:4 }
-const inputStyle = (): React.CSSProperties => ({
-  width:'100%', padding:'8px 12px', border:'1px solid #E5E7EB', borderRadius:8,
-  fontSize:14, boxSizing:'border-box', outline:'none', fontFamily:'inherit',
-})
-function addBtn(): React.CSSProperties {
-  return { background:'#EFF6FF', color:'#2563EB', border:'1px solid #BFDBFE', borderRadius:8, cursor:'pointer', padding:'7px 14px', fontSize:13, fontWeight:600, fontFamily:'inherit', alignSelf:'flex-start' }
-}
-function removeBtn(): React.CSSProperties {
-  return { background:'none', border:'none', cursor:'pointer', color:'#dc2626', fontSize:12, fontWeight:600, fontFamily:'inherit', padding:'2px 6px' }
-}
-function footerBtn(color: string): React.CSSProperties {
-  return { background:color, color:'#fff', border:'none', borderRadius:8, cursor:'pointer', padding:'9px 20px', fontSize:14, fontWeight:600, fontFamily:'inherit' }
-}
-
 // ── Field primitives ───────────────────────────────────────────────────────────
 function F({ label, value, onChange, type='text', placeholder }: {
   label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string
 }) {
   return (
     <div>
-      <label style={labelStyle}>{label}</label>
-      <input type={type} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} style={inputStyle()} />
+      <label className="pkg-field-label">{label}</label>
+      <input type={type} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} className="pkg-field-input" />
     </div>
   )
 }
@@ -342,17 +321,17 @@ function TA({ label, value, onChange, rows=4, placeholder }: {
 }) {
   return (
     <div>
-      <label style={labelStyle}>{label}</label>
+      <label className="pkg-field-label">{label}</label>
       <textarea value={value} rows={rows} placeholder={placeholder} onChange={e => onChange(e.target.value)}
-        style={{ ...inputStyle(), resize:'vertical', lineHeight:1.5 }} />
+        className="pkg-field-input pkg-field-textarea" />
     </div>
   )
 }
 
 function Chk({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:13, fontWeight:500 }}>
-      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ width:16, height:16 }} />
+    <label className="pkg-chk-label">
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="pkg-chk-input" />
       {label}
     </label>
   )
@@ -364,17 +343,17 @@ function LineList({ label, value, onChange, placeholder }: {
 }) {
   return (
     <div>
-      <label style={labelStyle}>{label}</label>
-      <div style={{ display:'flex', flexDirection:'column', gap:6, marginTop:6 }}>
+      <label className="pkg-field-label">{label}</label>
+      <div className="pkg-linelist-wrap">
         {value.map((line, i) => (
-          <div key={i} style={{ display:'flex', gap:6, alignItems:'center' }}>
+          <div key={i} className="pkg-linelist-row">
             <input value={line} placeholder={placeholder}
               onChange={e => onChange(value.map((x, j) => j === i ? e.target.value : x))}
-              style={{ ...inputStyle(), flex:1 }} />
-            <button onClick={() => onChange(value.filter((_, j) => j !== i))} style={removeBtn()}>✕</button>
+              className="pkg-field-input pkg-field-flex" />
+            <button onClick={() => onChange(value.filter((_, j) => j !== i))} className="pkg-btn-remove">✕</button>
           </div>
         ))}
-        <button onClick={() => onChange([...value, ''])} style={addBtn()}>+ Add</button>
+        <button onClick={() => onChange([...value, ''])} className="pkg-btn-add">+ Add</button>
       </div>
     </div>
   )

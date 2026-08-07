@@ -9,13 +9,6 @@ interface Enquiry {
   notes: string | null; status: string; created_at: string
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  pending:   '#D97706',
-  contacted: '#2563EB',
-  completed: '#16A34A',
-  cancelled: '#DC2626',
-}
-
 const PAGE_SIZE = 20
 
 export default function VisaEnquiriesPage() {
@@ -55,66 +48,62 @@ export default function VisaEnquiriesPage() {
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   return (
-    <div style={{ padding: 28, fontFamily: "'Inter', sans-serif" }}>
-      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+    <div className="visaenq-page">
+      <div className="visaenq-header">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <a href="/super/visa" style={{ color: '#2563EB', fontSize: 13, textDecoration: 'none', fontWeight: 600 }}>← Visa Pages</a>
-            <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#111' }}>Visa Enquiries</h1>
+          <div className="visaenq-title-row">
+            <a href="/super/visa" className="visaenq-back-link">← Visa Pages</a>
+            <h1 className="visaenq-title">Visa Enquiries</h1>
           </div>
-          <p style={{ color: '#6B7280', fontSize: 13, margin: '4px 0 0' }}>{total} enquiries total</p>
+          <p className="visaenq-subtitle">{total} enquiries total</p>
         </div>
-        {msg && <span style={{ fontSize: 13, color: '#16a34a', fontWeight: 600 }}>{msg}</span>}
+        {msg && <span className="visaenq-msg">{msg}</span>}
       </div>
 
       {/* Filter */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+      <div className="visaenq-filter-row">
         {['', 'pending', 'contacted', 'completed', 'cancelled'].map(s => (
           <button key={s} onClick={() => { setStatus(s); setPage(1); load(s, 1) }}
-            style={{ padding: '6px 14px', borderRadius: 20, border: '1px solid #E5E7EB', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-              background: status === s ? '#2563EB' : '#fff', color: status === s ? '#fff' : '#374151' }}>
+            className={`visaenq-filter-btn ${status === s ? 'visaenq-filter-btn--active' : ''}`}>
             {s || 'All'}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 40, color: '#6B7280' }}>Loading…</div>
+        <div className="visaenq-loading">Loading…</div>
       ) : enquiries.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF', fontSize: 14 }}>No enquiries yet.</div>
+        <div className="visaenq-empty">No enquiries yet.</div>
       ) : (
-        <div style={{ overflowX: 'auto', borderRadius: 10, border: '1px solid #E5E7EB' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div className="visaenq-table-wrap">
+          <table className="visaenq-table">
             <thead>
-              <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+              <tr className="visaenq-thead-row">
                 {['Date', 'Country', 'Name', 'Email', 'Phone', 'Passport', 'Travel Date', 'Return', 'Pax', 'Status', 'Action'].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>{h}</th>
+                  <th key={h} className="visaenq-th">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {enquiries.map((e, i) => (
-                <tr key={e.id} style={{ borderBottom: '1px solid #F3F4F6', backgroundColor: i % 2 === 0 ? '#fff' : '#FAFAFA' }}>
-                  <td style={{ padding: '8px 14px', color: '#6B7280', whiteSpace: 'nowrap' }}>{new Date(e.created_at).toLocaleDateString('en-IN')}</td>
-                  <td style={{ padding: '8px 14px', fontWeight: 600, color: '#111' }}>{e.country}</td>
-                  <td style={{ padding: '8px 14px', color: '#374151' }}>{e.full_name}</td>
-                  <td style={{ padding: '8px 14px', color: '#374151' }}>{e.email}</td>
-                  <td style={{ padding: '8px 14px', color: '#374151', whiteSpace: 'nowrap' }}>{e.phone}</td>
-                  <td style={{ padding: '8px 14px', fontFamily: 'monospace', fontSize: 12, color: '#6B7280' }}>{e.passport_number}</td>
-                  <td style={{ padding: '8px 14px', whiteSpace: 'nowrap' }}>{e.travel_date}</td>
-                  <td style={{ padding: '8px 14px', whiteSpace: 'nowrap', color: '#6B7280' }}>{e.return_date ?? '—'}</td>
-                  <td style={{ padding: '8px 14px', textAlign: 'center' }}>{e.num_travellers}</td>
-                  <td style={{ padding: '8px 14px' }}>
-                    <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                      background: (STATUS_COLORS[e.status] ?? '#6B7280') + '20',
-                      color: STATUS_COLORS[e.status] ?? '#6B7280',
-                      border: `1px solid ${(STATUS_COLORS[e.status] ?? '#6B7280')}50` }}>
+                <tr key={e.id} className={`visaenq-tr ${i % 2 !== 0 ? 'visaenq-tr--alt' : ''}`}>
+                  <td className="visaenq-td visaenq-td--muted visaenq-td--nowrap">{new Date(e.created_at).toLocaleDateString('en-IN')}</td>
+                  <td className="visaenq-td visaenq-td--bold">{e.country}</td>
+                  <td className="visaenq-td visaenq-td--plain">{e.full_name}</td>
+                  <td className="visaenq-td visaenq-td--plain">{e.email}</td>
+                  <td className="visaenq-td visaenq-td--plain visaenq-td--nowrap">{e.phone}</td>
+                  <td className="visaenq-td visaenq-td--mono">{e.passport_number}</td>
+                  <td className="visaenq-td visaenq-td--nowrap">{e.travel_date}</td>
+                  <td className="visaenq-td visaenq-td--muted visaenq-td--nowrap">{e.return_date ?? '—'}</td>
+                  <td className="visaenq-td visaenq-td--center">{e.num_travellers}</td>
+                  <td className="visaenq-td">
+                    <span className={`visaenq-status-pill visaenq-status-pill--${e.status}`}>
                       {e.status}
                     </span>
                   </td>
-                  <td style={{ padding: '8px 14px' }}>
+                  <td className="visaenq-td">
                     <select value={e.status} onChange={ev => updateStatus(e.id, ev.target.value)}
-                      style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 12, cursor: 'pointer' }}>
+                      className="visaenq-status-select">
                       <option value="pending">pending</option>
                       <option value="contacted">contacted</option>
                       <option value="completed">completed</option>
@@ -129,12 +118,12 @@ export default function VisaEnquiriesPage() {
       )}
 
       {totalPages > 1 && (
-        <div style={{ display: 'flex', gap: 8, marginTop: 16, alignItems: 'center', justifyContent: 'center' }}>
+        <div className="visaenq-pagination-row">
           <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-            style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #E5E7EB', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: '#fff' }}>← Prev</button>
-          <span style={{ fontSize: 13, color: '#374151' }}>Page {page} of {totalPages}</span>
+            className="visaenq-page-btn">← Prev</button>
+          <span className="visaenq-page-label">Page {page} of {totalPages}</span>
           <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
-            style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #E5E7EB', cursor: 'pointer', background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 600 }}>Next →</button>
+            className="visaenq-page-btn visaenq-page-btn--primary">Next →</button>
         </div>
       )}
     </div>

@@ -65,11 +65,10 @@ export default function NewOrgPage() {
   return (
     <div>
       <div className="admin-topbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="orgs-header-left">
           <button
-            className="btn btn-ghost btn-sm"
+            className="btn btn-ghost btn-sm orgs-btn-icon-gap"
             onClick={() => router.replace('/super/orgs')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
             <ArrowLeft size={14} />
             <span>Back to Orgs</span>
@@ -82,17 +81,17 @@ export default function NewOrgPage() {
         <div className="dashboard-grid">
           {/* Main Form Column */}
           <form onSubmit={handleSubmit}>
-            {error && <div className="login-error" style={{ marginBottom: 20 }}>{error}</div>}
+            {error && <div className="login-error orgs-mb-20">{error}</div>}
             {success && (
-              <div style={{ background: '#DCFCE7', color: '#16A34A', border: '1px solid #BBF7D0', borderRadius: 12, padding: '12px 16px', fontSize: 13, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="orgs-success-banner orgs-mb-20">
                 <CheckCircle2 size={16} />
                 <span>{success}</span>
               </div>
             )}
 
             {/* Organisation details card */}
-            <div className="explore-admin-section" style={{ marginBottom: 24 }}>
-              <div className="dashboard-card-header" style={{ marginBottom: 20 }}>
+            <div className="explore-admin-section orgs-section-mb24">
+              <div className="dashboard-card-header orgs-card-header-mb20">
                 <div className="dashboard-card-title-group">
                   <div className="dashboard-card-icon-icon dashboard-card-icon-blue">
                     <Building2 size={20} strokeWidth={2.2} />
@@ -124,7 +123,7 @@ export default function NewOrgPage() {
                 icon={<Hash size={16} />}
               />
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+              <div className="orgs-flight-hotel-grid">
                 <AppInput
                   label="Flight Cap (₹ per trip)"
                   type="number"
@@ -155,8 +154,8 @@ export default function NewOrgPage() {
             </div>
 
             {/* Initial Admin credentials card */}
-            <div className="explore-admin-section" style={{ marginBottom: 24 }}>
-              <div className="dashboard-card-header" style={{ marginBottom: 20 }}>
+            <div className="explore-admin-section orgs-section-mb24">
+              <div className="dashboard-card-header orgs-card-header-mb20">
                 <div className="dashboard-card-title-group">
                   <div className="dashboard-card-icon-icon dashboard-card-icon-teal">
                     <Mail size={20} strokeWidth={2.2} />
@@ -178,7 +177,7 @@ export default function NewOrgPage() {
                 icon={<Mail size={16} />}
               />
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+              <div className="orgs-password-grid">
                 <AppInput
                   label="Password"
                   type={showPassword ? 'text' : 'password'}
@@ -191,7 +190,7 @@ export default function NewOrgPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#64748b' }}
+                      className="orgs-eye-btn"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -209,21 +208,19 @@ export default function NewOrgPage() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div className="orgs-btn-row">
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="btn btn-primary orgs-btn-create"
                 disabled={saving}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '11px 24px' }}
               >
                 <Plus size={16} />
                 <span>{saving ? 'Creating…' : 'Create Organisation'}</span>
               </button>
               <button
                 type="button"
-                className="btn btn-ghost"
+                className="btn btn-ghost orgs-btn-cancel-pad-lg"
                 onClick={() => router.replace('/super/orgs')}
-                style={{ padding: '11px 20px' }}
               >
                 Cancel
               </button>
@@ -232,8 +229,8 @@ export default function NewOrgPage() {
 
           {/* Right Summary Info Panel */}
           <div>
-            <div className="explore-admin-section" style={{ padding: 24, position: 'sticky', top: 20 }}>
-              <div className="dashboard-card-header" style={{ marginBottom: 16 }}>
+            <div className="explore-admin-section orgs-sticky-panel">
+              <div className="dashboard-card-header orgs-card-header-mb16">
                 <div className="dashboard-card-title-group">
                   <div className="dashboard-card-icon-icon dashboard-card-icon-orange">
                     <Zap size={20} strokeWidth={2.2} />
@@ -264,14 +261,14 @@ export default function NewOrgPage() {
                   icon: Hash,
                   tone: '#ea580c',
                 },
-              ].map((item) => (
-                <div key={item.title} style={{ display: 'flex', gap: 12, padding: '14px 0', borderBottom: '1px solid #f1f5f9' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: `${item.tone}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: item.tone, flexShrink: 0 }}>
+              ].map((item, i) => (
+                <div key={item.title} className="orgs-highlight-row">
+                  <div className={`orgs-highlight-icon orgs-highlight-icon--${i}`}>
                     <item.icon size={18} />
                   </div>
                   <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', marginBottom: 2 }}>{item.title}</div>
-                    <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.45 }}>{item.desc}</div>
+                    <div className="orgs-highlight-title">{item.title}</div>
+                    <div className="orgs-highlight-desc">{item.desc}</div>
                   </div>
                 </div>
               ))}

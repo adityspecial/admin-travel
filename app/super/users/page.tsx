@@ -64,11 +64,11 @@ export default function AllUsersPage() {
       header: 'Organisation',
       render: (m) => (
         <div>
-          <div style={{ fontWeight: 700, color: '#0f172a' }}>
+          <div className="users-org-name">
             {m.biz_organizations?.name ?? '--'}
           </div>
           {m.biz_organizations?.org_code && (
-            <span className="data-table-code-pill" style={{ marginTop: 2 }}>
+            <span className="data-table-code-pill users-org-code">
               {m.biz_organizations.org_code}
             </span>
           )}
@@ -85,25 +85,8 @@ export default function AllUsersPage() {
       header: 'Role',
       render: (m) => {
         const role = (m.role || 'employee').toLowerCase()
-        const roleStyle =
-          role === 'admin'
-            ? { bg: '#dbeafe', color: '#1e40af' }
-            : role === 'manager'
-            ? { bg: '#fef3c7', color: '#92400e' }
-            : { bg: '#f1f5f9', color: '#475569' }
         return (
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 800,
-              padding: '3px 9px',
-              borderRadius: 99,
-              background: roleStyle.bg,
-              color: roleStyle.color,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}
-          >
+          <span className={`users-role-badge users-role-badge--${role}`}>
             {role}
           </span>
         )
@@ -113,7 +96,7 @@ export default function AllUsersPage() {
       key: 'created_at',
       header: 'Joined',
       render: (m) => (
-        <span className="data-table-muted-cell" style={{ fontSize: 12.5 }}>
+        <span className="data-table-muted-cell users-joined-cell">
           {new Date(m.created_at).toLocaleDateString('en-IN', {
             day: 'numeric',
             month: 'short',
@@ -172,15 +155,15 @@ export default function AllUsersPage() {
             title="Organisation Members"
             subtitle="Cross-organisation user directory across all registered corporate accounts"
             headerAction={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                <div style={{ width: 280 }}>
+              <div className="users-header-actions">
+                <div className="users-search-wrapper">
                   <AppInput
                     placeholder="Search email, org, dept..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     icon={<Search size={15} />}
                     wrapperClassName="m-0"
-                    style={{ padding: '8px 12px 8px 36px', fontSize: 13 }}
+                    className="users-search-input"
                   />
                 </div>
 

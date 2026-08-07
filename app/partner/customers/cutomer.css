@@ -1,0 +1,10 @@
+/* ── Page: Partner Customers (app/partner/customers/page.tsx) ───────────────── */
+
+.customer-expiry-cell--expired {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.customer-search-wrapper {
+  width: 280px;
+}

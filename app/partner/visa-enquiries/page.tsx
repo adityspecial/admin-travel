@@ -1,6 +1,10 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { adminFetch } from '@/lib/api'
+import { Pagination } from '@/components/Pagination'
+import { DataTable, ColumnDef } from '@/components/ui/DataTable'
+import '@/components/ui/AppInput.css'
+import './visa-enquiries.css'
 
 interface Enquiry {
   id: string; slug: string; country: string; full_name: string
@@ -9,11 +13,11 @@ interface Enquiry {
   notes: string | null; status: string; created_at: string
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  pending:   '#D97706',
-  contacted: '#2563EB',
-  completed: '#16A34A',
-  cancelled: '#DC2626',
+const STATUSES = ['', 'pending', 'contacted', 'completed', 'cancelled']
+
+// Maps 1:1 onto the real badge system (globals.css only ships green/red/yellow/blue/gray).
+const STATUS_BADGE: Record<string, string> = {
+  pending: 'badge-yellow', contacted: 'badge-blue', completed: 'badge-green', cancelled: 'badge-red',
 }
 
 const PAGE_SIZE = 20
@@ -52,88 +56,114 @@ export default function PartnerVisaEnquiriesPage() {
 
   function flash(m: string) { setMsg(m); setTimeout(() => setMsg(''), 3000) }
 
-  const totalPages = Math.ceil(total / PAGE_SIZE)
+  function changeFilter(s: string) {
+    setStatus(s)
+    setPage(1)
+    load(s, 1)
+  }
+
+  const columns: ColumnDef<Enquiry>[] = [
+    {
+      key: 'created_at',
+      header: 'Date',
+      render: (e) => <span className="data-table-muted-cell">{new Date(e.created_at).toLocaleDateString('en-IN')}</span>,
+    },
+    {
+      key: 'country',
+      header: 'Country',
+      render: (e) => <span className="data-table-cell-bold">{e.country}</span>,
+    },
+    {
+      key: 'full_name',
+      header: 'Traveller',
+      render: (e) => (
+        <div>
+          <div className="data-table-cell-bold">{e.full_name}</div>
+          <div className="data-table-muted-cell">{e.email} · {e.phone}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'passport_number',
+      header: 'Passport',
+      render: (e) => <span className="data-table-code-pill">{e.passport_number}</span>,
+    },
+    {
+      key: 'travel_date',
+      header: 'Travel Date',
+      render: (e) => <span className="data-table-muted-cell">{e.travel_date}</span>,
+    },
+    {
+      key: 'return_date',
+      header: 'Return',
+      render: (e) => <span className="data-table-muted-cell">{e.return_date ?? '--'}</span>,
+    },
+    {
+      key: 'num_travellers',
+      header: 'Pax',
+      align: 'center',
+      render: (e) => e.num_travellers,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (e) => (
+        <span className={`badge ${STATUS_BADGE[e.status] ?? 'badge-gray'}`}>{e.status}</span>
+      ),
+    },
+    {
+      key: 'action',
+      header: 'Action',
+      render: (e) => (
+        <select
+          className="app-input pvisaenq-status-select"
+          value={e.status}
+          onChange={(ev) => updateStatus(e.id, ev.target.value)}
+        >
+          {STATUSES.filter(Boolean).map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      ),
+    },
+  ]
 
   return (
-    <div style={{ padding: 28, fontFamily: "'Inter', sans-serif" }}>
-      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#111' }}>Visa Enquiries</h1>
-          <p style={{ color: '#6B7280', fontSize: 13, margin: '4px 0 0' }}>{total} enquiries from you and your sub-agents</p>
-        </div>
-        {msg && <span style={{ fontSize: 13, color: '#16a34a', fontWeight: 600 }}>{msg}</span>}
+    <div>
+      <div className="admin-topbar">
+        <h2>Visa Enquiries</h2>
+        <span className="topbar-meta">
+          {total.toLocaleString('en-IN')} enquiries from you and your sub-agents
+          {msg && <span className="pvisaenq-msg">{msg}</span>}
+        </span>
       </div>
 
-      {/* Filter */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {['', 'pending', 'contacted', 'completed', 'cancelled'].map(s => (
-          <button key={s} onClick={() => { setStatus(s); setPage(1); load(s, 1) }}
-            style={{ padding: '6px 14px', borderRadius: 20, border: '1px solid #E5E7EB', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-              background: status === s ? '#2563EB' : '#fff', color: status === s ? '#fff' : '#374151' }}>
-            {s || 'All'}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: 40, color: '#6B7280' }}>Loading…</div>
-      ) : enquiries.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF', fontSize: 14 }}>No enquiries yet.</div>
-      ) : (
-        <div style={{ overflowX: 'auto', borderRadius: 10, border: '1px solid #E5E7EB' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead>
-              <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                {['Date', 'Country', 'Name', 'Email', 'Phone', 'Passport', 'Travel Date', 'Return', 'Pax', 'Status', 'Action'].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>{h}</th>
+      <div className="admin-content">
+        <div className="page-stack">
+          <DataTable
+            title="Visa Enquiries"
+            subtitle="Track and update enquiry status for you and your sub-agents."
+            headerAction={
+              <div className="segmented-row">
+                {STATUSES.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className={`segment-btn ${status === s ? 'active' : ''}`}
+                    onClick={() => changeFilter(s)}
+                  >
+                    {s ? s.charAt(0).toUpperCase() + s.slice(1) : 'All'}
+                  </button>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {enquiries.map((e, i) => (
-                <tr key={e.id} style={{ borderBottom: '1px solid #F3F4F6', backgroundColor: i % 2 === 0 ? '#fff' : '#FAFAFA' }}>
-                  <td style={{ padding: '8px 14px', color: '#6B7280', whiteSpace: 'nowrap' }}>{new Date(e.created_at).toLocaleDateString('en-IN')}</td>
-                  <td style={{ padding: '8px 14px', fontWeight: 600, color: '#111' }}>{e.country}</td>
-                  <td style={{ padding: '8px 14px', color: '#374151' }}>{e.full_name}</td>
-                  <td style={{ padding: '8px 14px', color: '#374151' }}>{e.email}</td>
-                  <td style={{ padding: '8px 14px', color: '#374151', whiteSpace: 'nowrap' }}>{e.phone}</td>
-                  <td style={{ padding: '8px 14px', fontFamily: 'monospace', fontSize: 12, color: '#6B7280' }}>{e.passport_number}</td>
-                  <td style={{ padding: '8px 14px', whiteSpace: 'nowrap' }}>{e.travel_date}</td>
-                  <td style={{ padding: '8px 14px', whiteSpace: 'nowrap', color: '#6B7280' }}>{e.return_date ?? '—'}</td>
-                  <td style={{ padding: '8px 14px', textAlign: 'center' }}>{e.num_travellers}</td>
-                  <td style={{ padding: '8px 14px' }}>
-                    <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                      background: (STATUS_COLORS[e.status] ?? '#6B7280') + '20',
-                      color: STATUS_COLORS[e.status] ?? '#6B7280',
-                      border: `1px solid ${(STATUS_COLORS[e.status] ?? '#6B7280')}50` }}>
-                      {e.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '8px 14px' }}>
-                    <select value={e.status} onChange={ev => updateStatus(e.id, ev.target.value)}
-                      style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 12, cursor: 'pointer' }}>
-                      <option value="pending">pending</option>
-                      <option value="contacted">contacted</option>
-                      <option value="completed">completed</option>
-                      <option value="cancelled">cancelled</option>
-                    </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              </div>
+            }
+            columns={columns}
+            data={enquiries}
+            loading={loading}
+            emptyMessage="No enquiries yet."
+            keyExtractor={(e) => e.id}
+            footer={<Pagination total={total} page={page} perPage={PAGE_SIZE} onPage={setPage} />}
+          />
         </div>
-      )}
-
-      {totalPages > 1 && (
-        <div style={{ display: 'flex', gap: 8, marginTop: 16, alignItems: 'center', justifyContent: 'center' }}>
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-            style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #E5E7EB', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: '#fff' }}>← Prev</button>
-          <span style={{ fontSize: 13, color: '#374151' }}>Page {page} of {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
-            style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #E5E7EB', cursor: 'pointer', background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 600 }}>Next →</button>
-        </div>
-      )}
+      </div>
     </div>
   )
 }

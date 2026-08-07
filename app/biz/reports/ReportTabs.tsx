@@ -32,35 +32,30 @@ export function ReportTabs({ data, tab, setTab, loading }: {
   const g = data?.gst
 
   return (
-    <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', borderBottom: '1px solid #E5E7EB' }}>
+    <div className="rpt-card">
+      <div className="rpt-tabs-row">
         {(['overview','dept','employee','cost-center','gst'] as Tab[]).map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{
-            padding: '12px 18px', border: 'none', background: 'none', cursor: 'pointer',
-            fontSize: 13, fontWeight: tab === t ? 700 : 500,
-            color: tab === t ? '#E31E24' : '#6B7280',
-            borderBottom: tab === t ? '2px solid #E31E24' : '2px solid transparent',
-          }}>
+          <button key={t} onClick={() => setTab(t)} className={`rpt-tab-btn ${tab === t ? 'rpt-tab-btn--active' : ''}`}>
             {t === 'cost-center' ? 'Cost Centers' : t === 'gst' ? 'GST' : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
 
-      <div style={{ padding: 20 }}>
-        {loading && <div style={{ textAlign: 'center', color: '#9CA3AF', padding: 32 }}>Loading…</div>}
+      <div className="rpt-body">
+        {loading && <div className="rpt-loading">Loading…</div>}
 
         {!loading && data && tab === 'overview' && (
           data.monthly.length === 0
-            ? <div style={{ textAlign: 'center', color: '#9CA3AF', padding: 32 }}>No data for this period.</div>
+            ? <div className="rpt-empty">No data for this period.</div>
             : (
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 140 }}>
+              <div className="rpt-chart-wrap">
                 {data.monthly.map((m, i) => {
                   const max = Math.max(...data.monthly.map(x => x.spend), 1)
                   return (
-                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                      <div style={{ fontSize: 10, color: '#6B7280' }}>{fmt(m.spend)}</div>
-                      <div style={{ width: '70%', background: '#2563EB', borderRadius: '3px 3px 0 0', height: Math.max((m.spend/max)*120, 4) }} />
-                      <div style={{ fontSize: 10, color: '#9CA3AF' }}>{m.month.slice(5)}</div>
+                    <div key={i} className="rpt-bar-col">
+                      <div className="rpt-bar-value">{fmt(m.spend)}</div>
+                      <div className="rpt-bar" style={{ height: Math.max((m.spend/max)*120, 4) }} />
+                      <div className="rpt-bar-month">{m.month.slice(5)}</div>
                     </div>
                   )
                 })}
@@ -94,16 +89,16 @@ export function ReportTabs({ data, tab, setTab, loading }: {
 
         {!loading && data && tab === 'gst' && g && (
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 20 }}>
+            <div className="rpt-gst-grid">
               {[
                 ['Total Invoiced', fmt(g.totalWithGst), 'incl. 18% GST'],
                 ['Base Amount',   fmt(g.baseAmount),   'excl. GST'],
                 ['GST (18%)',     fmt(g.gstAmount),    'input credit eligible'],
               ].map(([l,v,sub]) => (
-                <div key={String(l)} style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 10, padding: '16px 20px' }}>
-                  <div style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 700, marginBottom: 4 }}>{l}</div>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: '#1a1a2e' }}>{v}</div>
-                  <div style={{ fontSize: 11, color: '#6B7280' }}>{sub}</div>
+                <div key={String(l)} className="rpt-gst-card">
+                  <div className="rpt-gst-card-label">{l}</div>
+                  <div className="rpt-gst-card-value">{v}</div>
+                  <div className="rpt-gst-card-sub">{sub}</div>
                 </div>
               ))}
             </div>
@@ -124,19 +119,19 @@ export function ReportTabs({ data, tab, setTab, loading }: {
 
 function SimpleTable({ headers, rows, empty }: { headers: string[]; rows: (string|number)[][]; empty: boolean }) {
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <table className="rpt-table">
       <thead>
-        <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
-          {headers.map(h => <th key={h} style={{ textAlign: 'left', padding: '10px 12px', fontSize: 11, fontWeight: 700, color: '#9CA3AF' }}>{h}</th>)}
+        <tr className="rpt-thead-row">
+          {headers.map(h => <th key={h} className="rpt-th">{h}</th>)}
         </tr>
       </thead>
       <tbody>
         {empty
-          ? <tr><td colSpan={headers.length} style={{ padding: 24, textAlign: 'center', color: '#9CA3AF' }}>No data.</td></tr>
+          ? <tr><td colSpan={headers.length} className="rpt-empty-td">No data.</td></tr>
           : rows.map((row, i) => (
-            <tr key={i} style={{ borderTop: '1px solid #F9FAFB' }}>
+            <tr key={i} className="rpt-tr">
               {row.map((cell, j) => (
-                <td key={j} style={{ padding: '12px 12px', fontSize: 13, fontWeight: j === 0 ? 700 : 400, color: j === 0 ? '#1a1a2e' : '#374151' }}>
+                <td key={j} className={`rpt-td ${j === 0 ? 'rpt-td--first' : ''}`}>
                   {cell}
                 </td>
               ))}

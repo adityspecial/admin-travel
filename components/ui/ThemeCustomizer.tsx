@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { Palette, X, RotateCcw, Check, Sparkles, Type, Sliders } from 'lucide-react';
+import { Palette, X, RotateCcw, Check, Sparkles, Type, Sliders, Minus, Plus } from 'lucide-react';
+import './ThemeCustomizer.css';
 
 interface PrimarySwatch {
   name: string;
@@ -30,6 +31,16 @@ interface HeaderOption {
   text: string;
 }
 
+// Default body font size and the app's fixed type scale (see globals.css
+// `--text-xs` … `--text-3xl`). Every +/- click shifts ALL of these — body and
+// headings alike — by the same 1px delta, so the whole app scales together.
+const DEFAULT_FONT_SIZE = 16;
+const MIN_FONT_SIZE = 12;
+const MAX_FONT_SIZE = 30;
+const BASE_TEXT_SCALE: Record<string, number> = {
+  xs: 11, sm: 12, base: 13, md: 15, lg: 18, xl: 22, '2xl': 28, '3xl': 36,
+};
+
 export function ThemeCustomizer() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname() || '';
@@ -39,7 +50,7 @@ export function ThemeCustomizer() {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Typography & Color Picker states
-  const [fontSize, setFontSize] = useState<number>(16);
+  const [fontSize, setFontSize] = useState<number>(DEFAULT_FONT_SIZE);
   const [fontFamily, setFontFamily] = useState<string>("Poppins");
   const [fontWeight, setFontWeight] = useState<string>("400");
   const [fontColor, setFontColor] = useState<string>("#222222");
@@ -186,6 +197,13 @@ export function ThemeCustomizer() {
     document.body.style.fontWeight = fontWeight;
     document.body.style.color = fontColor;
 
+    // Shift every heading/label size in the app's type scale by the same
+    // delta as the body font, so +/- affects headings and body together.
+    const offset = fontSize - DEFAULT_FONT_SIZE;
+    for (const key in BASE_TEXT_SCALE) {
+      root.style.setProperty(`--text-${key}`, `${BASE_TEXT_SCALE[key] + offset}px`);
+    }
+
     // Apply primary color & gradient
     const selectedPrimary = primarySwatches.find((s) => s.hex === primaryColor) || primarySwatches[0];
     root.style.setProperty('--primary-color', selectedPrimary.hex);
@@ -241,8 +259,12 @@ export function ThemeCustomizer() {
     );
   }, [fontSize, fontFamily, fontWeight, fontColor, backgroundColor, primaryColor, bgPreset, sidebarBg, headerBg, headerText, glassBlur, glassOpacity]);
 
+  const increaseFontSize = () => setFontSize((f) => Math.min(f + 1, MAX_FONT_SIZE));
+  const decreaseFontSize = () => setFontSize((f) => Math.max(f - 1, MIN_FONT_SIZE));
+  const resetFontSize = () => setFontSize(DEFAULT_FONT_SIZE);
+
   const handleReset = () => {
-    setFontSize(16);
+    setFontSize(DEFAULT_FONT_SIZE);
     setFontFamily("Poppins");
     setFontWeight("400");
     setFontColor("#222222");
@@ -257,33 +279,19 @@ export function ThemeCustomizer() {
     localStorage.removeItem('app-theme-settings');
   };
 
+  // Drives every var(--accent-color) reference in ThemeCustomizer.css so the
+  // drawer's own accents (selected borders, stepper icons, slider thumbs)
+  // follow whichever primary color is currently picked.
+  const rootVars = { '--accent-color': primaryColor } as React.CSSProperties;
+
   return (
-    <>
+    <div style={rootVars}>
       {/* Floating Design Scroller Toggle Button */}
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        style={{
-          position: 'fixed',
-          right: '24px',
-          bottom: '28px',
-          zIndex: 100,
-          backgroundColor: primaryColor,
-          color: '#ffffff',
-          border: '2px solid #ffffff',
-          borderRadius: '50%',
-          width: '52px',
-          height: '52px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.25), 0 0 15px ' + primaryColor,
-          cursor: 'pointer',
-          transition: 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)'
-        }}
+        className="theme-toggle-btn"
         title="Customize Design & Colors"
-        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.1) rotate(15deg)')}
-        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1) rotate(0deg)')}
       >
         <Palette size={24} />
       </button>
@@ -291,69 +299,34 @@ export function ThemeCustomizer() {
       {/* Theme Customizer Drawer Scroller */}
       <div
         ref={drawerRef}
-        className="theme-customizer-drawer"
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          width: '380px',
-          maxWidth: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(255, 255, 255, 0.97)',
-          backdropFilter: 'blur(24px)',
-          boxShadow: '-10px 0 35px rgba(0, 0, 0, 0.18)',
-          zIndex: 101,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: '24px 20px',
-          overflowY: 'auto',
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          opacity: isOpen ? 1 : 0,
-          visibility: isOpen ? 'visible' : 'hidden',
-          transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, visibility 0.35s ease'
-        }}
+        className={`theme-customizer-drawer ${isOpen ? 'open' : ''}`}
       >
         <div>
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '1px solid #e2e8f0', paddingBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="theme-drawer-header">
+            <div className="theme-drawer-header-left">
               <Sparkles size={20} color={primaryColor} />
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a' }}>Theme & Typography</h3>
+              <h3 className="theme-drawer-title">Theme & Typography</h3>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#64748b' }}
-            >
+            <button onClick={() => setIsOpen(false)} className="theme-drawer-close-btn">
               <X size={20} />
             </button>
           </div>
 
           {/* SECTION 1: Typography Controls */}
-          <div style={{ marginBottom: '24px', backgroundColor: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+          <div className="theme-section">
+            <div className="theme-section-header">
               <Type size={16} color={primaryColor} />
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>Typography & Text</span>
+              <span className="theme-section-label">Typography & Text</span>
             </div>
 
             {/* Font Family */}
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                Font Family
-              </label>
+            <div className="theme-field">
+              <label className="theme-field-label">Font Family</label>
               <select
                 value={fontFamily}
                 onChange={(e) => setFontFamily(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px 10px',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '12.5px',
-                  backgroundColor: '#ffffff',
-                  color: '#0f172a',
-                  fontWeight: 500
-                }}
+                className="theme-select"
               >
                 <option value="Poppins">Poppins</option>
                 <option value="Roboto">Roboto</option>
@@ -364,44 +337,54 @@ export function ThemeCustomizer() {
               </select>
             </div>
 
-            {/* Font Size Slider */}
-            <div style={{ marginBottom: '14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+            {/* Font Size Stepper */}
+            <div className="theme-field">
+              <div className="theme-fontsize-row">
                 <span>Font Size</span>
-                <span style={{ backgroundColor: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', fontSize: '11px' }}>{fontSize}px</span>
+                <span className="theme-fontsize-badge">{fontSize}px</span>
               </div>
-              <input
-                type="range"
-                min="12"
-                max="30"
-                value={fontSize}
-                onChange={(e) => setFontSize(Number(e.target.value))}
-                style={{ width: '100%', accentColor: primaryColor }}
-              />
+              <div className="theme-fontsize-stepper">
+                <button
+                  type="button"
+                  className="theme-stepper-btn"
+                  onClick={decreaseFontSize}
+                  disabled={fontSize <= MIN_FONT_SIZE}
+                  title="Decrease font size by 1px"
+                >
+                  <Minus size={14} />
+                </button>
+                <span className="theme-stepper-value">{fontSize}px</span>
+                <button
+                  type="button"
+                  className="theme-stepper-btn"
+                  onClick={increaseFontSize}
+                  disabled={fontSize >= MAX_FONT_SIZE}
+                  title="Increase font size by 1px"
+                >
+                  <Plus size={14} />
+                </button>
+                <button
+                  type="button"
+                  className="theme-stepper-default-btn"
+                  onClick={resetFontSize}
+                  title="Reset to default font size"
+                >
+                  Default
+                </button>
+              </div>
             </div>
 
             {/* Font Weight */}
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                Font Weight
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+            <div className="theme-field">
+              <label className="theme-field-label">Font Weight</label>
+              <div className="theme-weight-grid">
                 {fontWeights.map((w) => {
                   const isSelected = fontWeight === w.value;
                   return (
                     <button
                       key={w.value}
                       onClick={() => setFontWeight(w.value)}
-                      style={{
-                        padding: '6px 4px',
-                        fontSize: '11px',
-                        borderRadius: '6px',
-                        border: isSelected ? `2px solid ${primaryColor}` : '1px solid #cbd5e1',
-                        backgroundColor: isSelected ? '#ffffff' : '#f1f5f9',
-                        fontWeight: isSelected ? 700 : 500,
-                        color: isSelected ? primaryColor : '#475569',
-                        cursor: 'pointer'
-                      }}
+                      className={`theme-weight-btn ${isSelected ? 'selected' : ''}`}
                     >
                       {w.label}
                     </button>
@@ -412,35 +395,31 @@ export function ThemeCustomizer() {
           </div>
 
           {/* SECTION 2: Custom Color Pickers */}
-          <div style={{ marginBottom: '24px', backgroundColor: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+          <div className="theme-section">
+            <div className="theme-section-header">
               <Sliders size={16} color={primaryColor} />
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>Color Pickers</span>
+              <span className="theme-section-label">Color Pickers</span>
             </div>
 
             {/* Font Color Picker */}
-            <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>
-                Font Color
-              </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#64748b' }}>{fontColor}</span>
+            <div className="theme-color-row">
+              <label className="theme-color-row-label">Font Color</label>
+              <div className="theme-color-row-right">
+                <span className="theme-color-hex">{fontColor}</span>
                 <input
                   type="color"
                   value={fontColor}
                   onChange={(e) => setFontColor(e.target.value)}
-                  style={{ width: '36px', height: '32px', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', padding: '1px', backgroundColor: '#ffffff' }}
+                  className="theme-color-input"
                 />
               </div>
             </div>
 
             {/* Background Color Picker */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>
-                Background Color
-              </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#64748b' }}>{backgroundColor}</span>
+            <div className="theme-color-row">
+              <label className="theme-color-row-label">Background Color</label>
+              <div className="theme-color-row-right">
+                <span className="theme-color-hex">{backgroundColor}</span>
                 <input
                   type="color"
                   value={backgroundColor}
@@ -448,50 +427,25 @@ export function ThemeCustomizer() {
                     setBackgroundColor(e.target.value);
                     setBgPreset('custom');
                   }}
-                  style={{ width: '36px', height: '32px', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', padding: '1px', backgroundColor: '#ffffff' }}
+                  className="theme-color-input"
                 />
               </div>
             </div>
           </div>
 
           {/* SECTION 3: Primary Accent Color Swatches */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '10px' }}>
-              Primary Accent Swatches
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+          <div className="theme-block">
+            <label className="theme-block-label">Primary Accent Swatches</label>
+            <div className="theme-swatch-grid">
               {primarySwatches.map((swatch, idx) => {
                 const isSelected = primaryColor === swatch.hex;
                 return (
                   <button
                     key={idx}
                     onClick={() => setPrimaryColor(swatch.hex)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '8px',
-                      borderRadius: '10px',
-                      border: isSelected ? `2px solid ${swatch.hex}` : '1px solid #cbd5e1',
-                      backgroundColor: isSelected ? 'rgba(241, 245, 249, 0.9)' : '#ffffff',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      fontWeight: isSelected ? 600 : 400,
-                      color: '#1e293b'
-                    }}
+                    className={`theme-swatch-btn ${isSelected ? 'selected' : ''}`}
                   >
-                    <span
-                      style={{
-                        width: '18px',
-                        height: '18px',
-                        borderRadius: '50%',
-                        background: swatch.grad,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#ffffff'
-                      }}
-                    >
+                    <span className="theme-swatch-dot" style={{ background: swatch.grad }}>
                       {isSelected && <Check size={12} strokeWidth={3} />}
                     </span>
                     <span>{swatch.name}</span>
@@ -502,11 +456,9 @@ export function ThemeCustomizer() {
           </div>
 
           {/* SECTION 4: Page Background Gradient Presets */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '10px' }}>
-              Page Background Presets
-            </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="theme-block">
+            <label className="theme-block-label">Page Background Presets</label>
+            <div className="theme-preset-list">
               {bgPresets.map((preset) => {
                 const isSelected = bgPreset === preset.id;
                 return (
@@ -516,19 +468,8 @@ export function ThemeCustomizer() {
                       setBgPreset(preset.id);
                       setBackgroundColor(preset.start);
                     }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '10px 14px',
-                      borderRadius: '10px',
-                      border: isSelected ? `2px solid ${primaryColor}` : '1px solid #cbd5e1',
-                      background: `linear-gradient(90deg, ${preset.start} 0%, ${preset.mid} 50%, ${preset.end} 100%)`,
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      color: preset.id === 'dark' ? '#ffffff' : '#1e293b'
-                    }}
+                    className={`theme-preset-btn ${isSelected ? 'selected' : ''} ${preset.id === 'dark' ? 'dark' : ''}`}
+                    style={{ background: `linear-gradient(90deg, ${preset.start} 0%, ${preset.mid} 50%, ${preset.end} 100%)` }}
                   >
                     <span>{preset.label}</span>
                     {isSelected && <Check size={16} color={preset.id === 'dark' ? '#ffffff' : primaryColor} />}
@@ -539,85 +480,59 @@ export function ThemeCustomizer() {
           </div>
 
           {/* SECTION 5: Header or Sidebar Panel Theme Options */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '10px' }}>
+          <div className="theme-block">
+            <label className="theme-block-label">
               {isBiz ? 'Header Background' : 'Sidebar Panel Background'}
             </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="theme-preset-list">
               {isBiz
                 ? headerOptions.map((opt, idx) => {
-                    const isSelected = headerBg === opt.bg;
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          setHeaderBg(opt.bg);
-                          setHeaderText(opt.text);
-                        }}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '10px 14px',
-                          borderRadius: '10px',
-                          backgroundColor: opt.bg,
-                          border: isSelected ? `2px solid ${primaryColor}` : '1px solid #cbd5e1',
-                          color: opt.text,
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          fontWeight: 600
-                        }}
-                      >
-                        <span>{opt.name}</span>
-                        {isSelected && <Check size={16} color={opt.text} />}
-                      </button>
-                    );
-                  })
+                  const isSelected = headerBg === opt.bg;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setHeaderBg(opt.bg);
+                        setHeaderText(opt.text);
+                      }}
+                      className={`theme-preset-btn ${isSelected ? 'selected' : ''}`}
+                      style={{ backgroundColor: opt.bg, color: opt.text }}
+                    >
+                      <span>{opt.name}</span>
+                      {isSelected && <Check size={16} color={opt.text} />}
+                    </button>
+                  );
+                })
                 : sidebarOptions.map((opt, idx) => {
-                    const isSelected = sidebarBg === opt.bg;
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => setSidebarBg(opt.bg)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '10px 14px',
-                          borderRadius: '10px',
-                          backgroundColor: opt.bg,
-                          border: isSelected ? `2px solid ${primaryColor}` : '1px solid #cbd5e1',
-                          color: opt.text,
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          fontWeight: 600
-                        }}
-                      >
-                        <span>{opt.name}</span>
-                        {isSelected && <Check size={16} color={opt.text} />}
-                      </button>
-                    );
-                  })}
+                  const isSelected = sidebarBg === opt.bg;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setSidebarBg(opt.bg)}
+                      className={`theme-preset-btn ${isSelected ? 'selected' : ''}`}
+                      style={{ backgroundColor: opt.bg, color: opt.text }}
+                    >
+                      <span>{opt.name}</span>
+                      {isSelected && <Check size={16} color={opt.text} />}
+                    </button>
+                  );
+                })}
             </div>
           </div>
 
           {/* SECTION 6: Glass Blur & Opacity Sliders */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
-              Glass Blur Radius ({glassBlur}px)
-            </label>
+          <div className="theme-slider-block">
+            <label className="theme-slider-label">Glass Blur Radius ({glassBlur}px)</label>
             <input
               type="range"
               min="0"
               max="40"
               value={glassBlur}
               onChange={(e) => setGlassBlur(Number(e.target.value))}
-              style={{ width: '100%', accentColor: primaryColor, marginBottom: '16px' }}
+              className="theme-slider spaced"
             />
 
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
-              Card Transparency ({Math.round(glassOpacity * 100)}%)
-            </label>
+            <label className="theme-slider-label">Card Transparency ({Math.round(glassOpacity * 100)}%)</label>
             <input
               type="range"
               min="0.3"
@@ -625,36 +540,18 @@ export function ThemeCustomizer() {
               step="0.05"
               value={glassOpacity}
               onChange={(e) => setGlassOpacity(Number(e.target.value))}
-              style={{ width: '100%', accentColor: primaryColor }}
+              className="theme-slider"
             />
           </div>
         </div>
 
         {/* Reset Button */}
-        <button
-          onClick={handleReset}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            padding: '11px',
-            borderRadius: '12px',
-            border: '1.5px solid #cbd5e1',
-            backgroundColor: '#f8fafc',
-            fontSize: '13.5px',
-            fontWeight: 600,
-            color: '#475569',
-            cursor: 'pointer',
-            transition: 'background 0.2s'
-          }}
-        >
+        <button onClick={handleReset} className="theme-reset-btn">
           <RotateCcw size={16} />
           <span>Reset to Default Design</span>
         </button>
       </div>
-    </>
+    </div>
   );
 }
 

@@ -245,10 +245,10 @@ export default function FeaturedContentPage() {
       header: 'Placement',
       render: (it) => (
         <div>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#2563eb', background: '#eff6ff', borderRadius: 6, padding: '3px 8px' }}>
+          <span className="fc-placement-pill">
             {placementLabel(it.placement)}
           </span>
-          {it.category && <div className="data-table-muted-cell" style={{ fontSize: 11, marginTop: 2 }}>{it.category}</div>}
+          {it.category && <div className="data-table-muted-cell fc-category-sub">{it.category}</div>}
         </div>
       ),
     },
@@ -256,9 +256,9 @@ export default function FeaturedContentPage() {
       key: 'title',
       header: 'Title & Subtitle',
       render: (it) => (
-        <div style={{ maxWidth: 220 }}>
+        <div className="fc-title-cell">
           <div className="data-table-cell-bold">{it.title}</div>
-          <div className="data-table-muted-cell" style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div className="data-table-muted-cell fc-subtitle-cell">
             {it.subtitle}
           </div>
         </div>
@@ -268,7 +268,7 @@ export default function FeaturedContentPage() {
       key: 'route',
       header: 'Route / Target',
       render: (it) => (
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: '#334155' }}>
+        <span className="fc-route-cell">
           {it.target_from ? `${it.target_from}${it.target_to ? ` → ${it.target_to}` : ''}` : '—'}
         </span>
       ),
@@ -277,9 +277,9 @@ export default function FeaturedContentPage() {
       key: 'price',
       header: 'Price Type',
       render: (it) => (
-        <span style={{ fontSize: 12.5, fontWeight: 700 }}>
+        <span className="fc-price-cell">
           {it.use_live_price ? (
-            <span style={{ color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: 6 }}>● Live Price</span>
+            <span className="fc-live-price-pill">● Live Price</span>
           ) : (
             it.static_price_label || '—'
           )}
@@ -290,7 +290,7 @@ export default function FeaturedContentPage() {
       key: 'dates',
       header: 'Validity',
       render: (it) => (
-        <span className="data-table-muted-cell" style={{ fontSize: 11.5, whiteSpace: 'nowrap' }}>
+        <span className="data-table-muted-cell fc-validity-cell">
           {it.valid_from ?? '∞'} → {it.valid_until ?? '∞'}
         </span>
       ),
@@ -302,8 +302,7 @@ export default function FeaturedContentPage() {
         <button
           type="button"
           onClick={() => toggleActive(it)}
-          className={`data-table-status-pill ${it.is_active ? 'active' : 'inactive'}`}
-          style={{ border: 'none', cursor: 'pointer' }}
+          className={`data-table-status-pill fc-status-toggle-btn ${it.is_active ? 'active' : 'inactive'}`}
         >
           {it.is_active ? '● Active' : '● Draft'}
         </button>
@@ -378,24 +377,14 @@ export default function FeaturedContentPage() {
 
           {/* Alert Message Banner */}
           {msg && (
-            <div
-              style={{
-                background: msg.startsWith('Error') ? '#fef2f2' : '#dcfce7',
-                color: msg.startsWith('Error') ? '#991b1b' : '#15803d',
-                border: `1px solid ${msg.startsWith('Error') ? '#fecaca' : '#bbf7d0'}`,
-                borderRadius: 12,
-                padding: '12px 16px',
-                fontSize: 13,
-                fontWeight: 700,
-              }}
-            >
+            <div className={`fc-alert ${msg.startsWith('Error') ? 'fc-alert--error' : 'fc-alert--ok'}`}>
               {msg.startsWith('Error') ? '❌ ' : '✅ '}
               {msg}
             </div>
           )}
 
           {/* Placement Filter Pills */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div className="fc-filter-pills">
             <button
               className={`btn btn-sm ${filter === '' ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => setFilter('')}
@@ -419,9 +408,8 @@ export default function FeaturedContentPage() {
             subtitle="Manage every promotional banner, collection card, and seasonal campaign across mobile and desktop applications."
             headerAction={
               <button
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-sm fc-btn-icon-gap"
                 onClick={openCreate}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
               >
                 <Plus size={14} />
                 <span>New Item</span>
@@ -450,50 +438,26 @@ export default function FeaturedContentPage() {
         }}
       >
         {/* Live Card Preview */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>
+        <div className="fc-preview-wrap">
+          <div className="fc-preview-label">
             Card Live Preview
           </div>
-          <div
-            style={{
-              width: '100%',
-              height: 110,
-              borderRadius: 16,
-              backgroundColor: form.bg_color,
-              padding: '14px 18px',
-              position: 'relative',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              boxShadow: '0 10px 20px rgba(0,0,0,0.12)',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                width: 140,
-                height: 140,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.12)',
-                right: -20,
-                top: -30,
-              }}
-            />
+          <div className="fc-preview-card" style={{ backgroundColor: form.bg_color }}>
+            <div className="fc-preview-circle" />
             <div>
               {form.tag && (
-                <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.25)', borderRadius: 99, padding: '2px 8px', fontSize: 10, fontWeight: 700, color: '#fff', marginBottom: 5 }}>
+                <div className="fc-preview-tag">
                   {form.tag}
                 </div>
               )}
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>
+              <div className="fc-preview-title">
                 {form.title || 'Title Here'}
               </div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 3 }}>
+              <div className="fc-preview-subtitle">
                 {form.use_live_price ? 'Live lowest fare' : form.static_price_label || form.subtitle || 'Subtitle text'}
               </div>
             </div>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+            <div className="fc-preview-icon-circle">
               <Plane size={22} />
             </div>
           </div>
@@ -505,7 +469,7 @@ export default function FeaturedContentPage() {
             save()
           }}
         >
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="fc-form-grid">
             <div className="app-input-group">
               <label className="app-input-label">Placement *</label>
               <select className="app-input" value={form.placement} onChange={f('placement')}>
@@ -524,7 +488,7 @@ export default function FeaturedContentPage() {
               placeholder="e.g. flight, hotels"
             />
 
-            <div style={{ gridColumn: '1 / -1' }}>
+            <div className="fc-full-col">
               <AppInput
                 label="Title *"
                 required
@@ -534,7 +498,7 @@ export default function FeaturedContentPage() {
               />
             </div>
 
-            <div style={{ gridColumn: '1 / -1' }}>
+            <div className="fc-full-col">
               <AppInput
                 label="Subtitle"
                 value={form.subtitle}
@@ -571,21 +535,21 @@ export default function FeaturedContentPage() {
               placeholder="e.g. BOM"
             />
 
-            <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
+            <div className="fc-full-col fc-checkbox-row">
               <input
                 type="checkbox"
                 checked={form.use_live_price}
                 onChange={f('use_live_price')}
                 id="ulp"
-                style={{ width: 16, height: 16, cursor: 'pointer' }}
+                className="fc-checkbox"
               />
-              <label htmlFor="ulp" style={{ fontSize: 13, fontWeight: 600, color: '#334155', cursor: 'pointer' }}>
+              <label htmlFor="ulp" className="fc-checkbox-label">
                 Use live lowest fare (calendar-fare) instead of a static price label
               </label>
             </div>
 
             {!form.use_live_price && (
-              <div style={{ gridColumn: '1 / -1' }}>
+              <div className="fc-full-col">
                 <AppInput
                   label="Static Price Label"
                   value={form.static_price_label}
@@ -595,7 +559,7 @@ export default function FeaturedContentPage() {
               </div>
             )}
 
-            <div style={{ gridColumn: '1 / -1' }}>
+            <div className="fc-full-col">
               <AppInput
                 label="Deeplink"
                 value={form.deeplink}
@@ -604,7 +568,7 @@ export default function FeaturedContentPage() {
               />
             </div>
 
-            <div style={{ gridColumn: '1 / -1' }}>
+            <div className="fc-full-col">
               <AppInput
                 label="Image URL (overrides color)"
                 value={form.image_url}
@@ -613,29 +577,23 @@ export default function FeaturedContentPage() {
               />
             </div>
 
-            <div style={{ gridColumn: '1 / -1' }}>
+            <div className="fc-full-col">
               <label className="app-input-label">Background Preset Color</label>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+              <div className="fc-color-presets">
                 {COLOR_PRESETS.map((c) => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => setForm((p) => ({ ...p, bg_color: c }))}
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      background: c,
-                      border: form.bg_color === c ? '3px solid #0f172a' : '2px solid transparent',
-                      cursor: 'pointer',
-                    }}
+                    className={`fc-swatch ${form.bg_color === c ? 'fc-swatch--selected' : ''}`}
+                    style={{ background: c }}
                   />
                 ))}
                 <input
                   type="color"
                   value={form.bg_color}
                   onChange={f('bg_color')}
-                  style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', padding: 2 }}
+                  className="fc-color-input"
                 />
               </div>
             </div>

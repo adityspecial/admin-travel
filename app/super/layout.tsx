@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/api'
+import { RouteLoader } from '@/components/ui/RouteLoader'
 
 import {
   LayoutDashboard,
@@ -26,6 +27,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react'
 
 const NAV = [
@@ -124,11 +127,15 @@ export default function SuperLayout({ children }: { children: React.ReactNode })
             }}
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+            <span className="toggle-icon-desktop">
+              {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+            </span>
+            <span className="toggle-icon-mobile">
+              {isCollapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+            </span>
           </button>
         </div>
         <nav className="sidebar-nav">
-          <div className="nav-section">Platform</div>
           {NAV.map((item) => (
             <Link
               key={item.href}
@@ -155,7 +162,10 @@ export default function SuperLayout({ children }: { children: React.ReactNode })
           </button>
         </nav>
       </aside>
-      <main className="admin-main">{children}</main>
+      <main className="admin-main">
+        <RouteLoader />
+        {children}
+      </main>
     </div>
   )
 }

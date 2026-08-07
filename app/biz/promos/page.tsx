@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { PromoModal } from '../_components/PromoModal'
+import './promos.css'
 import {
   Ticket,
   Tag,
@@ -84,150 +85,30 @@ export default function BizPromosPage() {
   const activeCount = promos.filter((p) => p.is_active).length
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 54px)', background: '#F5F6FA', width: '100%', overflowX: 'hidden' }}>
-      <style>{`
-        .promos-container {
-          max-width: 1080px;
-          margin: 0 auto;
-          padding: 32px 32px 48px;
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-        }
-        .hero-banner-box {
-          background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
-          border-radius: 24px;
-          padding: 32px;
-          color: #ffffff;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 16px 36px -10px rgba(49, 46, 129, 0.25);
-        }
-        .card-shell {
-          background: #ffffff;
-          border: 1px solid #E5E7EB;
-          border-radius: 20px;
-          padding: 26px;
-          box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.03), 0 2px 6px rgba(0, 0, 0, 0.02);
-        }
-        .input-field {
-          padding: 10px 14px;
-          border-radius: 10px;
-          border: 1.5px solid #E5E7EB;
-          font-size: 13px;
-          outline: none;
-          box-sizing: border-box;
-          transition: all 0.2s ease;
-          width: 100%;
-        }
-        .input-field:focus {
-          border-color: var(--accent, #E31E24);
-          box-shadow: 0 0 0 3px rgba(227, 30, 36, 0.1);
-        }
-        .btn-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 20px;
-          background: linear-gradient(135deg, var(--accent, #E31E24) 0%, #B91C1C 100%);
-          color: #ffffff;
-          border: none;
-          border-radius: 12px;
-          font-weight: 600;
-          font-size: 13px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
-        }
-        .btn-primary:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 18px var(--accent, rgba(227, 30, 36, 0.35));
-        }
-        .btn-secondary {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 16px;
-          background: #F3F4F6;
-          color: #374151;
-          border: 1px solid #E5E7EB;
-          border-radius: 10px;
-          font-weight: 700;
-          font-size: 12.5px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .btn-secondary:hover {
-          background: #E5E7EB;
-        }
-        @media (max-width: 1024px) {
-          .promos-container {
-            padding: 24px 20px 36px;
-          }
-        }
-        @media (max-width: 640px) {
-          .promos-container {
-            padding: 16px 12px 28px;
-          }
-          .hero-banner-box {
-            padding: 20px;
-            border-radius: 18px;
-          }
-          .card-shell {
-            padding: 18px 14px;
-            border-radius: 16px;
-          }
-        }
-      `}</style>
-
+    <div className="bprm-page">
       <div className="promos-container">
         {/* Breadcrumb Navigation */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>
+        <div className="bprm-breadcrumb">
           <span>Admin</span>
           <ChevronRight size={13} color="#9CA3AF" />
-          <span style={{ color: 'var(--accent, #E31E24)', fontWeight: 700 }}>Corporate Vouchers & Promo Engine</span>
+          <span className="bprm-breadcrumb-active">Corporate Vouchers & Promo Engine</span>
         </div>
 
         {/* Hero Header Banner */}
         <div className="hero-banner-box">
           {/* Ambient Glow */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '-40px',
-              right: '-40px',
-              width: '240px',
-              height: '240px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(227, 30, 36, 0.25) 0%, rgba(0, 0, 0, 0) 70%)',
-              pointerEvents: 'none',
-            }}
-          />
+          <div className="bprm-hero-glow" />
 
-          <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-              <div
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '18px',
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  backdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ffffff',
-                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)',
-                }}
-              >
+          <div className="bprm-hero-content">
+            <div className="bprm-hero-left">
+              <div className="bprm-hero-icon">
                 <Ticket size={28} />
               </div>
               <div>
-                <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h1 className="bprm-hero-title">
                   Promo Codes & Discount Vouchers <Sparkles size={18} color="#F59E0B" />
                 </h1>
-                <p style={{ fontSize: '13.5px', color: 'rgba(255, 255, 255, 0.85)', marginTop: '4px', margin: 0, fontWeight: 500 }}>
+                <p className="bprm-hero-subtitle">
                   Create and manage employee discount vouchers, promotional campaigns, and minimum booking threshold rules.
                 </p>
               </div>
@@ -239,22 +120,22 @@ export default function BizPromosPage() {
           </div>
 
           {/* Quick Metrics Bar Inside Hero */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px', marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.15)' }}>
+          <div className="bprm-hero-metrics">
             <div>
-              <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Total Promo Codes</div>
-              <div style={{ fontSize: '20px', fontWeight: 900, color: '#ffffff', marginTop: '2px' }}>
+              <div className="bprm-metric-label">Total Promo Codes</div>
+              <div className="bprm-metric-value bprm-metric-value--total">
                 {promos.length} Codes
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Active Campaigns</div>
-              <div style={{ fontSize: '20px', fontWeight: 900, color: '#34D399', marginTop: '2px' }}>
+              <div className="bprm-metric-label">Active Campaigns</div>
+              <div className="bprm-metric-value bprm-metric-value--active">
                 {activeCount} Active
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Engine Clearance</div>
-              <div style={{ fontSize: '20px', fontWeight: 900, color: '#60A5FA', marginTop: '2px' }}>
+              <div className="bprm-metric-label">Engine Clearance</div>
+              <div className="bprm-metric-value bprm-metric-value--engine">
                 Realtime Auto-Apply
               </div>
             </div>
@@ -262,13 +143,13 @@ export default function BizPromosPage() {
         </div>
 
         {/* Promo Table Card */}
-        <div className="card-shell" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '18px 24px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: 0 }}>Corporate Voucher Directory</h3>
+        <div className="card-shell bprm-table-card">
+          <div className="bprm-table-header">
+            <h3 className="bprm-card-title">Corporate Voucher Directory</h3>
 
             {/* Search Box */}
-            <div style={{ position: 'relative', width: '280px' }}>
-              <Search size={15} color="#9CA3AF" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+            <div className="bprm-search-wrap">
+              <Search size={15} color="#9CA3AF" className="bprm-search-icon" />
               <input
                 placeholder="Search code or description..."
                 value={search}
@@ -276,18 +157,17 @@ export default function BizPromosPage() {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                className="input-field"
-                style={{ paddingLeft: '34px' }}
+                className="input-field bprm-search-input"
               />
             </div>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="bprm-table-scroll">
+            <table className="bprm-table">
               <thead>
-                <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                <tr className="bprm-thead-row">
                   {['PROMO CODE', 'DISCOUNT VALUE', 'MIN BOOKING', 'REDEMPTION USES', 'APPLIES TO', 'VALID UNTIL', 'STATUS', 'ACTIONS'].map((h) => (
-                    <th key={h} style={{ textAlign: 'left', padding: '14px 18px', fontSize: '11px', fontWeight: 700, color: '#6B7280', letterSpacing: '0.04em' }}>
+                    <th key={h} className="bprm-th">
                       {h}
                     </th>
                   ))}
@@ -296,103 +176,75 @@ export default function BizPromosPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8} style={{ padding: '48px', textAlign: 'center', color: '#9CA3AF', fontSize: '13.5px', fontWeight: 600 }}>
+                    <td colSpan={8} className="bprm-loading-cell">
                       Loading corporate promo vouchers…
                     </td>
                   </tr>
                 ) : slice.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ padding: '60px 20px', textAlign: 'center' }}>
-                      <Ticket size={36} color="#9CA3AF" style={{ margin: '0 auto 10px' }} />
-                      <div style={{ fontSize: '15px', fontWeight: 800, color: '#111827', marginBottom: '4px' }}>No Promo Codes Found</div>
-                      <div style={{ fontSize: '13px', color: '#9CA3AF' }}>Create your first promo campaign using the "+ New Promo Code" button.</div>
+                    <td colSpan={8} className="bprm-empty-cell">
+                      <Ticket size={36} color="#9CA3AF" className="bprm-empty-icon" />
+                      <div className="bprm-empty-title">No Promo Codes Found</div>
+                      <div className="bprm-empty-sub">Create your first promo campaign using the "+ New Promo Code" button.</div>
                     </td>
                   </tr>
                 ) : (
                   slice.map((p) => (
-                    <tr key={p.id} style={{ borderTop: '1px solid #F3F4F6' }}>
+                    <tr key={p.id} className="bprm-tr">
                       {/* Code */}
-                      <td style={{ padding: '16px 18px' }}>
+                      <td className="bprm-td">
                         <code
-                          style={{
-                            fontFamily: 'monospace',
-                            fontSize: '13px',
-                            fontWeight: 900,
-                            background: '#F3F4F6',
-                            color: '#111827',
-                            padding: '4px 10px',
-                            borderRadius: '8px',
-                            border: '1px solid #E5E7EB',
-                            letterSpacing: '0.04em',
-                          }}
+                          className="bprm-code-badge"
                         >
                           {p.code}
                         </code>
                       </td>
 
                       {/* Discount Value */}
-                      <td style={{ padding: '16px 18px', fontSize: '14px', fontWeight: 900, color: '#111827' }}>
+                      <td className="bprm-td-discount">
                         {p.discount_type === 'percentage' ? `${p.discount_value}% OFF` : `₹${p.discount_value.toLocaleString('en-IN')} OFF`}
                       </td>
 
                       {/* Min Booking */}
-                      <td style={{ padding: '16px 18px', fontSize: '13px', color: '#6B7280', fontWeight: 600 }}>
+                      <td className="bprm-td-minbooking">
                         {p.min_booking_amount ? `≥ ₹${p.min_booking_amount.toLocaleString('en-IN')}` : 'No Min'}
                       </td>
 
                       {/* Uses */}
-                      <td style={{ padding: '16px 18px', fontSize: '13px', fontWeight: 700, color: '#111827' }}>
+                      <td className="bprm-td-uses">
                         {p.current_uses}
-                        <span style={{ color: '#9CA3AF', fontWeight: 500 }}>{p.max_uses ? ` / ${p.max_uses}` : ' uses'}</span>
+                        <span className="bprm-uses-muted">{p.max_uses ? ` / ${p.max_uses}` : ' uses'}</span>
                       </td>
 
                       {/* Applies To */}
-                      <td style={{ padding: '16px 18px' }}>
+                      <td className="bprm-td">
                         <span
-                          style={{
-                            background: '#EFF6FF',
-                            color: '#1D4ED8',
-                            borderRadius: '99px',
-                            padding: '3px 10px',
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            border: '1px solid #93C5FD',
-                            textTransform: 'uppercase',
-                          }}
+                          className="bprm-applies-pill"
                         >
                           {p.applicable_to ?? 'All'}
                         </span>
                       </td>
 
                       {/* Valid Until */}
-                      <td style={{ padding: '16px 18px', fontSize: '12.5px', color: '#6B7280', whiteSpace: 'nowrap' }}>
+                      <td className="bprm-td-valid">
                         {fmtDate(p.valid_until)}
                       </td>
 
                       {/* Status */}
-                      <td style={{ padding: '16px 18px' }}>
+                      <td className="bprm-td">
                         <span
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: '99px',
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            background: p.is_active ? '#ECFDF5' : '#FEF2F2',
-                            color: p.is_active ? '#047857' : '#DC2626',
-                            border: `1px solid ${p.is_active ? '#6EE7B7' : '#FCA5A5'}`,
-                          }}
+                          className={`bprm-status-pill ${p.is_active ? 'bprm-status-pill--active' : 'bprm-status-pill--inactive'}`}
                         >
                           {p.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
 
                       {/* Actions */}
-                      <td style={{ padding: '16px 18px' }}>
+                      <td className="bprm-td">
                         <button
                           onClick={() => toggle(p)}
                           disabled={toggling === p.id}
-                          className="btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '12px' }}
+                          className="btn-secondary bprm-toggle-btn"
                         >
                           {toggling === p.id ? 'Updating…' : p.is_active ? 'Deactivate' : 'Activate'}
                         </button>
@@ -406,23 +258,12 @@ export default function BizPromosPage() {
 
           {/* Pagination Bar */}
           {pages > 1 && (
-            <div style={{ padding: '16px 24px', borderTop: '1px solid #F3F4F6', background: '#FAFAFA', display: 'flex', gap: '8px', justifyContent: 'center' }}>
+            <div className="bprm-pagination-bar">
               {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '8px',
-                    border: '1.5px solid #E5E7EB',
-                    background: page === p ? 'var(--accent, #E31E24)' : '#ffffff',
-                    color: page === p ? '#ffffff' : '#374151',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: 800,
-                    transition: 'all 0.15s ease',
-                  }}
+                  className={`bprm-page-btn ${page === p ? 'bprm-page-btn--active' : ''}`}
                 >
                   {p}
                 </button>

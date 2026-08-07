@@ -1,0 +1,185 @@
+/* ── Page: Partner Permissions (app/partner/permissions/page.tsx) ───────────── */
+
+.ppm-page {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.ppm-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #E5E7EB;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ppm-nav-header {
+  background: #111827;
+  color: #fff;
+  padding: 16px 20px;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.ppm-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: #fff;
+  border: none;
+  border-bottom: 1px solid #E5E7EB;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.ppm-toggle-btn--active {
+  background: #FFF7ED;
+}
+
+.ppm-toggle-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ppm-toggle-label--active {
+  color: var(--accent, #ff7a18);
+}
+
+.ppm-section-label {
+  padding: 12px 20px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #9CA3AF;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.ppm-roles-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.ppm-loading {
+  padding: 20px;
+  color: #9CA3AF;
+  font-size: 13px;
+}
+
+.ppm-role-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 13px 20px;
+  border: none;
+  background: #fff;
+  color: #374151;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+
+.ppm-role-btn--active {
+  background: #FFF7ED;
+  color: var(--accent, #ff7a18);
+  border-left: 3px solid var(--accent, #ff7a18);
+}
+
+.ppm-role-btn--current {
+  font-weight: 800;
+}
+
+.ppm-role-label {
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ppm-active-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent, #ff7a18);
+}
+
+.ppm-main-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px;
+  background: #F9FAFB;
+}
+
+.ppm-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.ppm-panel-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ppm-icon-18 {
+  font-size: 18px;
+}
+
+.ppm-panel-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #111827;
+}
+
+.ppm-title-accent {
+  color: var(--accent, #ff7a18);
+}
+
+.ppm-commit-btn {
+  padding: 12px 28px;
+  border-radius: 100px;
+  border: none;
+  background: var(--accent, #ff7a18);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+}
+
+.ppm-commit-btn--committed {
+  background: #16A34A;
+}
+
+.ppm-module-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.ppm-empty-state {
+  text-align: center;
+  padding-top: 80px;
+  color: #9CA3AF;
+}
+
+.ppm-empty-emoji {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.ppm-empty-label {
+  font-size: 16px;
+  font-weight: 700;
+}

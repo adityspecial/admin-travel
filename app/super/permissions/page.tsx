@@ -88,61 +88,44 @@ export default function PermissionsPage() {
   const systemModules = ['system', 'risk']
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <div className="perm-page">
 
       {/* ── Left sidebar ── */}
-      <div style={{ width: 280, flexShrink: 0, background: '#fff', borderRight: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="perm-sidebar">
 
         {/* Navigation Hub header */}
-        <div style={{ background: '#111827', color: '#fff', padding: '16px 20px', fontWeight: 800, fontSize: 13, letterSpacing: 1 }}>
+        <div className="perm-nav-header">
           NAVIGATION HUB
         </div>
 
         {/* Custom Access toggle */}
         <button
           onClick={() => setView(v => v === 'overrides' ? 'roles' : 'overrides')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px',
-            background: view === 'overrides' ? '#FFFBEB' : '#fff',
-            border: 'none', borderBottom: '1px solid #E5E7EB',
-            cursor: 'pointer', width: '100%', textAlign: 'left',
-          }}
+          className={`perm-custom-toggle ${view === 'overrides' ? 'perm-custom-toggle--active' : ''}`}
         >
-          <span style={{ fontSize: 14 }}>🛡</span>
-          <span style={{
-            fontSize: 13, fontWeight: 700,
-            color: view === 'overrides' ? '#D97706' : '#374151',
-            textTransform: 'uppercase', letterSpacing: 0.5,
-          }}>
+          <span className="perm-icon-14">🛡</span>
+          <span className={`perm-custom-toggle-label ${view === 'overrides' ? 'perm-custom-toggle-label--active' : ''}`}>
             Custom Access
           </span>
         </button>
 
         {/* System Roles */}
-        <div style={{ padding: '12px 20px 6px', fontSize: 11, fontWeight: 700, color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase' }}>
+        <div className="perm-section-label">
           System Roles
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div className="perm-roles-list">
           {loading ? (
-            <div style={{ padding: 20, color: '#9CA3AF', fontSize: 13 }}>Loading…</div>
+            <div className="perm-loading">Loading…</div>
           ) : roles.map(role => (
             <button
               key={role.id}
               onClick={() => { selectRole(role); setView('roles') }}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                width: '100%', padding: '13px 20px', border: 'none',
-                background: activeRoleId === role.id && view === 'roles' ? '#EFF6FF' : '#fff',
-                color: activeRoleId === role.id && view === 'roles' ? '#2563EB' : '#374151',
-                fontWeight: activeRoleId === role.id ? 800 : 600,
-                fontSize: 13, textAlign: 'left', cursor: 'pointer',
-                borderLeft: activeRoleId === role.id && view === 'roles' ? '3px solid #2563EB' : '3px solid transparent',
-              }}
+              className={`perm-role-btn ${activeRoleId === role.id && view === 'roles' ? 'perm-role-btn--active' : ''} ${activeRoleId === role.id ? 'perm-role-btn--current' : ''}`}
             >
-              <span style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>{role.label}</span>
+              <span className="perm-role-label">{role.label}</span>
               {activeRoleId === role.id && view === 'roles' && (
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#2563EB', flexShrink: 0 }} />
+                <span className="perm-active-dot" />
               )}
             </button>
           ))}
@@ -150,22 +133,22 @@ export default function PermissionsPage() {
       </div>
 
       {/* ── Main panel ── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px', background: '#F9FAFB' }}>
+      <div className="perm-main-panel">
 
         {view === 'overrides' ? (
           <OverrideEngine portal={PORTAL} modules={SUPER_ADMIN_MODULES} />
         ) : activeRole ? (
           <>
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 18 }}>🛡</span>
+            <div className="perm-panel-header">
+              <div className="perm-panel-header-left">
+                <span className="perm-icon-18">🛡</span>
                 <div>
-                  <h1 style={{ fontSize: 20, fontWeight: 900, color: '#111827', letterSpacing: -0.3 }}>
-                    ROLE SCHEMA: <span style={{ color: '#2563EB' }}>{activeRole.label.toUpperCase()}</span>
+                  <h1 className="perm-panel-title">
+                    ROLE SCHEMA: <span className="perm-title-accent">{activeRole.label.toUpperCase()}</span>
                   </h1>
                   {activeRole.is_custom && (
-                    <span style={{ fontSize: 11, color: '#D97706', fontWeight: 700 }}>CUSTOM ROLE</span>
+                    <span className="perm-custom-badge">CUSTOM ROLE</span>
                   )}
                 </div>
               </div>
@@ -173,19 +156,14 @@ export default function PermissionsPage() {
               <button
                 onClick={commitArchitecture}
                 disabled={committing}
-                style={{
-                  padding: '12px 28px', borderRadius: 100, border: 'none',
-                  background: committed ? '#16A34A' : '#2563EB',
-                  color: '#fff', fontWeight: 800, fontSize: 13, cursor: 'pointer',
-                  letterSpacing: 0.5,
-                }}
+                className={`perm-commit-btn ${committed ? 'perm-commit-btn--committed' : ''}`}
               >
                 {committing ? 'Saving…' : committed ? '✓ Committed' : 'COMMIT ARCHITECTURE'}
               </button>
             </div>
 
             {/* Module grid — 3 columns */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+            <div className="perm-module-grid">
               {SUPER_ADMIN_MODULES.map(mod => (
                 <ModuleCard
                   key={mod.key}

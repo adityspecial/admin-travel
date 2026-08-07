@@ -97,10 +97,10 @@ export function OverrideEngine({ portal, modules, overridesUrl = '/api/admin/sup
   return (
     <div>
       {/* Fingerprint header */}
-      <div style={{ textAlign: 'center', paddingTop: 48, paddingBottom: 32 }}>
-        <div style={{ fontSize: 48, marginBottom: 12 }}>🫆</div>
-        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>Individual Override Engine</h2>
-        <p style={{ color: '#6B7280', fontSize: 14 }}>
+      <div className="perm-oe-header">
+        <div className="perm-oe-emoji">🫆</div>
+        <h2 className="perm-oe-title">Individual Override Engine</h2>
+        <p className="perm-oe-subtitle">
           {portal === 'biz'
             ? 'Grant or revoke specific permissions for members in your organisation.'
             : portal === 'partner'
@@ -110,17 +110,12 @@ export function OverrideEngine({ portal, modules, overridesUrl = '/api/admin/sup
       </div>
 
       {/* Target type tabs */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24 }}>
+      <div className="perm-oe-tabs">
         {tabs.map(t => (
           <button
             key={t.type}
             onClick={() => { setTargetType(t.type); setSelected(null); setQuery(''); setResults([]); setOverrides([]) }}
-            style={{
-              padding: '9px 24px', borderRadius: 100, border: '1.5px solid #E5E7EB',
-              background: targetType === t.type ? '#111827' : '#fff',
-              color: targetType === t.type ? '#fff' : '#374151',
-              fontWeight: 700, fontSize: 13, cursor: 'pointer',
-            }}
+            className={`perm-oe-tab ${targetType === t.type ? 'perm-oe-tab--active' : ''}`}
           >
             {t.label}
           </button>
@@ -128,42 +123,32 @@ export function OverrideEngine({ portal, modules, overridesUrl = '/api/admin/sup
       </div>
 
       {/* Search */}
-      <div style={{ maxWidth: 520, margin: '0 auto', position: 'relative', marginBottom: 32 }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          border: '1.5px solid #E5E7EB', borderRadius: 100,
-          padding: '12px 20px', background: '#F9FAFB',
-        }}>
-          <span style={{ fontSize: 16 }}>🔍</span>
+      <div className="perm-oe-search-wrap">
+        <div className="perm-oe-search-box">
+          <span className="perm-icon-16">🔍</span>
           <input
-            style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 14, outline: 'none', color: '#111827' }}
+            className="perm-oe-search-input"
             placeholder="Search by name, email, ID or agent code…"
             value={query}
             onChange={e => search(e.target.value)}
           />
-          {searching && <span style={{ fontSize: 12, color: '#9CA3AF' }}>…</span>}
+          {searching && <span className="perm-oe-searching">…</span>}
         </div>
 
         {results.length > 0 && (
-          <div style={{
-            position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
-            background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB',
-            boxShadow: '0 16px 40px rgba(0,0,0,0.1)', overflow: 'hidden', zIndex: 50,
-          }}>
+          <div className="perm-oe-results">
             {results.map(u => (
               <div
                 key={u.id}
                 onClick={() => selectUser(u)}
-                style={{ padding: '12px 20px', cursor: 'pointer', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', gap: 12 }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
-                onMouseLeave={e => (e.currentTarget.style.background = '')}
+                className="perm-oe-result-row"
               >
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, color: '#2563EB' }}>
+                <div className="perm-oe-avatar-sm">
                   {(userName(u)[0] ?? '?').toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{userName(u)}</div>
-                  <div style={{ fontSize: 12, color: '#9CA3AF' }}>{u._type.replace('_', ' ')} {u.role ? `· ${u.role}` : ''}</div>
+                  <div className="perm-oe-result-name">{userName(u)}</div>
+                  <div className="perm-oe-result-meta">{u._type.replace('_', ' ')} {u.role ? `· ${u.role}` : ''}</div>
                 </div>
               </div>
             ))}
@@ -174,36 +159,36 @@ export function OverrideEngine({ portal, modules, overridesUrl = '/api/admin/sup
       {/* Override matrix for selected user */}
       {selected && (
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, padding: '14px 20px', background: '#F0FDF4', borderRadius: 12, border: '1.5px solid #BBF7D0' }}>
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 16 }}>
+          <div className="perm-oe-selected-banner">
+            <div className="perm-oe-avatar-lg">
               {(userName(selected)[0] ?? '?').toUpperCase()}
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: 15 }}>{userName(selected)}</div>
-              <div style={{ fontSize: 12, color: '#6B7280' }}>{selected._type.replace(/_/g, ' ')} {selected.role ? `· ${selected.role}` : ''} {overrides.length > 0 ? `· ${overrides.length} override${overrides.length > 1 ? 's' : ''} active` : '· No overrides'}</div>
+              <div className="perm-oe-selected-name">{userName(selected)}</div>
+              <div className="perm-oe-selected-meta">{selected._type.replace(/_/g, ' ')} {selected.role ? `· ${selected.role}` : ''} {overrides.length > 0 ? `· ${overrides.length} override${overrides.length > 1 ? 's' : ''} active` : '· No overrides'}</div>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+          <div className="perm-module-grid">
             {modules.map(mod => (
-              <div key={mod.key} style={{ background: '#fff', borderRadius: 16, border: '1.5px solid #E5E7EB', padding: '20px 24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid #F3F4F6' }}>
-                  <span style={{ fontSize: 16 }}>{mod.icon}</span>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#6B7280', letterSpacing: 1, textTransform: 'uppercase' }}>{mod.label}</span>
+              <div key={mod.key} className="perm-oe-mod-card">
+                <div className="perm-card-header">
+                  <span className="perm-icon-16">{mod.icon}</span>
+                  <span className="perm-card-label">{mod.label}</span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="perm-oe-list">
                   {mod.permissions.map(perm => {
                     const ov = getOverride(mod.key, perm.key)
                     const key = `${mod.key}.${perm.key}`
                     return (
-                      <div key={perm.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '5px 8px', borderRadius: 8, background: ov ? (ov.enabled ? '#EFF6FF' : '#FEF2F2') : 'transparent' }}>
-                        <span style={{ fontSize: 12, fontWeight: 500, color: '#374151', fontFamily: 'monospace', flex: 1 }}>{perm.key}</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div key={perm.key} className={`perm-oe-row ${ov ? (ov.enabled ? 'perm-oe-row--enabled' : 'perm-oe-row--disabled') : ''}`}>
+                        <span className="perm-oe-key">{perm.key}</span>
+                        <div className="perm-oe-row-right">
                           {ov && (
                             <button
                               onClick={() => clearOverride(mod.key, perm.key)}
                               title="Clear override — revert to role default"
-                              style={{ fontSize: 10, color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}
+                              className="perm-oe-clear-btn"
                             >✕</button>
                           )}
                           <PermissionToggle

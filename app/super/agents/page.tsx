@@ -167,7 +167,7 @@ export default function AgentsPage() {
       render: (agent) => (
         <div>
           <div className="data-table-cell-bold">{agent.agency_name || '--'}</div>
-          <div className="data-table-muted-cell" style={{ fontSize: 12 }}>{agent.contact_name || '--'}</div>
+          <div className="data-table-muted-cell agents-contact-name">{agent.contact_name || '--'}</div>
         </div>
       ),
     },
@@ -181,25 +181,8 @@ export default function AgentsPage() {
       header: 'Tier',
       render: (agent) => {
         const tier = (agent.tier ?? 'silver').toLowerCase()
-        const tierStyle =
-          tier === 'platinum'
-            ? { bg: '#fef08a', color: '#854d0e' }
-            : tier === 'gold'
-            ? { bg: '#dbeafe', color: '#1e40af' }
-            : { bg: '#f1f5f9', color: '#475569' }
         return (
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 800,
-              padding: '3px 9px',
-              borderRadius: 99,
-              background: tierStyle.bg,
-              color: tierStyle.color,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}
-          >
+          <span className={`agents-tier-badge agents-tier-badge--${tier}`}>
             {tier}
           </span>
         )
@@ -212,7 +195,7 @@ export default function AgentsPage() {
         const isAct = agent.status === 'active'
         const isPend = agent.status === 'pending'
         return (
-          <span className={`data-table-status-pill ${isAct ? 'active' : 'inactive'}`} style={isPend ? { background: '#ffedd5', color: '#c2410c' } : {}}>
+          <span className={`data-table-status-pill ${isAct ? 'active' : 'inactive'} ${isPend ? 'agents-status-pill-pending' : ''}`}>
             {isAct ? '●Active' : isPend ? '●Pending' : '●Suspended'}
           </span>
         )
@@ -222,7 +205,7 @@ export default function AgentsPage() {
       key: 'commission_pct',
       header: 'Commission',
       render: (agent) => (
-        <span style={{ fontWeight: 800, color: '#0f172a' }}>
+        <span className="agents-commission-value">
           {agent.commission_pct != null ? `${agent.commission_pct}%` : '--'}
         </span>
       ),
@@ -231,7 +214,7 @@ export default function AgentsPage() {
       key: 'credit_limit',
       header: 'Credit Limit',
       render: (agent) => (
-        <span style={{ fontWeight: 800, color: '#2563eb' }}>
+        <span className="agents-credit-value">
           {formatCurrency(agent.credit_limit ?? 0)}
         </span>
       ),
@@ -309,14 +292,14 @@ export default function AgentsPage() {
             title="Partner Agency Network"
             subtitle="Search, verify KYC details, update credit limits, and issue wallet top-ups"
             headerAction={
-              <div style={{ width: 280 }}>
+              <div className="agents-search-wrapper">
                 <AppInput
                   placeholder="Search code, agency, email..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   icon={<Search size={15} />}
                   wrapperClassName="m-0"
-                  style={{ padding: '8px 12px 8px 36px', fontSize: 13 }}
+                  className="agents-search-input"
                 />
               </div>
             }
@@ -340,7 +323,7 @@ export default function AgentsPage() {
         maxWidth={500}
         onClose={() => setCreds(null)}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="agents-creds-form">
           <AppInput
             label="Work Email"
             value={creds?.email ?? ''}
@@ -351,7 +334,7 @@ export default function AgentsPage() {
                 type="button"
                 onClick={() => creds && navigator.clipboard.writeText(creds.email)}
                 title="Copy Email"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: 2, display: 'flex' }}
+                className="agents-copy-icon-btn"
               >
                 <Copy size={15} />
               </button>
@@ -368,7 +351,7 @@ export default function AgentsPage() {
                 type="button"
                 onClick={() => creds && navigator.clipboard.writeText(creds.tempPassword)}
                 title="Copy Password"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: 2, display: 'flex' }}
+                className="agents-copy-icon-btn"
               >
                 <Copy size={15} />
               </button>
@@ -386,9 +369,8 @@ export default function AgentsPage() {
           </button>
           <button
             type="button"
-            className="confirm-modal-btn confirm-modal-btn-cancel"
+            className="confirm-modal-btn confirm-modal-btn-cancel agents-btn-icon-gap"
             onClick={() => creds && navigator.clipboard.writeText(`Email: ${creds.email}\nPassword: ${creds.tempPassword}`)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
             <Copy size={14} />
             <span>Copy All</span>
@@ -397,8 +379,7 @@ export default function AgentsPage() {
             href={`${PARTNER}/login`}
             target="_blank"
             rel="noreferrer"
-            className="confirm-modal-btn confirm-modal-btn-success"
-            style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            className="confirm-modal-btn confirm-modal-btn-success agents-btn-icon-gap agents-no-underline"
           >
             <span>Open Portal</span>
             <ExternalLink size={14} />
@@ -419,16 +400,16 @@ export default function AgentsPage() {
         {editError && <div className="login-error">{editError}</div>}
 
         {editAgent?.status === 'pending' && (
-          <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12, padding: 14 }}>
-            <div style={{ fontWeight: 800, fontSize: 13, color: '#c2410c', marginBottom: 8 }}>KYC Details Submitted</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 16px', fontSize: 12.5, color: '#9a3412' }}>
+          <div className="agents-kyc-box">
+            <div className="agents-kyc-box-title">KYC Details Submitted</div>
+            <div className="agents-kyc-grid">
               <span>Phone:</span><strong>{editAgent.phone || '--'}</strong>
               <span>Location:</span><strong>{[editAgent.city, editAgent.state].filter(Boolean).join(', ') || '--'}</strong>
               <span>GST:</span><strong>{editAgent.gst_number || '--'}</strong>
               <span>PAN:</span><strong>{editAgent.pan_number || '--'}</strong>
             </div>
             {editAgent.pan_card_url && (
-              <a href={editAgent.pan_card_url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ marginTop: 8, fontSize: 12 }}>
+              <a href={editAgent.pan_card_url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm agents-pan-link">
                 View PAN Document
               </a>
             )}
@@ -436,7 +417,7 @@ export default function AgentsPage() {
         )}
 
         <form onSubmit={saveEdit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="agents-edit-grid">
             <div className="app-input-group">
               <label className="app-input-label">Tier</label>
               <select
@@ -508,7 +489,7 @@ export default function AgentsPage() {
       >
         {walletError && <div className="login-error">{walletError}</div>}
         {walletDone && (
-          <div style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 12, padding: '12px 14px', fontSize: 13, fontWeight: 700 }}>
+          <div className="agents-wallet-success">
             {walletDone}
           </div>
         )}

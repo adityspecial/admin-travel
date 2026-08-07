@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { adminFetch, supabase } from '@/lib/api'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import './company.css'
 import {
   Building2,
   Image as ImageIcon,
@@ -227,162 +228,41 @@ export default function CompanyDetailsPage() {
   }
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 54px)', width: '100%', overflowX: 'hidden' }}>
-      <style>{`
-        .company-page-container {
-          margin: 0 auto;
-          padding: 32px 32px 48px;
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-        }
-        .hero-banner-box {
-          background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
-          border-radius: 24px;
-          padding: 32px;
-          color: #ffffff;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 16px 36px -10px rgba(49, 46, 129, 0.25);
-        }
-        .section-card {
-          background: #ffffff;
-          border: 1px solid #E5E7EB;
-          border-radius: 20px;
-          padding: 28px;
-          box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.03), 0 2px 6px rgba(0, 0, 0, 0.02);
-          transition: all 0.3s ease;
-        }
-        .input-field {
-          width: 100%;
-          padding: 10px 14px;
-          border-radius: 10px;
-          border: 1.5px solid #E5E7EB;
-          font-size: 13.5px;
-          outline: none;
-          box-sizing: border-box;
-          transition: all 0.2s ease;
-        }
-        .input-field:focus {
-          border-color: var(--accent, #E31E24);
-          box-shadow: 0 0 0 3px rgba(227, 30, 36, 0.1);
-        }
-        .btn-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 22px;
-          background: linear-gradient(135deg, var(--accent, #E31E24) 0%, #B91C1C 100%);
-          color: #ffffff;
-          border: none;
-          border-radius: 12px;
-          font-weight: 600;
-          font-size: 13px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
-        }
-        .btn-primary:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 18px rgba(227, 30, 36, 0.35);
-        }
-        .btn-secondary {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 10px 20px;
-          background: #F3F4F6;
-          color: '#374151';
-          border: 1px solid #E5E7EB;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 13px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .btn-secondary:hover {
-          background: #E5E7EB;
-        }
-        @media (max-width: 1024px) {
-          .company-page-container {
-            padding: 24px 20px 36px;
-          }
-        }
-        @media (max-width: 640px) {
-          .company-page-container {
-            padding: 16px 12px 28px;
-          }
-          .hero-banner-box {
-            padding: 20px;
-            border-radius: 18px;
-          }
-          .section-card {
-            padding: 18px 16px;
-            border-radius: 16px;
-          }
-        }
-      `}</style>
-
+    <div className="cp-page">
       <div className="company-page-container">
         {/* Breadcrumb Navigation */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>
+        <div className="cp-breadcrumb">
           <span>Admin</span>
           <ChevronRight size={13} color="#9CA3AF" />
-          <span style={{ color: 'var(--accent, #E31E24)', fontWeight: 700 }}>Company Profile & Settings</span>
+          <span className="cp-breadcrumb-active">Company Profile & Settings</span>
         </div>
 
         {/* Hero Header Banner */}
         <div className="hero-banner-box">
           {/* Ambient Glow */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '-40px',
-              right: '-40px',
-              width: '240px',
-              height: '240px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(227, 30, 36, 0.25) 0%, rgba(0, 0, 0, 0) 70%)',
-              pointerEvents: 'none',
-            }}
-          />
+          <div className="cp-hero-glow" />
 
-          <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <div className="cp-hero-content">
+            <div className="cp-hero-left">
               {/* Logo / Badge */}
-              <div
-                style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '18px',
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  backdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ffffff',
-                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)',
-                  overflow: 'hidden',
-                }}
-              >
+              <div className="cp-hero-logo">
                 {logoUrl ? (
-                  <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '6px' }} />
+                  <img src={logoUrl} alt="Logo" className="cp-hero-logo-img" />
                 ) : (
                   <Building2 size={30} />
                 )}
               </div>
 
               <div>
-                <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h1 className="cp-hero-title">
                   {policy?.name ?? 'Company Account'} <Sparkles size={18} color="#F59E0B" />
                 </h1>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '12px', background: 'rgba(255, 255, 255, 0.15)', padding: '2px 10px', borderRadius: '99px', fontWeight: 700 }}>
+                <div className="cp-hero-badges">
+                  <span className="cp-hero-pill">
                     Org Code: {policy?.org_code ?? '—'}
                   </span>
-                  <span style={{ fontSize: '12px', color: '#10B981', background: 'rgba(16, 185, 129, 0.15)', padding: '2px 10px', borderRadius: '99px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981' }} /> Active Corporate Workspace
+                  <span className="cp-hero-pill-active">
+                    <span className="cp-hero-pill-dot" /> Active Corporate Workspace
                   </span>
                 </div>
               </div>
@@ -392,71 +272,34 @@ export default function CompanyDetailsPage() {
 
         {/* Global Notifications */}
         {error && (
-          <div
-            style={{
-              padding: '12px 16px',
-              borderRadius: '12px',
-              background: '#FEF2F2',
-              border: '1px solid #FCA5A5',
-              color: '#DC2626',
-              fontSize: '13px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
+          <div className="cp-alert-error">
             <AlertCircle size={16} />
             <span>{error}</span>
           </div>
         )}
         {success && (
-          <div
-            style={{
-              padding: '12px 16px',
-              borderRadius: '12px',
-              background: '#ECFDF5',
-              border: '1px solid #6EE7B7',
-              color: '#047857',
-              fontSize: '13px',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
+          <div className="cp-alert-success">
             <CheckCircle2 size={16} />
             <span>{success}</span>
           </div>
         )}
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '48px', color: '#9CA3AF', fontSize: '14px', fontWeight: 600 }}>
+          <div className="cp-loading">
             Loading company profile...
           </div>
         ) : (
           <>
             {/* 1. Company General Details Section */}
             <section className="section-card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div
-                    style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '12px',
-                      background: '#EFF6FF',
-                      color: '#2563EB',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
+              <div className="cp-section-header">
+                <div className="cp-section-header-left">
+                  <div className="cp-section-icon cp-section-icon--blue">
                     <Building2 size={20} />
                   </div>
                   <div>
-                    <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: 0 }}>Company Information</h2>
-                    <span style={{ fontSize: '12px', color: '#6B7280' }}>Primary organization identity & corporate code</span>
+                    <h2 className="cp-section-title">Company Information</h2>
+                    <span className="cp-section-subtitle">Primary organization identity & corporate code</span>
                   </div>
                 </div>
 
@@ -465,7 +308,7 @@ export default function CompanyDetailsPage() {
                     <Edit3 size={14} /> Edit Details
                   </button>
                 ) : (
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div className="cp-btn-row">
                     <button onClick={savePolicy} disabled={saving} className="btn-primary">
                       <Check size={14} /> {saving ? 'Saving…' : 'Save'}
                     </button>
@@ -476,9 +319,9 @@ export default function CompanyDetailsPage() {
                 )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+              <div className="cp-field-grid-a">
                 <div>
-                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#4B5563', display: 'block', marginBottom: '6px' }}>
+                  <label className="cp-field-label">
                     Company Name
                   </label>
                   {editing ? (
@@ -489,14 +332,14 @@ export default function CompanyDetailsPage() {
                       placeholder="e.g. Acme Corporation"
                     />
                   ) : (
-                    <div style={{ fontSize: '15px', fontWeight: 800, color: '#111827', padding: '10px 14px', background: '#F9FAFB', borderRadius: '10px', border: '1px solid #F3F4F6' }}>
+                    <div className="cp-readonly-value">
                       {policy?.name || '—'}
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#4B5563', display: 'block', marginBottom: '6px' }}>
+                  <label className="cp-field-label">
                     Organization Code (Org Code)
                   </label>
                   {editing ? (
@@ -508,7 +351,7 @@ export default function CompanyDetailsPage() {
                       placeholder="e.g. ACME2026"
                     />
                   ) : (
-                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#111827', padding: '10px 14px', background: '#F9FAFB', borderRadius: '10px', border: '1px solid #F3F4F6', fontFamily: 'monospace' }}>
+                    <div className="cp-readonly-value cp-readonly-value--mono">
                       {policy?.org_code || '—'}
                     </div>
                   )}
@@ -518,58 +361,33 @@ export default function CompanyDetailsPage() {
 
             {/* 2. Company Brand Logo Section */}
             <section className="section-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                <div
-                  style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '12px',
-                    background: '#FEF2F2',
-                    color: '#E31E24',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
+              <div className="cp-section-header-simple">
+                <div className="cp-section-icon cp-section-icon--red">
                   <ImageIcon size={20} />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: 0 }}>Company Brand Logo</h2>
-                  <span style={{ fontSize: '12px', color: '#6B7280' }}>Displayed on corporate travel invoices and approval receipts</span>
+                  <h2 className="cp-section-title">Company Brand Logo</h2>
+                  <span className="cp-section-subtitle">Displayed on corporate travel invoices and approval receipts</span>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap', marginTop: '20px' }}>
+              <div className="cp-logo-row">
                 {/* Logo Preview Box */}
-                <div
-                  style={{
-                    width: '140px',
-                    height: '90px',
-                    borderRadius: '14px',
-                    border: '2px dashed #D1D5DB',
-                    background: '#F9FAFB',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'hidden',
-                    flexShrink: 0,
-                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)',
-                  }}
-                >
+                <div className="cp-logo-preview">
                   {logoUrl ? (
-                    <img src={logoUrl} alt="Company logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', padding: '8px' }} />
+                    <img src={logoUrl} alt="Company logo" className="cp-logo-preview-img" />
                   ) : (
-                    <div style={{ textAlign: 'center', color: '#9CA3AF' }}>
-                      <ImageIcon size={24} style={{ margin: '0 auto 4px' }} />
-                      <div style={{ fontSize: '10.5px', fontWeight: 700 }}>NO LOGO</div>
+                    <div className="cp-logo-empty">
+                      <ImageIcon size={24} className="cp-logo-empty-icon" />
+                      <div className="cp-logo-empty-text">NO LOGO</div>
                     </div>
                   )}
                 </div>
 
                 {/* Upload Actions */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoFile} style={{ display: 'none' }} />
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <div className="cp-upload-col">
+                  <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoFile} className="cp-hidden-input" />
+                  <div className="cp-upload-btn-row">
                     <button
                       onClick={() => logoInputRef.current?.click()}
                       disabled={logoUploading}
@@ -581,50 +399,27 @@ export default function CompanyDetailsPage() {
                     {logoUrl && (
                       <button
                         onClick={removeLogo}
-                        style={{
-                          padding: '10px 18px',
-                          background: '#FEF2F2',
-                          color: '#DC2626',
-                          border: '1px solid #FCA5A5',
-                          borderRadius: '12px',
-                          fontWeight: 700,
-                          fontSize: '13px',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                        }}
+                        className="cp-btn-remove-logo"
                       >
                         <Trash2 size={14} /> Remove Logo
                       </button>
                     )}
                   </div>
-                  <span style={{ fontSize: '11.5px', color: '#9CA3AF' }}>Supported: PNG, JPG, or SVG · Recommended transparent background · Max 2 MB</span>
+                  <span className="cp-hint-text">Supported: PNG, JPG, or SVG · Recommended transparent background · Max 2 MB</span>
                 </div>
               </div>
             </section>
 
             {/* 3. Company Identifiers & GSTN Section */}
             <section className="section-card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div
-                    style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '12px',
-                      background: '#ECFDF5',
-                      color: '#10B981',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
+              <div className="cp-section-header cp-section-header--wrap">
+                <div className="cp-section-header-left">
+                  <div className="cp-section-icon cp-section-icon--green">
                     <ShieldCheck size={20} />
                   </div>
                   <div>
-                    <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: 0 }}>Tax & Legal Identifiers (GSTN / Udyam)</h2>
-                    <span style={{ fontSize: '12px', color: '#6B7280' }}>Add company GSTN Number, Udyam ID or NGO Registration for tax claims</span>
+                    <h2 className="cp-section-title">Tax & Legal Identifiers (GSTN / Udyam)</h2>
+                    <span className="cp-section-subtitle">Add company GSTN Number, Udyam ID or NGO Registration for tax claims</span>
                   </div>
                 </div>
 
@@ -635,11 +430,11 @@ export default function CompanyDetailsPage() {
 
               {/* Form Modal/Collapsible Box */}
               {addingId && (
-                <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '16px', padding: '20px', marginBottom: '20px' }}>
-                  <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#111827', margin: '0 0 14px' }}>Add Tax Identifier</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+                <div className="cp-inline-box">
+                  <h4 className="cp-inline-box-title">Add Tax Identifier</h4>
+                  <div className="cp-field-grid-b">
                     <div>
-                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '4px' }}>
+                      <label className="cp-field-label-sm">
                         Identification Number *
                       </label>
                       <input
@@ -653,7 +448,7 @@ export default function CompanyDetailsPage() {
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '4px' }}>
+                      <label className="cp-field-label-sm">
                         Address Alias
                       </label>
                       <input
@@ -667,7 +462,7 @@ export default function CompanyDetailsPage() {
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '4px' }}>
+                      <label className="cp-field-label-sm">
                         Billing Address
                       </label>
                       <input
@@ -683,23 +478,23 @@ export default function CompanyDetailsPage() {
                   </div>
 
                   {idFormError && (
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#DC2626', marginBottom: '14px' }}>{idFormError}</div>
+                    <div className="cp-form-error">{idFormError}</div>
                   )}
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <div className="cp-checkbox-row">
                     <input
                       type="checkbox"
                       id="hq-check"
                       checked={idForm.is_hq}
                       onChange={(e) => setIdForm((f) => ({ ...f, is_hq: e.target.checked }))}
-                      style={{ width: '16px', height: '16px', accentColor: '#E31E24', cursor: 'pointer' }}
+                      className="cp-checkbox"
                     />
-                    <label htmlFor="hq-check" style={{ fontSize: '13px', fontWeight: 600, color: '#374151', cursor: 'pointer' }}>
+                    <label htmlFor="hq-check" className="cp-checkbox-label">
                       Mark as Primary Headquarter Address
                     </label>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  <div className="cp-btn-row-gap10">
                     <button onClick={addIdentifier} className="btn-primary">
                       <Check size={14} /> Save Identifier
                     </button>
@@ -711,12 +506,12 @@ export default function CompanyDetailsPage() {
               )}
 
               {/* Data Table */}
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div className="cp-table-wrap">
+                <table className="cp-table">
                   <thead>
-                    <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                    <tr className="cp-thead-row">
                       {['IDENTIFICATION NUMBER', 'ALIAS', 'BILLING ADDRESS', 'ACTIONS'].map((h) => (
-                        <th key={h} style={{ textAlign: 'left', padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#6B7280', letterSpacing: '0.04em' }}>
+                        <th key={h} className="cp-th">
                           {h}
                         </th>
                       ))}
@@ -725,39 +520,29 @@ export default function CompanyDetailsPage() {
                   <tbody>
                     {identifiers.length === 0 ? (
                       <tr>
-                        <td colSpan={4} style={{ padding: '24px 14px', fontSize: '13px', color: '#9CA3AF', textAlign: 'center' }}>
+                        <td colSpan={4} className="cp-empty-td">
                           No identifiers added yet. Click <strong>+ Add New ID</strong> to record tax numbers.
                         </td>
                       </tr>
                     ) : (
                       identifiers.map((id) => (
-                        <tr key={id.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                          <td style={{ padding: '14px', fontWeight: 800, fontSize: '13.5px', color: '#111827' }}>{id.number}</td>
-                          <td style={{ padding: '14px', fontSize: '13px', color: '#4B5563' }}>{id.alias || '—'}</td>
-                          <td style={{ padding: '14px', fontSize: '13px', color: '#4B5563' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <tr key={id.id} className="cp-tr">
+                          <td className="cp-td-id-number">{id.number}</td>
+                          <td className="cp-td-muted">{id.alias || '—'}</td>
+                          <td className="cp-td-muted">
+                            <div className="cp-address-row">
                               <span>{id.address || '—'}</span>
                               {id.is_hq && (
-                                <span style={{ fontSize: '10px', fontWeight: 800, background: '#312E81', color: '#ffffff', padding: '2px 8px', borderRadius: '99px', letterSpacing: '0.03em' }}>
+                                <span className="cp-hq-badge">
                                   HEADQUARTER
                                 </span>
                               )}
                             </div>
                           </td>
-                          <td style={{ padding: '14px' }}>
+                          <td className="cp-td-actions">
                             <button
                               onClick={() => setDeleteIdTarget(id)}
-                              style={{
-                                border: 'none',
-                                background: 'transparent',
-                                color: '#DC2626',
-                                cursor: 'pointer',
-                                fontWeight: 700,
-                                fontSize: '12.5px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                              }}
+                              className="cp-btn-delete-link"
                             >
                               <Trash2 size={14} /> Delete
                             </button>
@@ -772,25 +557,14 @@ export default function CompanyDetailsPage() {
 
             {/* 4. Frequently Travelled Addresses Section */}
             <section className="section-card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div
-                    style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '12px',
-                      background: '#FFF7ED',
-                      color: '#F97316',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
+              <div className="cp-section-header cp-section-header--wrap">
+                <div className="cp-section-header-left">
+                  <div className="cp-section-icon cp-section-icon--orange">
                     <MapPin size={20} />
                   </div>
                   <div>
-                    <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: 0 }}>Frequently Travelled Addresses</h2>
-                    <span style={{ fontSize: '12px', color: '#6B7280' }}>Save common office branches and hotel addresses for quick employee booking</span>
+                    <h2 className="cp-section-title">Frequently Travelled Addresses</h2>
+                    <span className="cp-section-subtitle">Save common office branches and hotel addresses for quick employee booking</span>
                   </div>
                 </div>
 
@@ -801,11 +575,11 @@ export default function CompanyDetailsPage() {
 
               {/* Add Address Form */}
               {addingAddr && (
-                <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '16px', padding: '20px', marginBottom: '20px' }}>
-                  <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#111827', margin: '0 0 14px' }}>Save Frequent Location</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+                <div className="cp-inline-box">
+                  <h4 className="cp-inline-box-title">Save Frequent Location</h4>
+                  <div className="cp-field-grid-c">
                     <div>
-                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '4px' }}>Label *</label>
+                      <label className="cp-field-label-sm">Label *</label>
                       <input
                         className="input-field"
                         value={addrForm.label}
@@ -814,7 +588,7 @@ export default function CompanyDetailsPage() {
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '4px' }}>Full Address *</label>
+                      <label className="cp-field-label-sm">Full Address *</label>
                       <input
                         className="input-field"
                         value={addrForm.address}
@@ -823,7 +597,7 @@ export default function CompanyDetailsPage() {
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#374151', display: 'block', marginBottom: '4px' }}>City</label>
+                      <label className="cp-field-label-sm">City</label>
                       <input
                         className="input-field"
                         value={addrForm.city}
@@ -832,7 +606,7 @@ export default function CompanyDetailsPage() {
                       />
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  <div className="cp-btn-row-gap10">
                     <button onClick={addAddress} className="btn-primary">
                       <Check size={14} /> Save Location
                     </button>
@@ -845,31 +619,23 @@ export default function CompanyDetailsPage() {
 
               {/* Address Cards Grid */}
               {addresses.length === 0 && !addingAddr ? (
-                <div style={{ padding: '24px', textAlign: 'center', color: '#9CA3AF', fontSize: '13px' }}>
+                <div className="cp-empty-msg">
                   No saved addresses. Click <strong>+ Add Address</strong> to save frequent office locations.
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+                <div className="cp-address-grid">
                   {addresses.map((a) => (
                     <div
                       key={a.id}
-                      style={{
-                        padding: '16px',
-                        background: '#F9FAFB',
-                        borderRadius: '14px',
-                        border: '1px solid #E5E7EB',
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        justifyContent: 'space-between',
-                      }}
+                      className="cp-address-card"
                     >
-                      <div style={{ display: 'flex', gap: '12px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#FFF7ED', color: '#F97316', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <div className="cp-address-card-left">
+                        <div className="cp-address-icon">
                           <MapPin size={16} />
                         </div>
                         <div>
-                          <h4 style={{ fontSize: '13.5px', fontWeight: 800, color: '#111827', margin: '0 0 4px' }}>{a.label}</h4>
-                          <p style={{ fontSize: '12px', color: '#6B7280', margin: 0, lineHeight: 1.4 }}>
+                          <h4 className="cp-address-title">{a.label}</h4>
+                          <p className="cp-address-text">
                             {a.address}
                             {a.city ? `, ${a.city}` : ''}
                           </p>
@@ -877,7 +643,7 @@ export default function CompanyDetailsPage() {
                       </div>
                       <button
                         onClick={() => removeAddress(a.id)}
-                        style={{ border: 'none', background: 'transparent', color: '#DC2626', cursor: 'pointer', padding: '4px' }}
+                        className="cp-btn-delete-icon"
                         title="Delete Address"
                       >
                         <Trash2 size={16} />
@@ -890,28 +656,17 @@ export default function CompanyDetailsPage() {
 
             {/* 5. Expenses Integration Key Generation Section */}
             <section className="section-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                <div
-                  style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '12px',
-                    background: '#F5F3FF',
-                    color: '#7C3AED',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
+              <div className="cp-section-header-simple">
+                <div className="cp-section-icon cp-section-icon--purple">
                   <KeyRound size={20} />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#111827', margin: 0 }}>Company Expenses API Key Generation</h2>
-                  <span style={{ fontSize: '12px', color: '#6B7280' }}>Integrate third-party expense management software (SAP, Concur, Zoho) with corporate travel</span>
+                  <h2 className="cp-section-title">Company Expenses API Key Generation</h2>
+                  <span className="cp-section-subtitle">Integrate third-party expense management software (SAP, Concur, Zoho) with corporate travel</span>
                 </div>
               </div>
 
-              <p style={{ fontSize: '13px', color: '#4B5563', marginTop: '12px', marginBottom: '20px', lineHeight: 1.5 }}>
+              <p className="cp-api-desc">
                 Generate secure corporate API authorization keys to automatically export booking receipts, employee spend data, and invoice statements.
               </p>
 
@@ -920,22 +675,21 @@ export default function CompanyDetailsPage() {
                   <Zap size={15} /> Generate API Key
                 </button>
               ) : (
-                <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '14px', padding: '16px' }}>
-                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#4B5563', display: 'block', marginBottom: '6px' }}>
+                <div className="cp-key-box">
+                  <label className="cp-field-label">
                     Generated Corporate Live API Secret Key:
                   </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div className="cp-key-row">
                     <input
-                      className="input-field"
+                      className="input-field cp-key-input"
                       readOnly
                       value={apiKey}
-                      style={{ fontFamily: 'monospace', fontWeight: 800, background: '#ffffff', color: '#111827' }}
                     />
-                    <button onClick={copyApiKey} className="btn-secondary" style={{ flexShrink: 0 }}>
+                    <button onClick={copyApiKey} className="btn-secondary cp-flex-shrink-0">
                       <Copy size={14} /> {keyCopied ? 'Copied!' : 'Copy'}
                     </button>
                   </div>
-                  <span style={{ fontSize: '11.5px', color: '#E31E24', fontWeight: 600, display: 'block', marginTop: '8px' }}>
+                  <span className="cp-key-warning">
                     ⚠️ Keep this API key secure. Do not share it in publicly accessible code repositories.
                   </span>
                 </div>
