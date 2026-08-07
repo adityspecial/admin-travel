@@ -47,7 +47,7 @@
   padding: 9px 14px;
   border-radius: 10px;
   border: 1.5px solid #E5E7EB;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   outline: none;
   box-sizing: border-box;
   transition: all 0.2s ease;
@@ -67,7 +67,7 @@
   border: none;
   border-radius: 12px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
@@ -87,7 +87,7 @@
   border: 1px solid #E5E7EB;
   border-radius: 10px;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -150,7 +150,7 @@
 }
 
 .inv-radio-label {
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   color: #374151;
   font-weight: 500;
 }
@@ -169,7 +169,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #6B7280;
 }
@@ -221,7 +221,7 @@
 }
 
 .inv-hero-title {
-  font-size: 24px;
+  font-size: var(--fs-section-heading);
   font-weight: 900;
   color: #ffffff;
   margin: 0;
@@ -231,7 +231,7 @@
 }
 
 .inv-hero-subtitle {
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   color: rgba(255, 255, 255, 0.85);
   margin: 4px 0 0;
   font-weight: 500;
@@ -253,14 +253,14 @@
 }
 
 .inv-metric-value-lg {
-  font-size: 22px;
+  font-size: var(--fs-card-title);
   font-weight: 900;
   color: #ffffff;
   margin-top: 2px;
 }
 
 .inv-metric-value-sm {
-  font-size: 18px;
+  font-size: var(--fs-nav);
   font-weight: 900;
   margin-top: 2px;
 }
@@ -288,14 +288,14 @@
 }
 
 .inv-card-title {
-  font-size: 15px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
   margin: 0;
 }
 
 .inv-card-desc {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #6B7280;
   margin: 0 0 14px;
 }
@@ -314,7 +314,7 @@
   border-radius: 8px;
   background: #FEF2F2;
   border: 1px solid #FCA5A5;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   font-weight: 700;
   color: var(--accent, #E31E24);
 }
@@ -324,7 +324,7 @@
   border: none;
   cursor: pointer;
   color: #DC2626;
-  font-size: 14px;
+  font-size: var(--fs-placeholder);
   padding: 0;
 }
 
@@ -380,19 +380,19 @@
 }
 
 .inv-automailer-label {
-  font-size: 14px;
+  font-size: var(--fs-placeholder);
   font-weight: 800;
   color: #111827;
 }
 
 .inv-automailer-desc {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #6B7280;
   margin: 2px 0 0;
 }
 
 .inv-mailer-settings-btn {
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   color: #2563EB;
   font-weight: 800;
   background: none;
@@ -478,7 +478,7 @@
   padding: 48px;
   text-align: center;
   color: #9CA3AF;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 600;
 }
 
@@ -492,14 +492,14 @@
 }
 
 .inv-empty-title {
-  font-size: 15px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
   margin-bottom: 4px;
 }
 
 .inv-empty-sub {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #9CA3AF;
 }
 
@@ -517,14 +517,14 @@
 
 .inv-td-bookingid {
   padding: 14px 14px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   color: #2563EB;
 }
 
 .inv-td-issuer {
   padding: 14px 14px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #374151;
 }
 
@@ -545,21 +545,21 @@
 
 .inv-td-amount {
   padding: 14px 14px;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 900;
   color: #111827;
 }
 
 .inv-td-date {
   padding: 14px 14px;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   color: #6B7280;
   white-space: nowrap;
 }
 
 .inv-gstin-badge {
   font-family: monospace;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   background: #F3F4F6;
   color: #111827;

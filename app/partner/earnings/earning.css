@@ -20,5 +20,5 @@
 
 .earning-balance-header {
   font-weight: 800;
-  font-size: 18px;
+  font-size: var(--fs-nav);
 }

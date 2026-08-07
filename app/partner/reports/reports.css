@@ -16,7 +16,7 @@
 }
 
 .preport-to-label {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: var(--ink-3);
 }
 

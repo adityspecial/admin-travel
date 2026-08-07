@@ -47,7 +47,7 @@
   padding: 10px 14px;
   border-radius: 10px;
   border: 1.5px solid #E5E7EB;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   outline: none;
   box-sizing: border-box;
   transition: all 0.2s ease;
@@ -66,7 +66,7 @@
   border: none;
   border-radius: 12px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
@@ -86,7 +86,7 @@
   border: 1px solid #E5E7EB;
   border-radius: 10px;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -99,7 +99,7 @@
   border: 1.5px solid #E5E7EB;
   background: #F9FAFB;
   color: #374151;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -174,7 +174,7 @@
 }
 
 .wal-filter-text {
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   color: #374151;
   font-weight: 500;
 }
@@ -193,7 +193,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #6B7280;
 }
@@ -245,7 +245,7 @@
 }
 
 .wal-hero-title {
-  font-size: 24px;
+  font-size: var(--fs-section-heading);
   font-weight: 900;
   color: #ffffff;
   margin: 0;
@@ -255,7 +255,7 @@
 }
 
 .wal-hero-subtitle {
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   color: rgba(255, 255, 255, 0.85);
   margin: 4px 0 0;
   font-weight: 500;
@@ -277,21 +277,21 @@
 }
 
 .wal-metric-value--balance {
-  font-size: 22px;
+  font-size: var(--fs-card-title);
   font-weight: 900;
   color: #ffffff;
   margin-top: 2px;
 }
 
 .wal-metric-value--activity {
-  font-size: 20px;
+  font-size: var(--fs-card-title);
   font-weight: 900;
   color: #60A5FA;
   margin-top: 2px;
 }
 
 .wal-status-value {
-  font-size: 15px;
+  font-size: var(--fs-label);
   font-weight: 900;
   margin-top: 6px;
   display: flex;
@@ -333,7 +333,7 @@
   background: #FFFBEB;
   border: 1px solid #FDE68A;
   color: #B45309;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   margin-bottom: 16px;
   display: flex;
@@ -361,13 +361,13 @@
 }
 
 .wal-balance-label {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   color: #6B7280;
 }
 
 .wal-balance-amount {
-  font-size: 28px;
+  font-size: var(--fs-section-heading);
   font-weight: 900;
   color: #111827;
   margin: 0;
@@ -384,7 +384,7 @@
 }
 
 .wal-bonus-title {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   color: #111827;
 }
@@ -402,7 +402,7 @@
 }
 
 .wal-card-title {
-  font-size: 16px;
+  font-size: var(--fs-body);
   font-weight: 800;
   color: #111827;
   margin: 0;
@@ -444,7 +444,7 @@
 
 .wal-error-msg {
   color: #DC2626;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   margin-top: 10px;
   font-weight: 600;
   display: flex;
@@ -454,7 +454,7 @@
 
 .wal-success-msg {
   color: #047857;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   margin-top: 10px;
   font-weight: 700;
   display: flex;
@@ -480,13 +480,13 @@
 }
 
 .wal-bank-label {
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   color: #374151;
   font-weight: 600;
 }
 
 .wal-bank-link {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #2563EB;
   font-weight: 800;
   background: none;
@@ -521,13 +521,13 @@
 }
 
 .wal-reminder-title {
-  font-size: 14px;
+  font-size: var(--fs-placeholder);
   font-weight: 800;
   color: #111827;
 }
 
 .wal-reminder-sub {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #6B7280;
 }
 
@@ -579,7 +579,7 @@
 }
 
 .wal-table-sub {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #6B7280;
 }
 
@@ -603,7 +603,7 @@
 
 .wal-search-input {
   padding-left: 32px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
 }
 
 .wal-table-scroll {
@@ -633,7 +633,7 @@
   padding: 48px;
   text-align: center;
   color: #9CA3AF;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 600;
 }
 
@@ -647,14 +647,14 @@
 }
 
 .wal-empty-title {
-  font-size: 15px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
   margin-bottom: 4px;
 }
 
 .wal-empty-sub {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #9CA3AF;
 }
 
@@ -674,14 +674,14 @@
 
 .wal-ref-text {
   font-family: monospace;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
 }
 
 .wal-td-by {
   padding: 14px 18px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #374151;
   font-weight: 500;
 }
@@ -721,13 +721,13 @@
 
 .wal-td-date {
   padding: 14px 18px;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   color: #6B7280;
 }
 
 .wal-td-amount {
   padding: 14px 18px;
-  font-size: 14px;
+  font-size: var(--fs-placeholder);
   font-weight: 900;
   color: #111827;
 }
@@ -738,6 +738,6 @@
 
 .wal-td-reason {
   padding: 14px 18px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #6B7280;
 }

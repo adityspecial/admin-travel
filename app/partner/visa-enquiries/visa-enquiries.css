@@ -2,7 +2,7 @@
 
 .pvisaenq-status-select {
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
 }
 
 .pvisaenq-msg {

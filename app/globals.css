@@ -98,7 +98,7 @@
   --r-full: 999px;
 
   /* Type scale — fixed rem, tight ratio (1.18) */
-  --app-font-size: 16px;
+  --app-font-size: var(--fs-body);
   --app-font-family: "Poppins";
   --app-font-color: #222;
   --app-bg-color: #fff;
@@ -111,6 +111,21 @@
   --text-xl: 22px;
   --text-2xl: 28px;
   --text-3xl: 36px;
+
+  /* Semantic font sizes — driven by the ThemeCustomizer font-size stepper
+     (see components/ui/ThemeCustomizer.tsx, BASE_SEMANTIC_SCALE). Each
+     +/- click shifts every value below by the same 1px delta. Where the
+     spec gave a range, the lower bound is stored here as the default. */
+  --fs-caption: 12px;          /* Caption: 12px */
+  --fs-placeholder: 14px;      /* Input placeholder: 14px */
+  --fs-label: 14px;            /* Labels: 14px */
+  --fs-body: 16px;             /* Body text: 16px */
+  --fs-button: 16px;           /* Buttons: 16px */
+  --fs-nav: 16px;              /* Navigation: 16–18px */
+  --fs-card-title: 18px;       /* Card title: 18–20px */
+  --fs-section-heading: 24px;  /* Section heading: 24–30px */
+  --fs-page-heading: 36px;     /* Page heading: 36–48px */
+  --fs-hero-heading: 48px;     /* Hero heading: 48–72px */
 
   /* Transitions */
   --t-fast: 120ms ease;
@@ -177,9 +192,11 @@ textarea {
   transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), padding 0.25s ease;
 }
 
-.sidebar.collapsed {
-  width: 72px;
-  padding: 16px 8px;
+@media (min-width: 841px) {
+  .sidebar.collapsed {
+    width: 72px;
+    padding: 16px 8px;
+  }
 }
 
 .sidebar-logo {
@@ -193,15 +210,21 @@ textarea {
   transition: all 0.2s ease;
 }
 
-.sidebar.collapsed .sidebar-logo {
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 12px 4px;
-}
+/* Desktop only: collapsing the sidebar narrows it to an icon rail, so the
+   logo row stacks and drops its text. On mobile the sidebar stays full
+   width and only the nav list collapses (see @media 840px), so the logo
+   row must keep its normal horizontal layout and text there. */
+@media (min-width: 841px) {
+  .sidebar.collapsed .sidebar-logo {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 4px;
+  }
 
-.sidebar.collapsed .sidebar-logo-text {
-  display: none;
+  .sidebar.collapsed .sidebar-logo-text {
+    display: none;
+  }
 }
 
 .sidebar-toggle-btn {
@@ -282,7 +305,7 @@ textarea {
 }
 
 .sidebar-logo h1 {
-  font-size: 18px;
+  font-size: var(--fs-nav);
   font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--sidebar-text, #ffffff);
@@ -1276,6 +1299,8 @@ aside::-webkit-scrollbar {
   .sidebar {
     position: static;
     width: auto;
+    height: auto;
+    max-height: none;
     min-height: auto;
   }
 
@@ -1287,8 +1312,19 @@ aside::-webkit-scrollbar {
     display: inline-flex;
   }
 
+  /* Mobile: sidebar stays full-width and expands/collapses vertically
+     (height), instead of the desktop left/right width animation. */
+  .sidebar-nav {
+    overflow: hidden;
+    max-height: 2000px;
+    opacity: 1;
+    transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  }
+
   .sidebar.collapsed .sidebar-nav {
-    display: none;
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
   }
 
   .admin-topbar,

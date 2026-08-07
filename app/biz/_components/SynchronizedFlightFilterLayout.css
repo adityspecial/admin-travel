@@ -147,7 +147,7 @@
 }
 
 .filter-section-title {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -171,7 +171,7 @@
   border: 1px solid #E5E7EB;
   background: #F9FAFB;
   color: #374151;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -336,7 +336,7 @@
 .sort-tab-btn {
   padding: 6px 14px;
   border-radius: 9px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   color: #6B7280;
   border: none;
@@ -437,5 +437,5 @@
   flex-wrap: wrap;
   gap: 20px;
   color: #6B7280;
-  font-size: 13px;
+  font-size: var(--fs-caption);
 }

@@ -27,7 +27,7 @@
   padding: 10px 14px;
   border-radius: 10px;
   border: 1.5px solid #E5E7EB;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   outline: none;
   box-sizing: border-box;
   transition: all 0.2s ease;
@@ -47,7 +47,7 @@
   border: none;
   border-radius: 12px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
@@ -62,7 +62,7 @@
   border: 1px solid #E5E7EB;
   border-radius: 10px;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -75,7 +75,7 @@
   border: 1px solid #E5E7EB;
   background: #ffffff;
   color: #4B5563;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -120,7 +120,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #6B7280;
 }
@@ -172,7 +172,7 @@
 }
 
 .bve-hero-title {
-  font-size: 24px;
+  font-size: var(--fs-section-heading);
   font-weight: 900;
   color: #ffffff;
   margin: 0;
@@ -182,7 +182,7 @@
 }
 
 .bve-hero-subtitle {
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   color: rgba(255, 255, 255, 0.85);
   margin: 4px 0 0;
   font-weight: 500;
@@ -204,7 +204,7 @@
 }
 
 .bve-metric-value {
-  font-size: 20px;
+  font-size: var(--fs-card-title);
   font-weight: 900;
   margin-top: 2px;
 }
@@ -231,7 +231,7 @@
   background: #ECFDF5;
   border: 1px solid #6EE7B7;
   color: #047857;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -302,7 +302,7 @@
   padding: 48px;
   text-align: center;
   color: #9CA3AF;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 600;
 }
 
@@ -316,14 +316,14 @@
 }
 
 .bve-empty-title {
-  font-size: 15px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
   margin-bottom: 4px;
 }
 
 .bve-empty-sub {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #9CA3AF;
 }
 
@@ -338,7 +338,7 @@
 
 .bve-td-date {
   padding: 14px 16px;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   color: #6B7280;
   white-space: nowrap;
 }
@@ -362,21 +362,21 @@
 }
 
 .bve-country-label {
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
 }
 
 .bve-td-name {
   padding: 14px 16px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   color: #111827;
 }
 
 .bve-td-contact {
   padding: 14px 16px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
 }
 
 .bve-contact-email {
@@ -391,7 +391,7 @@
 
 .bve-passport-badge {
   font-family: monospace;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   background: #F3F4F6;
   color: #111827;
@@ -402,7 +402,7 @@
 
 .bve-td-dates {
   padding: 14px 16px;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   color: #374151;
   white-space: nowrap;
 }
@@ -415,7 +415,7 @@
 .bve-td-pax {
   padding: 14px 16px;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   color: #111827;
 }
@@ -460,7 +460,7 @@
   padding: 6px 10px;
   border-radius: 8px;
   border: 1.5px solid #E5E7EB;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   color: #374151;
   background: #ffffff;
@@ -489,7 +489,7 @@
 }
 
 .bve-page-label {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   color: #374151;
 }

@@ -7,19 +7,19 @@
 }
 
 .ppromo-cash-badge {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   padding: 4px 10px;
 }
 
 .ppromo-balance-display {
-  font-size: 30px;
+  font-size: var(--fs-section-heading);
   font-weight: 800;
   color: #0f172a;
   margin: 4px 0 12px;
 }
 
 .ppromo-tx-desc {
-  font-size: 13px;
+  font-size: var(--fs-caption);
 }
 
 .ppromo-tx-badge {

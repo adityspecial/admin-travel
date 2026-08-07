@@ -22,7 +22,7 @@
 }
 
 .data-table-title {
-  font-size: 17px;
+  font-size: var(--fs-button);
   font-weight: 600;
   color: #0f172a;
   margin: 0 0 3px 0;
@@ -30,7 +30,7 @@
 }
 
 .data-table-subtitle {
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   font-weight: 500;
   color: #64748b;
   margin: 0;
@@ -65,7 +65,7 @@
 .data-table td {
   padding: 16px 20px;
   border-bottom: 1px solid #f1f5f9;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   color: #1e293b;
   vertical-align: middle;
   transition: background 0.15s ease;
@@ -142,7 +142,7 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   padding: 6px 14px;
   border-radius: 8px;
@@ -197,7 +197,7 @@
   padding: 48px 24px;
   text-align: center;
   color: #94a3b8;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 500;
 }
 

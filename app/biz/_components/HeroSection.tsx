@@ -77,7 +77,7 @@ export default function HeroSection({ companyName, walletBalance }: HeroSectionP
           padding: 36px 36px 32px;
         }
         .hero-title {
-          font-size: 28px;
+          font-size: var(--fs-section-heading);
         }
         .hero-cards-grid {
           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -87,7 +87,7 @@ export default function HeroSection({ companyName, walletBalance }: HeroSectionP
             padding: 28px 24px 24px;
           }
           .hero-title {
-            font-size: 24px;
+            font-size: var(--fs-section-heading);
           }
         }
         @media (max-width: 640px) {
@@ -95,7 +95,7 @@ export default function HeroSection({ companyName, walletBalance }: HeroSectionP
             padding: 20px 14px 20px;
           }
           .hero-title {
-            font-size: 21px;
+            font-size: var(--fs-card-title);
           }
           .hero-cards-grid {
             grid-template-columns: 1fr;

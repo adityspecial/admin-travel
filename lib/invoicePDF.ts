@@ -64,7 +64,7 @@ export function generateInvoicePDF(approval: any, orgGstin: string, orgName?: st
 <title>${invoiceNum}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a2e; background:#fff; }
+  body { font-family: Arial, sans-serif; font-size: var(--fs-caption); color: #1a1a2e; background:#fff; }
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .no-print { display: none; }

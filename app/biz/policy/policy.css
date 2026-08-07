@@ -64,7 +64,7 @@
   border: 1px solid #E5E7EB;
   border-radius: 10px;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -117,7 +117,7 @@
 }
 
 .pp-sidebar-heading {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 900;
   color: #111827;
   letter-spacing: 0.06em;
@@ -165,7 +165,7 @@
 .pp-item-icon--insurance { background: #FAF5FF; color: #9333EA; }
 
 .pp-item-label {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #374151;
 }
@@ -204,7 +204,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #6B7280;
 }
@@ -256,7 +256,7 @@
 }
 
 .pp-hero-title {
-  font-size: 24px;
+  font-size: var(--fs-section-heading);
   font-weight: 900;
   color: #ffffff;
   margin: 0;
@@ -266,7 +266,7 @@
 }
 
 .pp-hero-subtitle {
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   color: rgba(255, 255, 255, 0.85);
   margin: 4px 0 0;
   font-weight: 500;
@@ -288,7 +288,7 @@
 }
 
 .pp-metric-value {
-  font-size: 18px;
+  font-size: var(--fs-nav);
   font-weight: 900;
   margin-top: 2px;
 }
@@ -315,19 +315,19 @@
 }
 
 .pp-soon-emoji {
-  font-size: 48px;
+  font-size: var(--fs-hero-heading);
   margin-bottom: 12px;
 }
 
 .pp-soon-title {
-  font-size: 18px;
+  font-size: var(--fs-nav);
   font-weight: 900;
   color: #111827;
   margin: 0;
 }
 
 .pp-soon-desc {
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   color: #6B7280;
   margin: 6px auto 0;
   max-width: 400px;
@@ -337,7 +337,7 @@
 
 .pol-loading {
   padding: 40px;
-  font-size: 14px;
+  font-size: var(--fs-placeholder);
   color: #9CA3AF;
 }
 
@@ -350,13 +350,13 @@
 
 .pol-header-title {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--fs-card-title);
   font-weight: 900;
   color: #1a1a2e;
 }
 
 .pol-header-sub {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #9CA3AF;
   margin-top: 4px;
 }
@@ -368,7 +368,7 @@
   border: none;
   border-radius: 8px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
 }
 
@@ -404,13 +404,13 @@
 }
 
 .pol-trow-label {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #111827;
 }
 
 .pol-trow-desc {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #6B7280;
   margin-top: 2px;
 }
@@ -451,7 +451,7 @@
   gap: 8px;
   margin-bottom: 8px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #374151;
 }
 
@@ -469,13 +469,13 @@
 }
 
 .pol-label-13 {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #111827;
 }
 
 .pol-desc-12 {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #6B7280;
 }
 
@@ -492,7 +492,7 @@
   padding: 9px 12px;
   border-radius: 8px;
   border: 1.5px solid #E5E7EB;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   outline: none;
   background: #fff;
 }
@@ -527,7 +527,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
 }
 
@@ -536,7 +536,7 @@
 }
 
 .pol-subsection-title {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   color: #374151;
   margin-bottom: 14px;
@@ -559,7 +559,7 @@
 }
 
 .pol-tier-label {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #6B7280;
   min-width: 76px;
   flex-shrink: 0;
@@ -575,7 +575,7 @@
   padding: 6px 10px;
   border-radius: 6px;
   border: 1.5px solid #E5E7EB;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   outline: none;
 }
 
@@ -584,7 +584,7 @@
   padding: 7px 10px;
   border-radius: 6px;
   border: 1.5px solid #E5E7EB;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   outline: none;
   background: #fff;
 }
@@ -594,7 +594,7 @@
   background: none;
   color: #DC2626;
   cursor: pointer;
-  font-size: 18px;
+  font-size: var(--fs-nav);
   line-height: 1;
   padding: 0 4px;
   flex-shrink: 0;
@@ -607,7 +607,7 @@
   border: 1.5px dashed #CBD5E1;
   background: none;
   color: #6B7280;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   cursor: pointer;
 }

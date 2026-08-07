@@ -1,7 +1,6 @@
 /* ── Page: Biz Notifications (app/biz/notifications/page.tsx) ───────────────── */
 
 .notify-container {
-  max-width: 1080px;
   margin: 0 auto;
   padding: 32px 32px 48px;
   display: flex;
@@ -34,7 +33,7 @@
   border: none;
   border-radius: 12px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
@@ -53,7 +52,7 @@
   border: 1px solid #E5E7EB;
   border-radius: 10px;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -66,7 +65,7 @@
   border: 1px solid #E5E7EB;
   background: #ffffff;
   color: #4B5563;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -112,7 +111,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #6B7280;
 }
@@ -164,7 +163,7 @@
 }
 
 .notify-hero-title {
-  font-size: 24px;
+  font-size: var(--fs-section-heading);
   font-weight: 900;
   color: #ffffff;
   margin: 0;
@@ -174,7 +173,7 @@
 }
 
 .notify-hero-subtitle {
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   color: rgba(255, 255, 255, 0.85);
   margin: 4px 0 0;
   font-weight: 500;
@@ -196,7 +195,7 @@
 }
 
 .notify-metric-value {
-  font-size: 20px;
+  font-size: var(--fs-card-title);
   font-weight: 900;
   margin-top: 2px;
 }
@@ -236,7 +235,7 @@
   padding: 48px;
   text-align: center;
   color: #9CA3AF;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 600;
 }
 
@@ -250,14 +249,14 @@
 }
 
 .notify-empty-title {
-  font-size: 15px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
   margin-bottom: 4px;
 }
 
 .notify-empty-sub {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #9CA3AF;
 }
 
@@ -347,7 +346,7 @@
 }
 
 .notify-item-title {
-  font-size: 14px;
+  font-size: var(--fs-placeholder);
   font-weight: 800;
   color: #111827;
 }
@@ -373,7 +372,7 @@
 }
 
 .notify-item-body {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #4B5563;
   line-height: 1.5;
   margin: 0;
@@ -409,7 +408,7 @@
   background: #ffffff;
   color: #374151;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   transition: all 0.15s ease;
 }

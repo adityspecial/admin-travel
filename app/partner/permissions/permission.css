@@ -21,7 +21,7 @@
   color: #fff;
   padding: 16px 20px;
   font-weight: 800;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   letter-spacing: 1px;
 }
 
@@ -43,7 +43,7 @@
 }
 
 .ppm-toggle-label {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   color: #374151;
   text-transform: uppercase;
@@ -71,7 +71,7 @@
 .ppm-loading {
   padding: 20px;
   color: #9CA3AF;
-  font-size: 13px;
+  font-size: var(--fs-caption);
 }
 
 .ppm-role-btn {
@@ -84,7 +84,7 @@
   background: #fff;
   color: #374151;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   text-align: left;
   cursor: pointer;
   border-left: 3px solid transparent;
@@ -133,11 +133,11 @@
 }
 
 .ppm-icon-18 {
-  font-size: 18px;
+  font-size: var(--fs-nav);
 }
 
 .ppm-panel-title {
-  font-size: 20px;
+  font-size: var(--fs-card-title);
   font-weight: 900;
   color: #111827;
 }
@@ -153,7 +153,7 @@
   background: var(--accent, #ff7a18);
   color: #fff;
   font-weight: 800;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
   letter-spacing: 0.5px;
 }
@@ -175,11 +175,11 @@
 }
 
 .ppm-empty-emoji {
-  font-size: 48px;
+  font-size: var(--fs-hero-heading);
   margin-bottom: 16px;
 }
 
 .ppm-empty-label {
-  font-size: 16px;
+  font-size: var(--fs-body);
   font-weight: 700;
 }

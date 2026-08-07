@@ -41,6 +41,12 @@ const BASE_TEXT_SCALE: Record<string, number> = {
   xs: 11, sm: 12, base: 13, md: 15, lg: 18, xl: 22, '2xl': 28, '3xl': 36,
 };
 
+// Semantic role sizes (--fs-*, see globals.css). Same delta as BASE_TEXT_SCALE.
+const BASE_SEMANTIC_SCALE: Record<string, number> = {
+  caption: 12, placeholder: 14, label: 14, body: 16, button: 16, nav: 16,
+  'card-title': 18, 'section-heading': 24, 'page-heading': 36, 'hero-heading': 48,
+};
+
 export function ThemeCustomizer() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname() || '';
@@ -202,6 +208,9 @@ export function ThemeCustomizer() {
     const offset = fontSize - DEFAULT_FONT_SIZE;
     for (const key in BASE_TEXT_SCALE) {
       root.style.setProperty(`--text-${key}`, `${BASE_TEXT_SCALE[key] + offset}px`);
+    }
+    for (const key in BASE_SEMANTIC_SCALE) {
+      root.style.setProperty(`--fs-${key}`, `${BASE_SEMANTIC_SCALE[key] + offset}px`);
     }
 
     // Apply primary color & gradient

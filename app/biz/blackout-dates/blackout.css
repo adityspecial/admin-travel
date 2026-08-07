@@ -1,7 +1,6 @@
 /* ── Page: Biz Blackout Dates (app/biz/blackout-dates/page.tsx) ─────────────── */
 
 .blackout-container {
-  max-width: 1080px;
   margin: 0 auto;
   padding: 32px 32px 48px;
   display: flex;
@@ -28,7 +27,7 @@
   padding: 10px 14px;
   border-radius: 10px;
   border: 1.5px solid #E5E7EB;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   outline: none;
   box-sizing: border-box;
   transition: all 0.2s ease;
@@ -48,7 +47,7 @@
   border: none;
   border-radius: 12px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
@@ -67,7 +66,7 @@
   border: 1px solid #E5E7EB;
   border-radius: 10px;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -106,7 +105,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #6B7280;
 }
@@ -158,7 +157,7 @@
 }
 
 .bo-hero-title {
-  font-size: 24px;
+  font-size: var(--fs-section-heading);
   font-weight: 900;
   color: #ffffff;
   margin: 0;
@@ -168,7 +167,7 @@
 }
 
 .bo-hero-subtitle {
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   color: rgba(255, 255, 255, 0.85);
   margin: 4px 0 0;
   font-weight: 500;
@@ -190,7 +189,7 @@
 }
 
 .bo-metric-value {
-  font-size: 20px;
+  font-size: var(--fs-card-title);
   font-weight: 900;
   margin-top: 2px;
 }
@@ -213,7 +212,7 @@
   background: #FFFBEB;
   border: 1px solid #FDE68A;
   color: #B45309;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -232,7 +231,7 @@
 }
 
 .bo-card-title {
-  font-size: 16px;
+  font-size: var(--fs-body);
   font-weight: 800;
   color: #111827;
   margin: 0;
@@ -257,7 +256,7 @@
 }
 
 .bo-field-label {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   color: #374151;
 }
@@ -269,7 +268,7 @@
 
 .bo-form-error {
   color: #DC2626;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 700;
 }
 
@@ -331,7 +330,7 @@
   padding: 48px;
   text-align: center;
   color: #9CA3AF;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 600;
 }
 
@@ -345,14 +344,14 @@
 }
 
 .bo-empty-title {
-  font-size: 15px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
   margin-bottom: 4px;
 }
 
 .bo-empty-sub {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #9CA3AF;
 }
 
@@ -365,13 +364,13 @@
 }
 
 .bo-td-period {
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
 }
 
 .bo-td-duration {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #374151;
   font-weight: 600;
 }
@@ -388,7 +387,7 @@
 }
 
 .bo-td-reason {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #6B7280;
   font-weight: 500;
 }
@@ -419,7 +418,7 @@
 
 .bo-btn-toggle {
   padding: 6px 12px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
 }
 
 .bo-btn-delete {
@@ -431,7 +430,7 @@
   border: 1px solid #FCA5A5;
   background: #FEF2F2;
   color: #DC2626;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   cursor: pointer;
 }

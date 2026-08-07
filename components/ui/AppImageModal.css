@@ -49,14 +49,14 @@
 }
 
 .app-image-modal-title {
-  font-size: 16px;
+  font-size: var(--fs-body);
   font-weight: 700;
   color: #f8fafc;
   margin: 0;
 }
 
 .app-image-modal-subtitle {
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   color: #94a3b8;
   margin: 2px 0 0 0;
 }
@@ -73,7 +73,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 8px 14px;
   border-radius: 10px;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;

@@ -53,7 +53,7 @@
 .role-chip {
   padding: 6px 12px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   cursor: pointer;
   border: 1px solid #E5E7EB;
@@ -97,7 +97,7 @@
   padding: 10px 14px;
   border-radius: 10px;
   border: 1.5px solid #E5E7EB;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   outline: none;
   box-sizing: border-box;
   transition: all 0.2s ease;
@@ -116,7 +116,7 @@
   border: none;
   border-radius: 12px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
@@ -136,7 +136,7 @@
   border: 1px solid #E5E7EB;
   border-radius: 12px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -195,7 +195,7 @@
 
 .mem-filter-select {
   width: 100%;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #111827;
 }
@@ -247,7 +247,7 @@
 }
 
 .mem-status-label {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #374151;
 }
@@ -272,7 +272,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #6B7280;
 }
@@ -324,7 +324,7 @@
 }
 
 .mem-hero-title {
-  font-size: 24px;
+  font-size: var(--fs-section-heading);
   font-weight: 900;
   color: #ffffff;
   margin: 0;
@@ -334,7 +334,7 @@
 }
 
 .mem-hero-subtitle {
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   color: rgba(255, 255, 255, 0.85);
   margin: 4px 0 0;
   font-weight: 500;
@@ -356,7 +356,7 @@
 }
 
 .mem-metric-value {
-  font-size: 20px;
+  font-size: var(--fs-card-title);
   font-weight: 900;
   margin-top: 2px;
 }
@@ -396,14 +396,14 @@
 }
 
 .mem-card-title {
-  font-size: 16px;
+  font-size: var(--fs-body);
   font-weight: 800;
   color: #111827;
   margin: 0;
 }
 
 .mem-card-subtitle {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #6B7280;
 }
 
@@ -430,7 +430,7 @@
 }
 
 .mem-invite-msg {
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   color: #047857;
   margin-top: 10px;
   font-weight: 700;
@@ -448,7 +448,7 @@
 }
 
 .mem-csv-preview-title {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   color: #1D4ED8;
   margin-bottom: 8px;
@@ -467,7 +467,7 @@
 }
 
 .mem-csv-item {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #374151;
   font-weight: 500;
 }
@@ -524,7 +524,7 @@
 .mem-search-input {
   padding-left: 36px;
   width: 100%;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
 }
 
 .mem-bulk-bar {
@@ -537,13 +537,13 @@
 }
 
 .mem-bulk-text {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   color: #92400E;
 }
 
 .mem-btn-bulk-remove {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #DC2626;
   font-weight: 800;
   background: #FEF2F2;
@@ -595,7 +595,7 @@
   padding: 48px;
   text-align: center;
   color: #9CA3AF;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 600;
 }
 
@@ -609,14 +609,14 @@
 }
 
 .mem-empty-title {
-  font-size: 15px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
   margin-bottom: 4px;
 }
 
 .mem-empty-sub {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #9CA3AF;
 }
 
@@ -653,14 +653,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 900;
   flex-shrink: 0;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .mem-employee-name {
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
 }
@@ -672,7 +672,7 @@
 
 .mem-td-email {
   padding: 14px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #4B5563;
   font-weight: 500;
 }
@@ -680,7 +680,7 @@
 .mem-role-select {
   padding: 6px 12px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   outline: none;
   cursor: pointer;
@@ -709,19 +709,19 @@
 
 .mem-td-dept {
   padding: 14px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #4B5563;
   font-weight: 600;
 }
 
 .mem-td-joined {
   padding: 14px;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   color: #6B7280;
 }
 
 .mem-btn-remove {
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   color: #DC2626;
   font-weight: 700;
   background: transparent;

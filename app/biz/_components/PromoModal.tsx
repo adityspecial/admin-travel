@@ -41,7 +41,7 @@ export function PromoModal({ onClose, onCreated }: { onClose: () => void; onCrea
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 101 }}>
       <div style={{ background: '#fff', borderRadius: 14, padding: '28px', width: 560, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <span style={{ fontSize: 17, fontWeight: 800, color: '#1a1a2e' }}>Create Promo Code</span>

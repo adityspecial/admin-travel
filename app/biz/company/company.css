@@ -29,7 +29,7 @@
   padding: 10px 14px;
   border-radius: 10px;
   border: 1.5px solid #E5E7EB;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   outline: none;
   box-sizing: border-box;
   transition: all 0.2s ease;
@@ -48,7 +48,7 @@
   border: none;
   border-radius: 12px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 14px var(--accent, rgba(227, 30, 36, 0.25));
@@ -67,7 +67,7 @@
   border: 1px solid #E5E7EB;
   border-radius: 12px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -105,7 +105,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #6B7280;
 }
@@ -165,7 +165,7 @@
 }
 
 .cp-hero-title {
-  font-size: 24px;
+  font-size: var(--fs-section-heading);
   font-weight: 900;
   color: #ffffff;
   margin: 0;
@@ -183,7 +183,7 @@
 }
 
 .cp-hero-pill {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   background: rgba(255, 255, 255, 0.15);
   padding: 2px 10px;
   border-radius: 99px;
@@ -191,7 +191,7 @@
 }
 
 .cp-hero-pill-active {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #10B981;
   background: rgba(16, 185, 129, 0.15);
   padding: 2px 10px;
@@ -215,7 +215,7 @@
   background: #FEF2F2;
   border: 1px solid #FCA5A5;
   color: #DC2626;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -228,7 +228,7 @@
   background: #ECFDF5;
   border: 1px solid #6EE7B7;
   color: #047857;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -239,7 +239,7 @@
   text-align: center;
   padding: 48px;
   color: #9CA3AF;
-  font-size: 14px;
+  font-size: var(--fs-placeholder);
   font-weight: 600;
 }
 
@@ -303,14 +303,14 @@
 }
 
 .cp-section-title {
-  font-size: 16px;
+  font-size: var(--fs-body);
   font-weight: 800;
   color: #111827;
   margin: 0;
 }
 
 .cp-section-subtitle {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #6B7280;
 }
 
@@ -361,7 +361,7 @@
 }
 
 .cp-readonly-value {
-  font-size: 15px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
   padding: 10px 14px;
@@ -371,7 +371,7 @@
 }
 
 .cp-readonly-value--mono {
-  font-size: 14px;
+  font-size: var(--fs-placeholder);
   font-family: monospace;
 }
 
@@ -441,7 +441,7 @@
   border: 1px solid #FCA5A5;
   border-radius: 12px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -462,14 +462,14 @@
 }
 
 .cp-inline-box-title {
-  font-size: 14px;
+  font-size: var(--fs-placeholder);
   font-weight: 800;
   color: #111827;
   margin: 0 0 14px;
 }
 
 .cp-form-error {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #DC2626;
   margin-bottom: 14px;
@@ -490,7 +490,7 @@
 }
 
 .cp-checkbox-label {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: #374151;
   cursor: pointer;
@@ -521,7 +521,7 @@
 
 .cp-empty-td {
   padding: 24px 14px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #9CA3AF;
   text-align: center;
 }
@@ -533,13 +533,13 @@
 .cp-td-id-number {
   padding: 14px;
   font-weight: 800;
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   color: #111827;
 }
 
 .cp-td-muted {
   padding: 14px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #4B5563;
 }
 
@@ -570,7 +570,7 @@
   color: #DC2626;
   cursor: pointer;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: var(--fs-label);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -580,7 +580,7 @@
   padding: 24px;
   text-align: center;
   color: #9CA3AF;
-  font-size: 13px;
+  font-size: var(--fs-caption);
 }
 
 .cp-address-grid {
@@ -617,14 +617,14 @@
 }
 
 .cp-address-title {
-  font-size: 13.5px;
+  font-size: var(--fs-label);
   font-weight: 800;
   color: #111827;
   margin: 0 0 4px;
 }
 
 .cp-address-text {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #6B7280;
   margin: 0;
   line-height: 1.4;
@@ -639,7 +639,7 @@
 }
 
 .cp-api-desc {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: #4B5563;
   margin-top: 12px;
   margin-bottom: 20px;

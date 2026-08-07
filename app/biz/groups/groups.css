@@ -10,13 +10,13 @@
 }
 
 .groups-breadcrumb {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   color: #9CA3AF;
   margin-bottom: 6px;
 }
 
 .groups-title {
-  font-size: 22px;
+  font-size: var(--fs-card-title);
   font-weight: 900;
   color: #1a1a2e;
   margin: 0;
@@ -31,19 +31,19 @@
 }
 
 .groups-empty-icon {
-  font-size: 40px;
+  font-size: var(--fs-page-heading);
   margin-bottom: 12px;
 }
 
 .groups-empty-title {
-  font-size: 16px;
+  font-size: var(--fs-body);
   font-weight: 800;
   color: #1a1a2e;
   margin-bottom: 8px;
 }
 
 .groups-empty-desc {
-  font-size: 14px;
+  font-size: var(--fs-placeholder);
   color: #6B7280;
   max-width: 400px;
   margin: 0 auto;
