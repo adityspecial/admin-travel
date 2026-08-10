@@ -13,6 +13,7 @@ import {
   UserCheck,
   Plane,
   Ticket,
+  Briefcase,
   Palmtree,
   ClipboardList,
   FileCheck,
@@ -22,8 +23,10 @@ import {
   CreditCard,
   BadgePercent,
   KeyRound,
+  UserCog,
   ScrollText,
   AlertTriangle,
+  TrendingUp,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -31,34 +34,84 @@ import {
   ChevronDown,
 } from 'lucide-react'
 
-const NAV = [
+interface NavLink { href: string; label: string; Icon: any }
+interface NavGroup { label: string; Icon: any; children: NavLink[] }
+type NavEntry = NavLink | NavGroup
+function isGroup(entry: NavEntry): entry is NavGroup { return 'children' in entry }
+
+const NAV: NavEntry[] = [
   { href: '/super',              label: 'Dashboard',              Icon: LayoutDashboard },
   { href: '/super/orgs',         label: 'Organisations',          Icon: Building2 },
   { href: '/super/agents',       label: 'myPartner Agents',       Icon: Users },
   { href: '/super/partners',     label: 'Partner Admins',         Icon: ShieldCheck },
+  { href: '/super/corporate-admins', label: 'Corporate Admins',   Icon: Briefcase },
   { href: '/super/users',        label: 'All Members',            Icon: UserCheck },
-  { href: '/super/bookings',     label: 'All Bookings',           Icon: ClipboardList },
-  { href: '/super/booking-failures', label: 'Failed Bookings',    Icon: AlertTriangle },
+  {
+    label: 'Partner Tiers', Icon: TrendingUp,
+    children: [
+      { href: '/super/partner-tiers',            label: 'Tier Settings',   Icon: TrendingUp },
+      { href: '/super/partner-tier-promotions',  label: 'Tier Promotions', Icon: AlertTriangle },
+    ],
+  },
   // { href: '/super/fixed-flights',label: 'Fixed Departures',       Icon: Plane },
   // { href: '/super/fareguide',    label: 'FareGuide Fixed Flights',Icon: Ticket },
-  { href: '/super/packages',     label: 'Holiday Packages',       Icon: Palmtree },
-  { href: '/super/visa',         label: 'Visa Pages',             Icon: FileCheck },
-  { href: '/super/featured-content', label: 'Featured Content',   Icon: Megaphone },
-  { href: '/super/notifications', label: 'Notification Center',   Icon: Send },
-  { href: '/super/promos',        label: 'Promo Codes',            Icon: Tag },
-  { href: '/super/payments',     label: 'Razorpay Payments',      Icon: CreditCard },
-  { href: '/super/disputes',     label: 'Disputes',               Icon: AlertTriangle },
-  { href: '/super/booking-disputes', label: 'Booking Disputes',   Icon: AlertTriangle },
-  { href: '/super/refunds',      label: 'Refund Aging',           Icon: CreditCard },
-  { href: '/super/sla',          label: 'SLA Tracker',            Icon: AlertTriangle },
-  { href: '/super/duplicate-bookings', label: 'Duplicate Bookings', Icon: AlertTriangle },
-  { href: '/super/pnr-health',   label: 'PNR Health',             Icon: AlertTriangle },
-  { href: '/super/reports/promo-burn', label: 'Promo Cash Burn',  Icon: BadgePercent },
-  { href: '/super/consumer',     label: 'Fee Settings',           Icon: BadgePercent },
-  { href: '/super/permissions',  label: 'Permissions',            Icon: KeyRound },
-  { href: '/super/audit-log',    label: 'Audit Log',              Icon: ScrollText },
-  { href: '/super/webhook-events', label: 'Webhook Events',       Icon: ScrollText },
-  { href: '/super/provider-errors', label: 'Provider API Errors', Icon: AlertTriangle },
+  {
+    label: 'Booking', Icon: ClipboardList,
+    children: [
+      { href: '/super/bookings',           label: 'All Bookings',       Icon: ClipboardList },
+      { href: '/super/duplicate-bookings', label: 'Duplicate Bookings', Icon: AlertTriangle },
+      { href: '/super/pnr-health',         label: 'PNR Health',         Icon: AlertTriangle },
+    ],
+  },
+  {
+    label: 'Errors', Icon: AlertTriangle,
+    children: [
+      { href: '/super/booking-failures', label: 'Failed Bookings',     Icon: AlertTriangle },
+      { href: '/super/provider-errors',  label: 'Provider API Errors', Icon: AlertTriangle },
+      { href: '/super/webhook-events',   label: 'Webhook Events',      Icon: ScrollText },
+    ],
+  },
+  {
+    label: 'Content', Icon: Megaphone,
+    children: [
+      { href: '/super/packages',     label: 'Holiday Packages',     Icon: Palmtree },
+      { href: '/super/visa',         label: 'Visa Pages',           Icon: FileCheck },
+      { href: '/super/featured-content', label: 'Featured Content', Icon: Megaphone },
+      { href: '/super/notifications', label: 'Notification Center', Icon: Send },
+    ],
+  },
+  {
+    label: 'Promos', Icon: Tag,
+    children: [
+      { href: '/super/promos',             label: 'Promo Codes',     Icon: Tag },
+      { href: '/super/reports/promo-burn', label: 'Promo Cash Burn', Icon: BadgePercent },
+    ],
+  },
+  {
+    label: 'Disputes', Icon: AlertTriangle,
+    children: [
+      { href: '/super/disputes',         label: 'Disputes',       Icon: AlertTriangle },
+      { href: '/super/booking-disputes', label: 'Booking Disputes', Icon: AlertTriangle },
+      { href: '/super/biz-approval-disputes', label: 'Corporate Disputes', Icon: AlertTriangle },
+    ],
+  },
+  {
+    label: 'Payments', Icon: CreditCard,
+    children: [
+      { href: '/super/payments', label: 'Razorpay Payments', Icon: CreditCard },
+      { href: '/super/refunds',  label: 'Refund Aging',      Icon: CreditCard },
+      { href: '/super/consumer', label: 'Fee Settings',      Icon: BadgePercent },
+    ],
+  },
+  {
+    label: 'System', Icon: UserCog,
+    children: [
+      { href: '/super/staff',       label: 'Staff',       Icon: UserCog },
+      { href: '/super/permissions', label: 'Permissions', Icon: KeyRound },
+      { href: '/super/audit-log',   label: 'Audit Log',   Icon: ScrollText },
+      { href: '/super/company',     label: 'Company Settings', Icon: Building2 },
+    ],
+  },
 ]
 
 export default function SuperLayout({ children }: { children: React.ReactNode }) {
@@ -67,6 +120,23 @@ export default function SuperLayout({ children }: { children: React.ReactNode })
 
   const checked = useRef(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
+  // A group starts open if the current page is one of its own children, so
+  // deep-linking straight to e.g. /super/pnr-health doesn't land on a
+  // sidebar that looks like nothing is selected.
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
+    const initial = new Set<string>()
+    for (const entry of NAV) {
+      if (isGroup(entry) && entry.children.some(c => c.href === pathname)) initial.add(entry.label)
+    }
+    return initial
+  })
+  function toggleGroup(label: string) {
+    setOpenGroups(prev => {
+      const next = new Set(prev)
+      next.has(label) ? next.delete(label) : next.add(label)
+      return next
+    })
+  }
 
   // Load saved sidebar state from localStorage
   useEffect(() => {
@@ -136,19 +206,57 @@ export default function SuperLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
         <nav className="sidebar-nav">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`nav-link ${pathname === item.href ? 'active' : ''}`}
-              data-tooltip={item.label}
-            >
-              <span className="nav-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <item.Icon size={15} strokeWidth={2} />
-              </span>
-              <span className="nav-link-text">{item.label}</span>
-            </Link>
-          ))}
+          {NAV.map((item) => {
+            if (isGroup(item)) {
+              const isOpen = openGroups.has(item.label)
+              return (
+                <div key={item.label}>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(item.label)}
+                    className="nav-link nav-link-plain"
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                    data-tooltip={item.label}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <span className="nav-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <item.Icon size={15} strokeWidth={2} />
+                      </span>
+                      <span className="nav-link-text">{item.label}</span>
+                    </span>
+                    <span className="nav-link-text">{isOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}</span>
+                  </button>
+                  {isOpen && item.children.map((child) => (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      className={`nav-link ${pathname === child.href ? 'active' : ''}`}
+                      style={{ paddingLeft: 34 }}
+                      data-tooltip={child.label}
+                    >
+                      <span className="nav-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <child.Icon size={13} strokeWidth={2} />
+                      </span>
+                      <span className="nav-link-text">{child.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              )
+            }
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-link ${pathname === item.href ? 'active' : ''}`}
+                data-tooltip={item.label}
+              >
+                <span className="nav-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <item.Icon size={15} strokeWidth={2} />
+                </span>
+                <span className="nav-link-text">{item.label}</span>
+              </Link>
+            )
+          })}
           <div className="nav-section" style={{ marginTop: 16 }}>Account</div>
           <button
             className="nav-link nav-link-plain"

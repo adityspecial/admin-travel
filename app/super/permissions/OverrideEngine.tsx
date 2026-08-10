@@ -15,6 +15,12 @@ interface User {
 
 interface Override { module: string; permission: string; enabled: boolean; reason?: string }
 
+// A staged, not-yet-saved edit — 'set' stages a toggle to a new value,
+// 'clear' stages removing an existing override back to the role default.
+type PendingChange =
+  | { action: 'set'; module: string; permission: string; enabled: boolean }
+  | { action: 'clear'; module: string; permission: string }
+
 interface Props {
   portal:       string
   modules:      ModuleDef[]
@@ -29,7 +35,9 @@ export function OverrideEngine({ portal, modules, overridesUrl = '/api/admin/sup
   const [selected,   setSelected]   = useState<User | null>(null)
   const [overrides,  setOverrides]  = useState<Override[]>([])
   const [searching,  setSearching]  = useState(false)
-  const [saving,     setSaving]     = useState<string | null>(null)
+  const [pending,    setPending]    = useState<Record<string, PendingChange>>({})
+  const [committing, setCommitting] = useState(false)
+  const [commitError, setCommitError] = useState('')
 
   async function search(q: string) {
     setQuery(q)
@@ -47,39 +55,81 @@ export function OverrideEngine({ portal, modules, overridesUrl = '/api/admin/sup
 
   async function selectUser(u: User) {
     setSelected(u); setResults([]); setQuery(userName(u))
+    setPending({}); setCommitError('')
     const d = await adminFetch(`${overridesUrl}?targetType=${u._type}&targetId=${u.id}&portal=${portal}`)
     setOverrides(d.overrides ?? [])
+  }
+
+  function switchTab(t: TargetType) {
+    setTargetType(t); setSelected(null); setQuery(''); setResults([]); setOverrides([])
+    setPending({}); setCommitError('')
   }
 
   function getOverride(module: string, perm: string): Override | undefined {
     return overrides.find(o => o.module === module && o.permission === perm)
   }
 
-  async function toggleOverride(module: string, perm: string, enabled: boolean) {
-    if (!selected) return
+  // Stage a toggle — no network call yet, just marks it pending until Commit.
+  function stageSet(module: string, perm: string, enabled: boolean) {
     const key = `${module}.${perm}`
-    setSaving(key)
-    await adminFetch(overridesUrl, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        portal, targetType: selected._type, targetId: selected.id,
-        module, permission: perm, enabled,
-      }),
-    })
-    setOverrides(prev => {
-      const filtered = prev.filter(o => !(o.module === module && o.permission === perm))
-      return [...filtered, { module, permission: perm, enabled }]
-    })
-    setSaving(null)
+    setPending(prev => ({ ...prev, [key]: { action: 'set', module, permission: perm, enabled } }))
   }
 
-  async function clearOverride(module: string, perm: string) {
-    if (!selected) return
-    await adminFetch(overridesUrl, {
-      method: 'DELETE',
-      body: JSON.stringify({ targetType: selected._type, targetId: selected.id, module, permission: perm }),
+  // Stage clearing an existing (already-committed) override.
+  function stageClear(module: string, perm: string) {
+    const key = `${module}.${perm}`
+    setPending(prev => ({ ...prev, [key]: { action: 'clear', module, permission: perm } }))
+  }
+
+  // Undo a staged edit that hasn't been committed yet — reverts the row to
+  // whatever was last actually saved.
+  function unstage(module: string, perm: string) {
+    const key = `${module}.${perm}`
+    setPending(prev => {
+      const next = { ...prev }
+      delete next[key]
+      return next
     })
-    setOverrides(prev => prev.filter(o => !(o.module === module && o.permission === perm)))
+  }
+
+  const pendingCount = Object.keys(pending).length
+
+  async function commitAll() {
+    if (!selected || !pendingCount) return
+    setCommitting(true); setCommitError('')
+    const entries = Object.values(pending)
+    try {
+      await Promise.all(entries.map(change =>
+        change.action === 'set'
+          ? adminFetch(overridesUrl, {
+              method: 'PATCH',
+              body: JSON.stringify({
+                portal, targetType: selected._type, targetId: selected.id,
+                module: change.module, permission: change.permission, enabled: change.enabled,
+              }),
+            })
+          : adminFetch(overridesUrl, {
+              method: 'DELETE',
+              body: JSON.stringify({ targetType: selected._type, targetId: selected.id, module: change.module, permission: change.permission }),
+            })
+      ))
+      setOverrides(prev => {
+        let next = prev
+        for (const change of entries) {
+          next = next.filter(o => !(o.module === change.module && o.permission === change.permission))
+          if (change.action === 'set') next = [...next, { module: change.module, permission: change.permission, enabled: change.enabled }]
+        }
+        return next
+      })
+      setPending({})
+    } catch (e: any) {
+      setCommitError(e.message ?? 'Failed to save changes')
+    }
+    setCommitting(false)
+  }
+
+  function discardAll() {
+    setPending({}); setCommitError('')
   }
 
   function userName(u: User) {
@@ -114,7 +164,7 @@ export function OverrideEngine({ portal, modules, overridesUrl = '/api/admin/sup
         {tabs.map(t => (
           <button
             key={t.type}
-            onClick={() => { setTargetType(t.type); setSelected(null); setQuery(''); setResults([]); setOverrides([]) }}
+            onClick={() => switchTab(t.type)}
             className={`perm-oe-tab ${targetType === t.type ? 'perm-oe-tab--active' : ''}`}
           >
             {t.label}
@@ -180,22 +230,34 @@ export function OverrideEngine({ portal, modules, overridesUrl = '/api/admin/sup
                   {mod.permissions.map(perm => {
                     const ov = getOverride(mod.key, perm.key)
                     const key = `${mod.key}.${perm.key}`
+                    const change = pending[key]
+                    const isPending = !!change
+                    // What the toggle should show right now: the staged value
+                    // if there's a pending 'set', off if pending 'clear',
+                    // otherwise the last-committed override (if any).
+                    const displayEnabled = change
+                      ? (change.action === 'set' ? change.enabled : false)
+                      : (ov?.enabled ?? false)
+                    const showClearBtn = isPending || !!ov
+                    const rowClass = isPending
+                      ? 'perm-oe-row--pending'
+                      : ov ? (ov.enabled ? 'perm-oe-row--enabled' : 'perm-oe-row--disabled') : ''
                     return (
-                      <div key={perm.key} className={`perm-oe-row ${ov ? (ov.enabled ? 'perm-oe-row--enabled' : 'perm-oe-row--disabled') : ''}`}>
+                      <div key={perm.key} className={`perm-oe-row ${rowClass}`}>
                         <span className="perm-oe-key">{perm.key}</span>
                         <div className="perm-oe-row-right">
-                          {ov && (
+                          {showClearBtn && (
                             <button
-                              onClick={() => clearOverride(mod.key, perm.key)}
-                              title="Clear override — revert to role default"
+                              onClick={() => isPending ? unstage(mod.key, perm.key) : stageClear(mod.key, perm.key)}
+                              title={isPending ? 'Undo staged change' : 'Clear override — revert to role default'}
                               className="perm-oe-clear-btn"
                             >✕</button>
                           )}
                           <PermissionToggle
-                            enabled={ov?.enabled ?? false}
+                            enabled={displayEnabled}
                             dangerous={perm.dangerous}
-                            onChange={v => toggleOverride(mod.key, perm.key, v)}
-                            disabled={saving === key}
+                            onChange={v => stageSet(mod.key, perm.key, v)}
+                            disabled={committing || (change?.action === 'clear')}
                           />
                         </div>
                       </div>
@@ -204,6 +266,20 @@ export function OverrideEngine({ portal, modules, overridesUrl = '/api/admin/sup
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Commit bar — only appears once something is staged */}
+      {selected && pendingCount > 0 && (
+        <div className="perm-oe-commit-bar">
+          <span className="perm-oe-commit-count">{pendingCount} unsaved change{pendingCount > 1 ? 's' : ''}</span>
+          {commitError && <span className="perm-oe-commit-error">{commitError}</span>}
+          <div className="perm-oe-commit-actions">
+            <button className="btn btn-ghost btn-sm" onClick={discardAll} disabled={committing}>Discard</button>
+            <button className="btn btn-primary btn-sm" onClick={commitAll} disabled={committing}>
+              {committing ? 'Saving…' : 'Commit Changes'}
+            </button>
           </div>
         </div>
       )}

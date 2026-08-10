@@ -6,7 +6,7 @@ import { AppPopup } from '@/components/ui/AppPopup'
 import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import '@/components/ui/ConfirmModal.css'
 import { Tag, PencilLine, History } from 'lucide-react'
-import type { Promo } from './page'
+import type { Promo, ScopeOption } from './page'
 
 interface UsageRecord {
   id: string
@@ -25,12 +25,66 @@ const BLANK_FORM = {
   max_uses: '', uses_per_user: '1',
   applicable_to: 'all',
   valid_from: '', valid_until: '',
+  scope: 'global' as 'global' | 'biz_org' | 'partner_agent',
+  scope_id: '',
+}
+
+// Scope selector: Global / Specific Organization / Specific Agent. Choosing
+// the latter two reveals a filtered <select> over the org/agent list — no
+// combobox component exists yet in this codebase, a plain search-then-select
+// matches this app's existing plain-HTML form style closely enough.
+function ScopePicker({
+  scope, scopeId, orgs, agents, onScopeChange, onScopeIdChange,
+}: {
+  scope: 'global' | 'biz_org' | 'partner_agent'
+  scopeId: string
+  orgs: ScopeOption[]
+  agents: ScopeOption[]
+  onScopeChange: (s: 'global' | 'biz_org' | 'partner_agent') => void
+  onScopeIdChange: (id: string) => void
+}) {
+  const [filter, setFilter] = useState('')
+  const options = scope === 'biz_org' ? orgs : scope === 'partner_agent' ? agents : []
+  const filtered = filter ? options.filter(o => o.label.toLowerCase().includes(filter.toLowerCase())) : options
+
+  return (
+    <>
+      <div className="app-input-group">
+        <label className="app-input-label">Scope</label>
+        <select
+          className="app-input"
+          value={scope}
+          onChange={e => { onScopeChange(e.target.value as any); onScopeIdChange('') }}
+        >
+          <option value="global">Global (all bookings)</option>
+          <option value="biz_org">Specific Organization</option>
+          <option value="partner_agent">Specific Agent</option>
+        </select>
+      </div>
+      {scope !== 'global' && (
+        <div className="app-input-group">
+          <label className="app-input-label">{scope === 'biz_org' ? 'Organization' : 'Agent'}</label>
+          <input
+            className="app-input" style={{ marginBottom: 6 }}
+            placeholder={`Search ${scope === 'biz_org' ? 'organizations' : 'agents'}…`}
+            value={filter} onChange={e => setFilter(e.target.value)}
+          />
+          <select className="app-input" value={scopeId} onChange={e => onScopeIdChange(e.target.value)}>
+            <option value="">Select {scope === 'biz_org' ? 'an organization' : 'an agent'}…</option>
+            {filtered.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+        </div>
+      )}
+    </>
+  )
 }
 
 // ── Create Modal ──────────────────────────────────────────────────────────────
 export function CreatePromoModal({
-  onClose, onCreated,
+  orgs, agents, onClose, onCreated,
 }: {
+  orgs: ScopeOption[]
+  agents: ScopeOption[]
   onClose: () => void
   onCreated: (p: Promo) => void
 }) {
@@ -42,6 +96,10 @@ export function CreatePromoModal({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
+    if (form.scope !== 'global' && !form.scope_id) {
+      setError(`Please select ${form.scope === 'biz_org' ? 'an organization' : 'an agent'}.`)
+      return
+    }
     setSaving(true); setError('')
     try {
       const body: Record<string, any> = {
@@ -52,6 +110,8 @@ export function CreatePromoModal({
         valid_until:    form.valid_until,
         uses_per_user:  Number(form.uses_per_user),
         applicable_to:  form.applicable_to === 'all' ? null : form.applicable_to,
+        scope:          form.scope,
+        scope_id:       form.scope === 'global' ? undefined : form.scope_id,
       }
       if (form.description)         body.description         = form.description
       if (form.min_booking_amount)  body.min_booking_amount  = Number(form.min_booking_amount)
@@ -111,14 +171,21 @@ export function CreatePromoModal({
             <label className="app-input-label">Applicable To</label>
             <select className="app-input" value={form.applicable_to} onChange={e => set('applicable_to', e.target.value)}>
               <option value="all">All bookings</option>
-              <option value="flights">Flights only</option>
-              <option value="hotels">Hotels only</option>
+              <option value="flight">Flights only</option>
+              <option value="hotel">Hotels only</option>
             </select>
           </div>
           <div />
 
           <AppInput label="Valid From" type="date" required value={form.valid_from} onChange={e => set('valid_from', e.target.value)} />
           <AppInput label="Valid Until" type="date" required value={form.valid_until} onChange={e => set('valid_until', e.target.value)} />
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <ScopePicker
+              scope={form.scope} scopeId={form.scope_id} orgs={orgs} agents={agents}
+              onScopeChange={s => set('scope', s)} onScopeIdChange={id => set('scope_id', id)}
+            />
+          </div>
         </div>
 
         <div className="app-popup-footer">
@@ -134,9 +201,11 @@ export function CreatePromoModal({
 
 // ── Edit Modal ────────────────────────────────────────────────────────────────
 export function EditPromoModal({
-  promo, onClose, onSaved,
+  promo, orgs, agents, onClose, onSaved,
 }: {
   promo: Promo
+  orgs: ScopeOption[]
+  agents: ScopeOption[]
   onClose: () => void
   onSaved: (patch: Partial<Promo>) => void
 }) {
@@ -151,6 +220,8 @@ export function EditPromoModal({
     valid_from:          promo.valid_from?.slice(0, 10) ?? '',
     valid_until:         promo.valid_until?.slice(0, 10) ?? '',
     is_active:           promo.is_active,
+    scope:               promo.scope ?? 'global',
+    scope_id:            promo.scope_id ?? '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState('')
@@ -159,6 +230,10 @@ export function EditPromoModal({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
+    if (form.scope !== 'global' && !form.scope_id) {
+      setError(`Please select ${form.scope === 'biz_org' ? 'an organization' : 'an agent'}.`)
+      return
+    }
     setSaving(true); setError('')
     try {
       const patch: Record<string, any> = {
@@ -172,6 +247,8 @@ export function EditPromoModal({
         valid_from:          form.valid_from,
         valid_until:         form.valid_until,
         is_active:           form.is_active,
+        scope:               form.scope,
+        scope_id:            form.scope === 'global' ? null : form.scope_id,
       }
       await adminFetch(`/api/admin/super/promos/${promo.id}`, {
         method: 'PATCH', body: JSON.stringify(patch),
@@ -215,8 +292,8 @@ export function EditPromoModal({
             <label className="app-input-label">Applicable To</label>
             <select className="app-input" value={form.applicable_to} onChange={e => set('applicable_to', e.target.value)}>
               <option value="all">All bookings</option>
-              <option value="flights">Flights only</option>
-              <option value="hotels">Hotels only</option>
+              <option value="flight">Flights only</option>
+              <option value="hotel">Hotels only</option>
             </select>
           </div>
 
@@ -231,6 +308,13 @@ export function EditPromoModal({
 
           <AppInput label="Valid From" type="date" required value={form.valid_from} onChange={e => set('valid_from', e.target.value)} />
           <AppInput label="Valid Until" type="date" required value={form.valid_until} onChange={e => set('valid_until', e.target.value)} />
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <ScopePicker
+              scope={form.scope} scopeId={form.scope_id} orgs={orgs} agents={agents}
+              onScopeChange={s => set('scope', s)} onScopeIdChange={id => set('scope_id', id)}
+            />
+          </div>
         </div>
 
         <div className="app-popup-footer">

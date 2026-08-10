@@ -22,6 +22,7 @@ interface Promo {
   valid_until: string
   is_active: boolean
   created_at: string
+  created_by_role: 'super' | 'biz_admin' | 'partner_agent'
 }
 
 interface PromoCashTx {
@@ -209,9 +210,16 @@ export default function PartnerPromosPage() {
       render: (p) => <span className={`badge ${p.is_active ? 'badge-green' : 'badge-red'}`}>{p.is_active ? 'Active' : 'Inactive'}</span>,
     },
     {
+      key: 'created_by_role',
+      header: 'Source',
+      render: (p) => p.created_by_role === 'partner_agent'
+        ? <span className="badge badge-gray">Self-created</span>
+        : <span className="badge badge-yellow">Granted by AirDunia</span>,
+    },
+    {
       key: 'actions',
       header: 'Actions',
-      render: (p) => (
+      render: (p) => p.created_by_role === 'partner_agent' ? (
         <button
           type="button"
           className={`data-table-btn ${p.is_active ? 'data-table-btn-edit' : 'data-table-btn-success'}`}
@@ -220,6 +228,8 @@ export default function PartnerPromosPage() {
         >
           {toggling === p.id ? '…' : p.is_active ? 'Deactivate' : 'Activate'}
         </button>
+      ) : (
+        <span className="data-table-muted-cell">View only</span>
       ),
     },
   ]
@@ -379,8 +389,8 @@ export default function PartnerPromosPage() {
               <label className="app-input-label">Applicable To</label>
               <select className="app-input" value={form.applicable_to} onChange={e => setF('applicable_to', e.target.value)}>
                 <option value="all">All bookings</option>
-                <option value="flights">Flights only</option>
-                <option value="hotels">Hotels only</option>
+                <option value="flight">Flights only</option>
+                <option value="hotel">Hotels only</option>
               </select>
             </div>
             <div />

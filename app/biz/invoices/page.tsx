@@ -1,8 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { adminFetch } from '@/lib/api'
-import { generateInvoicePDF } from '@/lib/invoicePDF'
+import { adminFetch, supabase } from '@/lib/api'
 import { FilterSidebar, FilterSidebarBlock } from '../_components/FilterSidebar'
 import './invoices.css'
 import {
@@ -47,12 +46,17 @@ const QTR_LABEL = (() => {
 const INVOICE_TYPES = ['MakeMyTrip Invoice', 'Vendor (GST) Invoice', 'E-ticket/Voucher']
 const TRIP_TYPES = ['Flights', 'Hotels', 'Cabs', 'Bus', 'Train', 'Meals']
 
+interface Invoice {
+  id: string; invoice_number: string; booking_type: string; booking_id: string
+  total_amount: number; customer_name: string; customer_gstin: string | null
+  traveller_name: string | null; issued_at: string
+}
+
 export default function InvoicesPage() {
-  const [approvals, setApprovals] = useState<any[]>([])
+  const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const [gstin, setGstin] = useState('')
   const [orgName, setOrgName] = useState('')
-  const [orgLogo, setOrgLogo] = useState('')
   const [search, setSearch] = useState('')
   const [automailer, setAutomailer] = useState(false)
   const [datePreset, setDatePreset] = useState('qtr')
@@ -64,26 +68,39 @@ export default function InvoicesPage() {
 
   useEffect(() => {
     Promise.all([
-      adminFetch('/api/admin/biz/approvals?status=approved'),
-      adminFetch('/api/admin/biz/identifiers'),
+      adminFetch('/api/admin/biz/invoices'),
       adminFetch('/api/admin/biz/policy'),
     ])
-      .then(([appData, idData, policyData]) => {
-        setApprovals(appData.approvals ?? [])
-        const ids: any[] = idData.identifiers ?? []
-        const hq = ids.find((x: any) => x.is_hq) ?? ids[0] ?? null
-        setGstin(hq?.number ?? '')
+      .then(([invData, policyData]) => {
+        setInvoices(invData.invoices ?? [])
+        setGstin(policyData.policy?.gst_number ?? '')
         setOrgName(policyData.policy?.name ?? '')
-        setOrgLogo(policyData.policy?.logo_url ?? '')
       })
       .catch(() => { })
       .finally(() => setLoading(false))
   }, [])
 
-  const filtered = approvals.filter((a) => {
-    if (!a.booking_ref && !search) return true
-    if (search) return (a.booking_ref ?? '').toLowerCase().includes(search.toLowerCase()) || (a.id ?? '').toLowerCase().includes(search.toLowerCase())
-    if (tripType.length > 0) return tripType.map((t) => t.toLowerCase()).includes(a.booking_type?.toLowerCase())
+  async function viewInvoice(id: string) {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`/api/admin/biz/invoices/${id}`, {
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+    })
+    if (!res.ok) return
+    const html = await res.text()
+    const win = window.open('', '_blank', 'width=900,height=700')
+    if (!win) return
+    win.document.write(html)
+    win.document.close()
+  }
+
+  const filtered = invoices.filter((inv) => {
+    if (search) {
+      const q = search.toLowerCase()
+      return inv.invoice_number.toLowerCase().includes(q)
+        || (inv.customer_name ?? '').toLowerCase().includes(q)
+        || inv.booking_id.toLowerCase().includes(q)
+    }
+    if (tripType.length > 0) return tripType.map((t) => t.toLowerCase().replace(/s$/, '')).includes(inv.booking_type?.toLowerCase())
     return true
   })
 
@@ -247,21 +264,21 @@ export default function InvoicesPage() {
             {/* Quick Metrics Bar Inside Hero */}
             <div className="inv-hero-metrics">
               <div>
-                <div className="inv-metric-label">Approved Invoices</div>
+                <div className="inv-metric-label">Issued Invoices</div>
                 <div className="inv-metric-value-lg">
-                  {loading ? '…' : `${approvals.length} Invoices`}
+                  {loading ? '…' : `${invoices.length} Invoices`}
                 </div>
               </div>
               <div>
-                <div className="inv-metric-label">Primary GSTIN</div>
+                <div className="inv-metric-label">Org GSTIN</div>
                 <div className="inv-metric-value-sm inv-metric-value-sm--gstin">
-                  {gstin || '27AAACA0000A1Z5'}
+                  {gstin || '—'}
                 </div>
               </div>
               <div>
                 <div className="inv-metric-label">Tax Entity</div>
                 <div className="inv-metric-value-sm inv-metric-value-sm--org">
-                  {orgName || 'AirDunia Corporate Ltd'}
+                  {orgName || '—'}
                 </div>
               </div>
             </div>
@@ -350,7 +367,7 @@ export default function InvoicesPage() {
                     <th className="inv-th-checkbox">
                       <input type="checkbox" className="inv-checkbox" />
                     </th>
-                    {['BOOKING ID', 'EMPLOYEE / ISSUER', 'INVOICE ACTION', 'AMOUNT (₹)', 'TRAVEL DATE', 'COMPANY GSTIN'].map((h) => (
+                    {['BOOKING ID', 'TRAVELLER', 'INVOICE', 'AMOUNT (₹)', 'ISSUED DATE', 'CUSTOMER GSTIN'].map((h) => (
                       <th key={h} className="inv-th">
                         {h}
                       </th>
@@ -373,59 +390,50 @@ export default function InvoicesPage() {
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((a) => {
-                      const fd = a.flight_data
-                      const hd = a.hotel_data
-                      const travelDate = fd?.date || fd?.departure_date || hd?.check_in || hd?.checkIn || ''
-                      const amount = a.amount ?? 0
+                    filtered.map((inv) => (
+                      <tr key={inv.id} className="inv-tr">
+                        <td className="inv-td-checkbox">
+                          <input type="checkbox" className="inv-checkbox" />
+                        </td>
 
-                      return (
-                        <tr key={a.id} className="inv-tr">
-                          <td className="inv-td-checkbox">
-                            <input type="checkbox" className="inv-checkbox" />
-                          </td>
+                        {/* Booking ID */}
+                        <td className="inv-td-bookingid">
+                          {inv.booking_id.slice(0, 8).toUpperCase()}
+                        </td>
 
-                          {/* Booking ID */}
-                          <td className="inv-td-bookingid">
-                            {a.booking_ref ?? a.id.slice(0, 14) + '…'}
-                          </td>
+                        {/* Issuer */}
+                        <td className="inv-td-issuer">
+                          {inv.traveller_name || inv.customer_name || '—'}
+                        </td>
 
-                          {/* Issuer */}
-                          <td className="inv-td-issuer">
-                            {a.requester?.work_email ?? '—'}
-                          </td>
+                        {/* Invoice View/Download Action */}
+                        <td className="inv-td">
+                          <button
+                            onClick={() => viewInvoice(inv.id)}
+                            className="inv-btn-createpdf"
+                          >
+                            <FileText size={13} /> {inv.invoice_number}
+                          </button>
+                        </td>
 
-                          {/* Invoice Create PDF Action */}
-                          <td className="inv-td">
-                            <button
-                              onClick={() => generateInvoicePDF(a, gstin, orgName, orgLogo)}
-                              className="inv-btn-createpdf"
-                            >
-                              <FileText size={13} /> Create PDF
-                            </button>
-                          </td>
+                        {/* Amount */}
+                        <td className="inv-td-amount">
+                          {inv.total_amount > 0 ? `₹${inv.total_amount.toLocaleString('en-IN')}` : '—'}
+                        </td>
 
-                          {/* Amount */}
-                          <td className="inv-td-amount">
-                            {amount > 0 ? `₹${amount.toLocaleString('en-IN')}` : '—'}
-                          </td>
+                        {/* Issued Date */}
+                        <td className="inv-td-date">
+                          {new Date(inv.issued_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </td>
 
-                          {/* Travel Date */}
-                          <td className="inv-td-date">
-                            {travelDate ? new Date(travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
-                          </td>
-
-                          {/* GSTIN */}
-                          <td className="inv-td">
-                            <span
-                              className="inv-gstin-badge"
-                            >
-                              {gstin || '—'}
-                            </span>
-                          </td>
-                        </tr>
-                      )
-                    })
+                        {/* GSTIN */}
+                        <td className="inv-td">
+                          <span className="inv-gstin-badge">
+                            {inv.customer_gstin || '—'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </table>

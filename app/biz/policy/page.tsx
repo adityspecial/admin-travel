@@ -44,7 +44,11 @@ const TYPES = [
   { key: 'insurance', label: 'Travel Insurance', icon: Shield },
 ]
 
-const LIVE = new Set(['domestic_flight', 'hotel', 'cab', 'insurance'])
+// Everything that renders a real settings editor below (not the "Coming
+// Soon" placeholder) belongs here — drives both the sidebar LIVE/SOON badge
+// and the "Active Policy"/"Under Development" status. visa/package route to
+// SimpleCapPolicy (cap + buffer), which is genuinely saved and enforced.
+const LIVE = new Set(['domestic_flight', 'hotel', 'cab', 'insurance', 'visa', 'package'])
 
 export default function PolicyPage() {
   const [sel, setSel] = useState('domestic_flight')

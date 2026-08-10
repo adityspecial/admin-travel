@@ -7,7 +7,7 @@ import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { AppInput } from '@/components/ui/AppInput'
 import { AppPopup } from '@/components/ui/AppPopup'
 import '@/components/ui/ConfirmModal.css'
-import { Network, Users, CheckCircle2, Clock, Wallet, Search, Pencil } from 'lucide-react'
+import { Network, Users, CheckCircle2, Clock, Wallet, Search, Pencil, Plus } from 'lucide-react'
 import './sub-agent.css'
 
 interface SubAgent {
@@ -25,16 +25,13 @@ interface SubAgent {
   kyc_verified: boolean
   pan_number: string | null
   gst_number: string | null
+  role_id: string | null
   wallet?: { balance: number }
 }
 
-const TIERS = ['standard', 'premium', 'elite']
+const TIERS = ['bronze', 'silver', 'gold', 'platinum']
 const STATUSES = ['active', 'suspended', 'pending']
-
-// agents-tier-badge only ships silver/gold/platinum modifiers (built for
-// super/agents' tier vocabulary) — map partner's tier values onto the same
-// visual tones rather than inventing new CSS for an equivalent 3-tier scale.
-const TIER_TONE: Record<string, string> = { standard: 'silver', premium: 'gold', elite: 'platinum' }
+const TIER_TONE: Record<string, string> = { bronze: 'bronze', silver: 'silver', gold: 'gold', platinum: 'platinum' }
 
 function formatCurrency(value: number) {
   return `Rs ${(value ?? 0).toLocaleString('en-IN')}`
@@ -45,23 +42,58 @@ export default function SubAgentsPage() {
   const [loading, setLoading] = useState(true)
   const [search,  setSearch]  = useState('')
   const [edit,    setEdit]    = useState<SubAgent | null>(null)
-  const [form,    setForm]    = useState({ tier: '', commission_pct: '', credit_limit: '', status: '' })
+  const [form,    setForm]    = useState({ tier: '', commission_pct: '', credit_limit: '', status: '', role_id: '' })
   const [saving,  setSaving]  = useState(false)
   const [error,   setError]   = useState('')
   const [commissionHistory, setCommissionHistory] = useState<{ id: string; old_value: number | null; new_value: number; changed_by_type: string; changed_by_label: string | null; created_at: string }[]>([])
+  // Assignable roles for partner agents — the built-in 'agent' template plus
+  // any custom roles created on the Permissions page. agent_admin is a
+  // different targetType (staff managing an agency, not the agent itself)
+  // and is filtered out.
+  const [roles, setRoles] = useState<{ id: string; name: string; label: string }[]>([])
 
-  useEffect(() => {
+  const [showAdd,   setShowAdd]   = useState(false)
+  const [addForm,   setAddForm]   = useState({ agencyName: '', contactName: '', email: '', phone: '', password: '' })
+  const [addError,  setAddError]  = useState('')
+  const [adding,    setAdding]    = useState(false)
+
+  function load() {
     const agentId = typeof window !== 'undefined' ? (sessionStorage.getItem('partner_agent_id') ?? undefined) : undefined
     if (!agentId) return
     adminFetch('/api/admin/partner/sub-agents', { agentId })
       .then((d: any) => setAgents(d.agents ?? []))
       .catch(() => {})
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    load()
+    adminFetch('/api/admin/super/permissions/roles?portal=partner')
+      .then((d: any) => setRoles((d.roles ?? []).filter((r: any) => r.name !== 'agent_admin')))
+      .catch(() => {})
   }, [])
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault()
+    setAdding(true); setAddError('')
+    const agentId = typeof window !== 'undefined' ? (sessionStorage.getItem('partner_agent_id') ?? undefined) : undefined
+    try {
+      await adminFetch('/api/admin/partner/sub-agents', {
+        method: 'POST', agentId,
+        body: JSON.stringify(addForm),
+      })
+      setShowAdd(false)
+      setAddForm({ agencyName: '', contactName: '', email: '', phone: '', password: '' })
+      load()
+    } catch (e: any) {
+      setAddError(e.message ?? 'Failed to add sub-agent')
+    }
+    setAdding(false)
+  }
 
   function openEdit(a: SubAgent) {
     setEdit(a)
-    setForm({ tier: a.tier, commission_pct: String(a.commission_pct), credit_limit: String(a.credit_limit), status: a.status })
+    setForm({ tier: a.tier, commission_pct: String(a.commission_pct), credit_limit: String(a.credit_limit), status: a.status, role_id: a.role_id ?? '' })
     setError('')
     setCommissionHistory([])
     const agentId = typeof window !== 'undefined' ? (sessionStorage.getItem('partner_agent_id') ?? undefined) : undefined
@@ -77,7 +109,7 @@ export default function SubAgentsPage() {
     try {
       const updated = await adminFetch(`/api/admin/partner/sub-agents/${edit.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ tier: form.tier, commissionPct: Number(form.commission_pct), creditLimit: Number(form.credit_limit), status: form.status }),
+        body: JSON.stringify({ tier: form.tier, commissionPct: Number(form.commission_pct), creditLimit: Number(form.credit_limit), status: form.status, roleId: form.role_id || null }),
       })
       setAgents(prev => prev.map(a => a.id === edit.id ? { ...a, ...updated.agent } : a))
       setEdit(null)
@@ -175,6 +207,9 @@ export default function SubAgentsPage() {
       <div className="admin-topbar">
         <h2>Sub-Agents</h2>
         <span className="topbar-meta">{agents.length.toLocaleString('en-IN')} total in your network</span>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}>
+          <Plus size={14} /> Add Sub-Agent
+        </button>
       </div>
 
       <div className="admin-content">
@@ -240,6 +275,14 @@ export default function SubAgentsPage() {
             </div>
 
             <div className="app-input-group">
+              <label className="app-input-label">Permission Role</label>
+              <select className="app-input" value={form.role_id} onChange={e => setForm(f => ({ ...f, role_id: e.target.value }))}>
+                <option value="">Default (Agent)</option>
+                {roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+              </select>
+            </div>
+
+            <div className="app-input-group">
               <AppInput
                 label="Commission %"
                 type="number" step="0.1" min="0" max="20"
@@ -278,6 +321,41 @@ export default function SubAgentsPage() {
             </button>
             <button type="submit" className="confirm-modal-btn confirm-modal-btn-success" disabled={saving}>
               {saving ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </AppPopup>
+
+      {/* Add Sub-Agent AppPopup */}
+      <AppPopup
+        isOpen={showAdd}
+        title="Add Sub-Agent"
+        subtitle="Create an account for a sub-agent under this agency"
+        icon={<Plus size={22} strokeWidth={2.2} />}
+        iconTone="orange"
+        maxWidth={480}
+        onClose={() => setShowAdd(false)}
+      >
+        {addError && <div className="login-error">{addError}</div>}
+
+        <form onSubmit={handleAdd}>
+          <div className="agents-edit-grid">
+            <AppInput label="Agency Name" value={addForm.agencyName} onChange={e => setAddForm(f => ({ ...f, agencyName: e.target.value }))} required />
+            <AppInput label="Contact Name" value={addForm.contactName} onChange={e => setAddForm(f => ({ ...f, contactName: e.target.value }))} required />
+            <AppInput label="Email" type="email" value={addForm.email} onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))} required />
+            <AppInput label="Phone" value={addForm.phone} onChange={e => setAddForm(f => ({ ...f, phone: e.target.value }))} />
+            <AppInput
+              label="Initial Password" type="password" minLength={8}
+              value={addForm.password} onChange={e => setAddForm(f => ({ ...f, password: e.target.value }))} required
+            />
+          </div>
+
+          <div className="app-popup-footer">
+            <button type="button" className="confirm-modal-btn confirm-modal-btn-cancel" onClick={() => setShowAdd(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="confirm-modal-btn confirm-modal-btn-success" disabled={adding}>
+              {adding ? 'Creating…' : 'Create Sub-Agent'}
             </button>
           </div>
         </form>

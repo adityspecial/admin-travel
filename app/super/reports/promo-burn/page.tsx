@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { adminFetch } from '@/lib/api'
+import { adminFetch, adminDownload } from '@/lib/api'
 
 interface ByType { table: string; promoSpend: number; walletSpend: number }
 interface Report {
@@ -30,6 +30,11 @@ export default function PromoBurnPage() {
 
   useEffect(() => { load() }, []) // eslint-disable-line
 
+  function exportCSV() {
+    adminDownload(`/api/admin/super/reports/promo-burn/export?days=${days}`, `promo-burn-${days}d.csv`)
+      .catch(e => setError(e.message ?? 'Export failed'))
+  }
+
   const promoShare = report && (report.totalPromoSpend + report.totalWalletSpend) > 0
     ? (report.totalPromoSpend / (report.totalPromoSpend + report.totalWalletSpend)) * 100
     : 0
@@ -56,6 +61,7 @@ export default function PromoBurnPage() {
                 </select>
               </label>
               <button className="btn btn-primary btn-sm" onClick={load}>Apply</button>
+              <button className="btn btn-ghost btn-sm" onClick={exportCSV}>⬇ CSV</button>
             </div>
           </section>
 

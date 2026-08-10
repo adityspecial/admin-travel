@@ -9,9 +9,9 @@ interface KV      { key: string; value: string }
 const splitCSV = (s: string) => s.split(',').map(l => l.trim()).filter(Boolean)
 
 export function PackageEditModal({ pkgId, onClose, onSaved }: {
-  pkgId: string; onClose: () => void; onSaved: () => void
+  pkgId: string | null; onClose: () => void; onSaved: () => void
 }) {
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!!pkgId)
   const [saving,  setSaving]  = useState(false)
   const [err,     setErr]     = useState('')
   const [tab,     setTab]     = useState<'basic'|'media'|'content'|'itinerary'|'stays'|'policies'>('basic')
@@ -20,6 +20,8 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
   // Basic
   const [name,           setName]           = useState('')
   const [destination,    setDestination]    = useState('')
+  const [destinationCode,setDestinationCode]= useState('')
+  const [originCities,   setOriginCities]   = useState<string[]>([])
   const [nights,         setNights]         = useState('')
   const [days,           setDays]           = useState('')
   const [price,          setPrice]          = useState('')
@@ -54,10 +56,13 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
   const [policies, setPolicies] = useState<KV[]>([])
 
   useEffect(() => {
+    if (!pkgId) { setLoading(false); return }
     adminFetch(`/api/admin/super/packages/${pkgId}`)
       .then(({ package: p }: { package: any }) => {
         setPkgName(p.name)
         setName(p.name); setDestination(p.destination)
+        setDestinationCode(p.destination_code ?? '')
+        setOriginCities(Array.isArray(p.origin_cities) ? p.origin_cities : [])
         setNights(String(p.duration_nights)); setDays(String(p.duration_days))
         setPrice(String(p.base_price)); setCurrency(p.currency ?? 'INR')
         setOperator(p.operator ?? ''); setGroupSize(p.group_size ?? '')
@@ -98,38 +103,42 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
   async function save() {
     setSaving(true); setErr('')
     const cleanImages = images.filter(Boolean)
+    const body = {
+      name, destination,
+      destination_code: destinationCode || null,
+      origin_cities: originCities.filter(Boolean),
+      duration_nights: Number(nights), duration_days: Number(days),
+      base_price: Number(price), currency,
+      operator: operator || null, group_size: groupSize || null,
+      rating: rating ? Number(rating) : null,
+      is_featured: featured, is_active: active, commissionable,
+      thumbnail_url: thumbnail || cleanImages[0] || null,
+      images: cleanImages,
+      description: description || null,
+      what_to_expect: whatToExpect || null,
+      highlights:        highlights.filter(Boolean),
+      inclusions:        inclusions.filter(Boolean),
+      inclusions_detail: inclusionsDetail || null,
+      exclusions:        exclusions.filter(Boolean),
+      terms_conditions:  terms.filter(Boolean),
+      itinerary: itinerary.map((d, i) => ({
+        day: d.day || i + 1, title: d.title, description: d.description,
+        meals: splitCSV(d.meals),
+      })),
+      accommodations: accommodations.map(a => ({
+        name: a.name, location: a.location, nights: Number(a.nights) || 1,
+        roomType: a.roomType, mealsIncluded: splitCSV(a.mealsIncluded),
+      })),
+      policies: policies.length > 0
+        ? Object.fromEntries(policies.filter(p => p.key).map(p => [p.key, p.value]))
+        : null,
+    }
     try {
-      await adminFetch(`/api/admin/super/packages/${pkgId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          name, destination,
-          duration_nights: Number(nights), duration_days: Number(days),
-          base_price: Number(price), currency,
-          operator: operator || null, group_size: groupSize || null,
-          rating: rating ? Number(rating) : null,
-          is_featured: featured, is_active: active, commissionable,
-          thumbnail_url: thumbnail || cleanImages[0] || null,
-          images: cleanImages,
-          description: description || null,
-          what_to_expect: whatToExpect || null,
-          highlights:        highlights.filter(Boolean),
-          inclusions:        inclusions.filter(Boolean),
-          inclusions_detail: inclusionsDetail || null,
-          exclusions:        exclusions.filter(Boolean),
-          terms_conditions:  terms.filter(Boolean),
-          itinerary: itinerary.map((d, i) => ({
-            day: d.day || i + 1, title: d.title, description: d.description,
-            meals: splitCSV(d.meals),
-          })),
-          accommodations: accommodations.map(a => ({
-            name: a.name, location: a.location, nights: Number(a.nights) || 1,
-            roomType: a.roomType, mealsIncluded: splitCSV(a.mealsIncluded),
-          })),
-          policies: policies.length > 0
-            ? Object.fromEntries(policies.filter(p => p.key).map(p => [p.key, p.value]))
-            : null,
-        }),
-      })
+      if (pkgId) {
+        await adminFetch(`/api/admin/super/packages/${pkgId}`, { method: 'PATCH', body: JSON.stringify(body) })
+      } else {
+        await adminFetch('/api/admin/super/packages', { method: 'POST', body: JSON.stringify(body) })
+      }
       onSaved(); onClose()
     } catch (e: any) { setErr(e.message ?? 'Save failed') }
     finally { setSaving(false) }
@@ -150,7 +159,7 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
 
         <div className="pkg-modal-header">
           <div>
-            <h2 className="pkg-modal-title">Edit Package</h2>
+            <h2 className="pkg-modal-title">{pkgId ? 'Edit Package' : 'Add Package'}</h2>
             {pkgName && <p className="pkg-modal-subtitle">{pkgName}</p>}
           </div>
           <button onClick={onClose} className="pkg-modal-close-btn">✕</button>
@@ -169,6 +178,7 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
               <div className="pkg-form-grid">
                 <div className="pkg-span-2"><F label="Package Name" value={name} onChange={setName} /></div>
                 <F label="Destination" value={destination} onChange={setDestination} />
+                <F label="Destination Code" value={destinationCode} onChange={setDestinationCode} placeholder="e.g. GOI" />
                 <F label="Operator / DMC" value={operator} onChange={setOperator} placeholder="e.g. Nexus DMC" />
                 <F label="Duration — Nights" value={nights} onChange={setNights} type="number" />
                 <F label="Duration — Days"   value={days}   onChange={setDays}   type="number" />
@@ -180,6 +190,9 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
                   <Chk label="Featured"        checked={featured}       onChange={setFeatured} />
                   <Chk label="Active (visible)" checked={active}         onChange={setActive} />
                   <Chk label="Commissionable"   checked={commissionable} onChange={setCommissionable} />
+                </div>
+                <div className="pkg-span-2">
+                  <LineList label="Origin Cities (departure cities this package is sold from)" value={originCities} onChange={setOriginCities} placeholder="e.g. Delhi" />
                 </div>
               </div>
             )}
@@ -296,7 +309,7 @@ export function PackageEditModal({ pkgId, onClose, onSaved }: {
           {err ? <span className="pkg-modal-err">{err}</span> : <span className="pkg-flex-1" />}
           <button onClick={onClose} className="pkg-btn-footer pkg-btn-footer--cancel">Cancel</button>
           <button onClick={save} disabled={saving||loading} className="pkg-btn-footer pkg-btn-footer--save">
-            {saving ? 'Saving…' : 'Save All Changes'}
+            {saving ? 'Saving…' : pkgId ? 'Save All Changes' : 'Create Package'}
           </button>
         </div>
       </div>

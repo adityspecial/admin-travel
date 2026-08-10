@@ -33,7 +33,7 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const [type, setType] = useState('')
+  const [type, setType] = useState('flight')
   const [source, setSource] = useState('')
   const [q, setQ] = useState('')
 
@@ -60,7 +60,9 @@ export default function BookingsPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, []) // eslint-disable-line
+  // Reload whenever the type filter changes, so switching from Flight to
+  // Hotel queries only the hotel table instead of loading every type.
+  useEffect(() => { load() }, [type]) // eslint-disable-line
 
   const { slice: pageBookings, page, setPage, total } = usePagination(bookings, 20)
 

@@ -12,6 +12,7 @@ import {
   Wallet,
   Plane,
   Ticket,
+  ClipboardList,
   Globe,
   FileText,
   Receipt,
@@ -62,7 +63,7 @@ export interface NavbarProps {
 
 export default function Navbar({
   brandLogo = {
-    badge: 'my',
+    badge: 'Yatra',
     title: 'Biz',
     subtitle: 'Admin',
     href: '/biz',
@@ -124,6 +125,7 @@ export default function Navbar({
           badge: pendingCount > 0 ? String(pendingCount) : undefined,
           Icon: Ticket,
         },
+        { label: 'All Bookings', href: '/biz/bookings', Icon: ClipboardList },
         { label: 'Visa Enquiries', href: '/biz/visa-enquiries', Icon: Globe },
         { label: 'Travel Reports', href: '/biz/reports', Icon: FileText },
         { label: 'Travel Invoices', href: '/biz/invoices', Icon: Receipt },

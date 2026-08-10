@@ -26,12 +26,20 @@ import {
   Tag,
 } from 'lucide-react'
 
-const ROLES = ['employee', 'manager', 'admin']
 const STATUS_OPTIONS = ['Invited', 'Pending Verification', 'Disabled', 'Verified']
 
 export default function MembersPage() {
   const [members, setMembers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  // Assignable roles for this org — includes any custom roles created on the
+  // Permissions page, not just the 3 built-in templates (employee/manager/
+  // admin). Falls back to the built-ins if the fetch fails, so the page
+  // still works even if permissions/roles is briefly unavailable.
+  const [roles, setRoles] = useState<{ id: string; name: string; label: string }[]>([
+    { id: 'employee', name: 'employee', label: 'Employee' },
+    { id: 'manager',  name: 'manager',  label: 'Manager' },
+    { id: 'admin',    name: 'admin',    label: 'Admin' },
+  ])
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [filterStatus, setFilterStatus] = useState<string[]>([])
@@ -45,6 +53,15 @@ export default function MembersPage() {
   const [csvPreview, setCsvPreview] = useState<string[]>([])
   const [csvUploading, setCsvUploading] = useState(false)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const [editingLimitId, setEditingLimitId] = useState<string | null>(null)
+  const [limitInput, setLimitInput] = useState('')
+  const [savingLimit, setSavingLimit] = useState(false)
+  const [editingPhoneId, setEditingPhoneId] = useState<string | null>(null)
+  const [phoneInput, setPhoneInput] = useState('')
+  const [savingPhone, setSavingPhone] = useState(false)
+  const [editingCostCenterId, setEditingCostCenterId] = useState<string | null>(null)
+  const [costCenterInput, setCostCenterInput] = useState('')
+  const [savingCostCenter, setSavingCostCenter] = useState(false)
 
   const csvInputRef = useRef<HTMLInputElement>(null)
 
@@ -52,6 +69,14 @@ export default function MembersPage() {
     adminFetch('/api/admin/biz/members')
       .then((d) => setMembers(d.members ?? []))
       .finally(() => setLoading(false))
+    adminFetch('/api/admin/biz/permissions/roles')
+      .then((d) => {
+        // org_manager governs AirDunia staff assigned to this org (targetType
+        // admin_staff), not the org's own employees — not assignable here.
+        const assignable = (d.roles ?? []).filter((r: any) => r.name !== 'org_manager')
+        if (assignable.length) setRoles(assignable.map((r: any) => ({ id: r.id, name: r.name, label: r.label })))
+      })
+      .catch(() => {})
   }, [])
 
   async function changeRole(id: string, role: string) {
@@ -61,6 +86,50 @@ export default function MembersPage() {
     } catch (e: any) {
       alert(e.message || 'Failed to update role')
     }
+  }
+
+  function startEditLimit(m: any) {
+    setEditingLimitId(m.id)
+    setLimitInput(m.monthly_spend_limit != null ? String(m.monthly_spend_limit) : '')
+  }
+
+  async function saveLimit(id: string) {
+    setSavingLimit(true)
+    try {
+      const value = limitInput.trim() === '' ? null : Number(limitInput)
+      const d = await adminFetch(`/api/admin/biz/members/${id}`, { method: 'PATCH', body: JSON.stringify({ monthlySpendLimit: value }) })
+      setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, monthly_spend_limit: d.member.monthly_spend_limit } : m)))
+      setEditingLimitId(null)
+    } catch (e: any) {
+      alert(e.message || 'Failed to update monthly cap')
+    }
+    setSavingLimit(false)
+  }
+
+  async function savePhone(id: string) {
+    setSavingPhone(true)
+    try {
+      const value = phoneInput.trim() === '' ? null : phoneInput.trim()
+      const d = await adminFetch(`/api/admin/biz/members/${id}`, { method: 'PATCH', body: JSON.stringify({ phone: value }) })
+      setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, phone: d.member.phone } : m)))
+      setEditingPhoneId(null)
+    } catch (e: any) {
+      alert(e.message || 'Failed to update phone number')
+    }
+    setSavingPhone(false)
+  }
+
+  async function saveCostCenter(id: string) {
+    setSavingCostCenter(true)
+    try {
+      const value = costCenterInput.trim() === '' ? null : costCenterInput.trim()
+      const d = await adminFetch(`/api/admin/biz/members/${id}`, { method: 'PATCH', body: JSON.stringify({ defaultCostCenter: value }) })
+      setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, default_cost_center: d.member.default_cost_center } : m)))
+      setEditingCostCenterId(null)
+    } catch (e: any) {
+      alert(e.message || 'Failed to update cost center')
+    }
+    setSavingCostCenter(false)
   }
 
   async function removeMember(id: string, email: string) {
@@ -254,13 +323,13 @@ export default function MembersPage() {
               >
                 All Roles
               </div>
-              {ROLES.map((r) => (
+              {roles.map((r) => (
                 <div
-                  key={r}
-                  className={`role-chip mem-role-chip-capitalize ${filterRole === r ? 'active' : ''}`}
-                  onClick={() => setFilterRole(filterRole === r ? '' : r)}
+                  key={r.id}
+                  className={`role-chip mem-role-chip-capitalize ${filterRole === r.name ? 'active' : ''}`}
+                  onClick={() => setFilterRole(filterRole === r.name ? '' : r.name)}
                 >
-                  {r}
+                  {r.label}
                 </div>
               ))}
             </div>
@@ -477,7 +546,7 @@ export default function MembersPage() {
                         className="mem-checkbox"
                       />
                     </th>
-                    {['EMPLOYEE', 'EMAIL', 'ROLE', 'GROUP / DEPT', 'JOINED DATE', 'ACTIONS'].map((h) => (
+                    {['EMPLOYEE', 'EMAIL', 'PHONE', 'ROLE', 'GROUP / DEPT', 'COST CENTER', 'MONTHLY CAP', 'JOINED DATE', 'ACTIONS'].map((h) => (
                       <th key={h} className="mem-th">
                         {h}
                       </th>
@@ -487,13 +556,13 @@ export default function MembersPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="mem-loading-cell">
+                      <td colSpan={9} className="mem-loading-cell">
                         Loading employees directory…
                       </td>
                     </tr>
                   ) : filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="mem-empty-cell">
+                      <td colSpan={9} className="mem-empty-cell">
                         <Users size={32} color="#9CA3AF" className="mem-empty-icon" />
                         <div className="mem-empty-title">No Employee(s) found</div>
                         <div className="mem-empty-sub">Try clearing filters or searching another keyword.</div>
@@ -525,29 +594,88 @@ export default function MembersPage() {
                               </div>
                               <div>
                                 <div className="mem-employee-name">
-                                  {m.work_email?.split('@')[0] ?? '—'}
+                                  {m.full_name || m.work_email?.split('@')[0] || '—'}
                                 </div>
                                 <div className="mem-employee-status">
-                                  {m.status === 'invited' ? 'Pending Acceptance' : 'Active Employee'}
+                                  {m.user_id ? 'Active Employee' : 'Pending Acceptance'}
                                 </div>
                               </div>
                             </div>
                           </td>
                           <td className="mem-td-email">{m.work_email}</td>
                           <td className="mem-td">
+                            {editingPhoneId === m.id ? (
+                              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                <input
+                                  value={phoneInput}
+                                  onChange={e => setPhoneInput(e.target.value)}
+                                  placeholder="Mobile number"
+                                  style={{ width: 120, padding: '4px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 12 }}
+                                />
+                                <button className="btn-secondary" disabled={savingPhone} onClick={() => savePhone(m.id)}>Save</button>
+                                <button className="btn-secondary" onClick={() => setEditingPhoneId(null)}>Cancel</button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <span style={{ fontSize: 12 }}>{m.phone || '—'}</span>
+                                <button className="btn-secondary" onClick={() => { setEditingPhoneId(m.id); setPhoneInput(m.phone ?? '') }}>Edit</button>
+                              </div>
+                            )}
+                          </td>
+                          <td className="mem-td">
                             <select
                               value={m.role}
                               onChange={(e) => changeRole(m.id, e.target.value)}
                               className={`mem-role-select ${roleClass}`}
                             >
-                              {ROLES.map((r) => (
-                                <option key={r} value={r}>
-                                  {r.charAt(0).toUpperCase() + r.slice(1)}
+                              {roles.map((r) => (
+                                <option key={r.id} value={r.name}>
+                                  {r.label}
                                 </option>
                               ))}
                             </select>
                           </td>
                           <td className="mem-td-dept">{m.dept || 'Unassigned'}</td>
+                          <td className="mem-td">
+                            {editingCostCenterId === m.id ? (
+                              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                <input
+                                  value={costCenterInput}
+                                  onChange={e => setCostCenterInput(e.target.value.toUpperCase())}
+                                  placeholder="e.g. CC-1042"
+                                  style={{ width: 100, padding: '4px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 12 }}
+                                />
+                                <button className="btn-secondary" disabled={savingCostCenter} onClick={() => saveCostCenter(m.id)}>Save</button>
+                                <button className="btn-secondary" onClick={() => setEditingCostCenterId(null)}>Cancel</button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <span style={{ fontSize: 12 }}>{m.default_cost_center || '—'}</span>
+                                <button className="btn-secondary" onClick={() => { setEditingCostCenterId(m.id); setCostCenterInput(m.default_cost_center ?? '') }}>Edit</button>
+                              </div>
+                            )}
+                          </td>
+                          <td className="mem-td">
+                            {editingLimitId === m.id ? (
+                              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                <input
+                                  type="number" min="0" value={limitInput}
+                                  onChange={e => setLimitInput(e.target.value)}
+                                  placeholder="No limit"
+                                  style={{ width: 90, padding: '4px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 12 }}
+                                />
+                                <button className="btn btn-primary btn-sm" disabled={savingLimit} onClick={() => saveLimit(m.id)}>Save</button>
+                                <button className="btn btn-ghost btn-sm" onClick={() => setEditingLimitId(null)}>Cancel</button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <span style={{ fontSize: 12 }}>
+                                  {m.monthly_spend_limit != null ? `Rs ${Number(m.monthly_spend_limit).toLocaleString('en-IN')}` : 'No limit'}
+                                </span>
+                                <button className="btn btn-ghost btn-sm" onClick={() => startEditLimit(m)}>Edit</button>
+                              </div>
+                            )}
+                          </td>
                           <td className="mem-td-joined">
                             {new Date(m.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </td>

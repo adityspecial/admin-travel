@@ -5,6 +5,7 @@ import { adminFetch } from '@/lib/api'
 import { BIZ_MODULES } from '@/lib/permissions/definitions'
 import { ModuleCard } from '../../super/permissions/ModuleCard'
 import { OverrideEngine } from '../../super/permissions/OverrideEngine'
+import { AppPopup } from '@/components/ui/AppPopup'
 import './permission.css'
 import {
   Shield,
@@ -17,6 +18,8 @@ import {
   UserCheck,
   Building2,
   Filter,
+  Plus,
+  Pencil,
 } from 'lucide-react'
 
 const PORTAL = 'biz'
@@ -39,21 +42,79 @@ export default function BizPermissionsPage() {
   const [committed, setCommitted] = useState(false)
   const [localMatrix, setLocalMatrix] = useState<Record<string, Record<string, boolean>>>({})
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
+  const [createForm, setCreateForm] = useState({ name: '', label: '', description: '' })
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState('')
+  const [renaming, setRenaming] = useState(false)
+  const [renameLabel, setRenameLabel] = useState('')
+  const [renameSaving, setRenameSaving] = useState(false)
 
   const activeRole = roles.find((r) => r.id === activeRoleId) ?? null
 
+  function fetchRoles() {
+    return adminFetch('/api/admin/biz/permissions/roles').then((d) => {
+      setRoles(d.roles ?? [])
+      return d.roles ?? []
+    })
+  }
+
   useEffect(() => {
     setLoading(true)
-    adminFetch('/api/admin/biz/permissions/roles')
-      .then((d) => {
-        setRoles(d.roles ?? [])
-        if (d.roles?.length) {
-          setActiveRoleId(d.roles[0].id)
-          setLocalMatrix(d.roles[0].matrix ?? {})
+    fetchRoles()
+      .then((loaded) => {
+        if (loaded.length) {
+          setActiveRoleId(loaded[0].id)
+          setLocalMatrix(loaded[0].matrix ?? {})
         }
       })
       .finally(() => setLoading(false))
   }, [])
+
+  async function createRole(e: React.FormEvent) {
+    e.preventDefault()
+    setCreating(true); setCreateError('')
+    try {
+      const result = await adminFetch('/api/admin/biz/permissions/roles', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: createForm.name, label: createForm.label,
+          description: createForm.description || undefined,
+        }),
+      })
+      const loaded = await fetchRoles()
+      const created = loaded.find((r: Role) => r.id === result.id)
+      if (created) { setActiveRoleId(created.id); setLocalMatrix(created.matrix ?? {}); setView('roles') }
+      setCreateForm({ name: '', label: '', description: '' })
+      setShowCreate(false)
+    } catch (err: any) {
+      try { setCreateError(JSON.parse(err.message).error ?? err.message) }
+      catch { setCreateError(err.message) }
+    }
+    setCreating(false)
+  }
+
+  function startRename() {
+    if (!activeRole) return
+    setRenameLabel(activeRole.label)
+    setRenaming(true)
+  }
+
+  async function saveRename() {
+    if (!activeRole || !renameLabel.trim()) return
+    setRenameSaving(true)
+    try {
+      await adminFetch(`/api/admin/biz/permissions/roles/${activeRole.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ label: renameLabel.trim() }),
+      })
+      setRoles(prev => prev.map(r => r.id === activeRole.id ? { ...r, label: renameLabel.trim() } : r))
+      setRenaming(false)
+    } catch (err: any) {
+      alert(err.message ?? 'Failed to rename')
+    }
+    setRenameSaving(false)
+  }
 
   async function handleToggle(module: string, permission: string, enabled: boolean) {
     if (!activeRoleId) return
@@ -109,8 +170,11 @@ export default function BizPermissionsPage() {
           </button>
 
           {/* Roles Group Title */}
-          <div className="bp-roles-group-title">
+          <div className="bp-roles-group-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             CORPORATE ROLES ({roles.length})
+            <button onClick={() => setShowCreate(true)} title="Create custom role" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex' }}>
+              <Plus size={14} />
+            </button>
           </div>
 
           {/* Roles List */}
@@ -212,9 +276,28 @@ export default function BizPermissionsPage() {
               <div className="bp-schema-header">
                 <div className="bp-schema-header-left">
                   <Building2 size={22} color="var(--accent, #E31E24)" />
-                  <h2 className="bp-schema-title">
-                    ROLE SCHEMA: <span className="bp-schema-accent">{activeRole.label.toUpperCase()}</span>
-                  </h2>
+                  {renaming ? (
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <input
+                        autoFocus
+                        value={renameLabel}
+                        onChange={e => setRenameLabel(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && saveRename()}
+                        style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 14 }}
+                      />
+                      <button className="btn-primary" disabled={renameSaving} onClick={saveRename}>
+                        {renameSaving ? 'Saving…' : 'Save'}
+                      </button>
+                      <button className="btn-secondary" onClick={() => setRenaming(false)}>Cancel</button>
+                    </div>
+                  ) : (
+                    <h2 className="bp-schema-title">
+                      ROLE SCHEMA: <span className="bp-schema-accent">{activeRole.label.toUpperCase()}</span>
+                      <button onClick={startRename} title="Rename role" style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: 8, verticalAlign: 'middle', color: 'inherit', opacity: 0.6 }}>
+                        <Pencil size={14} />
+                      </button>
+                    </h2>
+                  )}
                 </div>
 
                 <button onClick={commit} disabled={committing} className="btn-primary">
@@ -248,6 +331,53 @@ export default function BizPermissionsPage() {
           ) : null}
         </main>
       </div>
+
+      <AppPopup
+        isOpen={showCreate}
+        title="Create Custom Role"
+        subtitle="Define a new role for your organisation."
+        icon={<Plus size={22} strokeWidth={2.2} />}
+        iconTone="blue"
+        maxWidth={480}
+        onClose={() => setShowCreate(false)}
+      >
+        {createError && <div className="login-error">{createError}</div>}
+        <form onSubmit={createRole}>
+          <div className="app-input-group">
+            <label className="app-input-label">Name (machine key) *</label>
+            <input
+              className="app-input" required
+              value={createForm.name}
+              onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
+              placeholder="e.g. travel_coordinator"
+            />
+          </div>
+          <div className="app-input-group">
+            <label className="app-input-label">Display Label *</label>
+            <input
+              className="app-input" required
+              value={createForm.label}
+              onChange={e => setCreateForm(f => ({ ...f, label: e.target.value }))}
+              placeholder="e.g. Travel Coordinator"
+            />
+          </div>
+          <div className="app-input-group">
+            <label className="app-input-label">Description</label>
+            <input
+              className="app-input"
+              value={createForm.description}
+              onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))}
+              placeholder="Optional"
+            />
+          </div>
+          <div className="app-popup-footer">
+            <button type="button" className="confirm-modal-btn confirm-modal-btn-cancel" onClick={() => setShowCreate(false)}>Cancel</button>
+            <button type="submit" className="confirm-modal-btn confirm-modal-btn-success" disabled={creating}>
+              {creating ? 'Creating…' : 'Create Role'}
+            </button>
+          </div>
+        </form>
+      </AppPopup>
     </div>
   )
 }

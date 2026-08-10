@@ -3,3 +3,58 @@
 .markup-stat-grid {
   grid-template-columns: repeat(3, 1fr);
 }
+
+/* Fixed / Percentage choice — a segmented control, not bare OS radios, to
+   match the polished select/input controls it sits next to in the form. */
+.markup-type-group {
+  display: flex;
+  gap: 8px;
+}
+
+.markup-type-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 150ms ease-out, color 150ms ease-out, background 150ms ease-out;
+}
+
+.markup-type-option:hover {
+  border-color: var(--ink-3);
+}
+
+.markup-type-option:has(input:focus-visible) {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.markup-type-option.is-selected {
+  border-color: var(--orange);
+  background: var(--orange-lt);
+  color: var(--orange);
+}
+
+.markup-type-option input {
+  /* Kept in the DOM (not display:none) so keyboard nav, label association,
+     and form submission all still work — just visually replaced by the
+     button-styled label around it. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* "Not yet applied to live pricing" — a real warning signal, not a stray caption */
+.markup-live-flag {
+  margin-top: 4px;
+}

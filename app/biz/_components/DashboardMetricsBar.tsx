@@ -288,17 +288,17 @@ export default function DashboardMetricsBar({
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
-                fontSize: '11.5px',
+                gap: '6px',
+                fontSize: '14px',
                 fontWeight: 800,
                 color: '#2563EB',
                 textDecoration: 'none',
                 background: '#EFF6FF',
-                padding: '4px 10px',
+                padding: '6px 14px',
                 borderRadius: '6px',
               }}
             >
-              <PlusCircle size={13} />
+              <PlusCircle size={16} />
               <span>Top-up</span>
             </Link>
           </div>

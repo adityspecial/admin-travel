@@ -23,7 +23,24 @@ import {
   AlertCircle,
   Briefcase,
   Zap,
+  Plane,
+  BedDouble,
+  Car,
+  Stamp,
+  Package,
+  Sliders,
 } from 'lucide-react'
+
+// key/bufferKey match the PATCH body field names backend/app/api/admin/biz/policy/route.ts's
+// CAP_FIELDS expects; column/bufferColumn match what GET actually returns (snake_case).
+const CAP_ROWS: { key: string; bufferKey: string; column: string; bufferColumn: string; label: string; unit: string; icon: any }[] = [
+  { key: 'flightCap',    bufferKey: 'flightCapBuffer',    column: 'flight_cap',    bufferColumn: 'flight_cap_buffer',    label: 'Flight Cap',    unit: 'per trip',        icon: Plane },
+  { key: 'hotelCap',     bufferKey: 'hotelCapBuffer',     column: 'hotel_cap',     bufferColumn: 'hotel_cap_buffer',     label: 'Hotel Cap',     unit: 'per night',       icon: BedDouble },
+  { key: 'insuranceCap', bufferKey: 'insuranceCapBuffer', column: 'insurance_cap', bufferColumn: 'insurance_cap_buffer', label: 'Insurance Cap', unit: 'per policy',      icon: ShieldCheck },
+  { key: 'cabCap',       bufferKey: 'cabCapBuffer',       column: 'cab_cap',       bufferColumn: 'cab_cap_buffer',       label: 'Cab Cap',       unit: 'per trip',        icon: Car },
+  { key: 'visaCap',      bufferKey: 'visaCapBuffer',      column: 'visa_cap',      bufferColumn: 'visa_cap_buffer',      label: 'Visa Cap',      unit: 'per application', icon: Stamp },
+  { key: 'packageCap',   bufferKey: 'packageCapBuffer',   column: 'package_cap',   bufferColumn: 'package_cap_buffer',   label: 'Package Cap',   unit: 'per booking',     icon: Package },
+]
 
 interface Identifier {
   id: string
@@ -49,7 +66,10 @@ export default function CompanyDetailsPage() {
   const [addresses, setAddresses] = useState<Address[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
-  const [editForm, setEditForm] = useState({ name: '', orgCode: '' })
+  const [editForm, setEditForm] = useState({ name: '', gstNumber: '', panNumber: '', cin: '' })
+  const [capsEditing, setCapsEditing] = useState(false)
+  const [capsForm, setCapsForm] = useState<Record<string, string>>({})
+  const [savingCaps, setSavingCaps] = useState(false)
   const [addingId, setAddingId] = useState(false)
   const [idForm, setIdForm] = useState({ number: '', alias: '', address: '', is_hq: false })
   const [idFormError, setIdFormError] = useState('')
@@ -75,8 +95,17 @@ export default function CompanyDetailsPage() {
     ])
       .then(([p, ids, addrs]) => {
         setPolicy(p.policy)
-        setEditForm({ name: p.policy?.name ?? '', orgCode: p.policy?.org_code ?? '' })
+        setEditForm({
+          name: p.policy?.name ?? '', gstNumber: p.policy?.gst_number ?? '',
+          panNumber: p.policy?.pan_number ?? '', cin: p.policy?.cin ?? '',
+        })
         setLogoUrl(p.policy?.logo_url ?? '')
+        setCapsForm(Object.fromEntries(
+          CAP_ROWS.flatMap(r => [
+            [r.key, String(p.policy?.[r.column] ?? 0)],
+            [r.bufferKey, String(p.policy?.[r.bufferColumn] ?? 0)],
+          ])
+        ))
         setIdentifiers(ids.identifiers ?? [])
         setAddresses(addrs.addresses ?? [])
       })
@@ -148,17 +177,33 @@ export default function CompanyDetailsPage() {
     }
   }
 
-  async function savePolicy() {
-    if (!editForm.orgCode.trim()) {
-      setError('Org code is required.')
-      return
+  async function saveCaps() {
+    setSavingCaps(true)
+    setError('')
+    try {
+      const body = Object.fromEntries(
+        CAP_ROWS.flatMap(r => [[r.key, Number(capsForm[r.key] ?? 0)], [r.bufferKey, Number(capsForm[r.bufferKey] ?? 0)]])
+      )
+      const d = await adminFetch('/api/admin/biz/policy', { method: 'PATCH', body: JSON.stringify(body) })
+      setPolicy(d.policy)
+      showNotification('Booking caps updated successfully.')
+      setCapsEditing(false)
+    } catch (e: any) {
+      setError(e.message)
     }
+    setSavingCaps(false)
+  }
+
+  async function savePolicy() {
     setSaving(true)
     setError('')
     try {
       const d = await adminFetch('/api/admin/biz/policy', {
         method: 'PATCH',
-        body: JSON.stringify({ name: editForm.name, orgCode: editForm.orgCode, gstNumber: policy?.gst_number }),
+        body: JSON.stringify({
+          name: editForm.name, gstNumber: editForm.gstNumber,
+          panNumber: editForm.panNumber, cin: editForm.cin,
+        }),
       })
       setPolicy(d.policy)
       showNotification('Company profile updated successfully.')
@@ -342,20 +387,139 @@ export default function CompanyDetailsPage() {
                   <label className="cp-field-label">
                     Organization Code (Org Code)
                   </label>
+                  <div className="cp-readonly-value cp-readonly-value--mono">
+                    {policy?.org_code || '—'}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="cp-field-label">GSTIN</label>
                   {editing ? (
                     <input
                       className="input-field"
-                      value={editForm.orgCode}
-                      onChange={(e) => setEditForm((f) => ({ ...f, orgCode: e.target.value.toUpperCase().replace(/\s/g, '') }))}
-                      maxLength={12}
-                      placeholder="e.g. ACME2026"
+                      value={editForm.gstNumber}
+                      onChange={(e) => setEditForm((f) => ({ ...f, gstNumber: e.target.value.toUpperCase() }))}
+                      placeholder="e.g. 06AADCM5146R1ZZ"
                     />
                   ) : (
-                    <div className="cp-readonly-value cp-readonly-value--mono">
-                      {policy?.org_code || '—'}
-                    </div>
+                    <div className="cp-readonly-value cp-readonly-value--mono">{policy?.gst_number || '—'}</div>
                   )}
                 </div>
+
+                <div>
+                  <label className="cp-field-label">PAN</label>
+                  {editing ? (
+                    <input
+                      className="input-field"
+                      value={editForm.panNumber}
+                      onChange={(e) => setEditForm((f) => ({ ...f, panNumber: e.target.value.toUpperCase() }))}
+                      placeholder="e.g. AADCM5146R"
+                    />
+                  ) : (
+                    <div className="cp-readonly-value cp-readonly-value--mono">{policy?.pan_number || '—'}</div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="cp-field-label">CIN</label>
+                  {editing ? (
+                    <input
+                      className="input-field"
+                      value={editForm.cin}
+                      onChange={(e) => setEditForm((f) => ({ ...f, cin: e.target.value.toUpperCase() }))}
+                      placeholder="e.g. U63040HR2000PTC090846"
+                    />
+                  ) : (
+                    <div className="cp-readonly-value cp-readonly-value--mono">{policy?.cin || '—'}</div>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* 1b. Booking Caps & Approval Buffers Section */}
+            <section className="section-card">
+              <div className="cp-section-header">
+                <div className="cp-section-header-left">
+                  <div className="cp-section-icon cp-section-icon--blue">
+                    <Sliders size={20} />
+                  </div>
+                  <div>
+                    <h2 className="cp-section-title">Booking Caps &amp; Approval Buffers</h2>
+                    <span className="cp-section-subtitle">Per-booking spending limits by product, and how far a booking can exceed the cap before requiring approval</span>
+                  </div>
+                </div>
+
+                {!capsEditing ? (
+                  <button onClick={() => setCapsEditing(true)} className="btn-secondary">
+                    <Edit3 size={14} /> Edit Caps
+                  </button>
+                ) : (
+                  <div className="cp-btn-row">
+                    <button onClick={saveCaps} disabled={savingCaps} className="btn-primary">
+                      <Check size={14} /> {savingCaps ? 'Saving…' : 'Save'}
+                    </button>
+                    <button onClick={() => setCapsEditing(false)} className="btn-secondary">
+                      <X size={14} /> Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="cp-field-grid-a">
+                {CAP_ROWS.map(r => {
+                  const Icon = r.icon
+                  return (
+                    <div key={r.key}>
+                      <label className="cp-field-label">
+                        <Icon size={13} style={{ marginRight: 5, verticalAlign: -2 }} />
+                        {r.label} (₹ {r.unit})
+                      </label>
+                      {capsEditing ? (
+                        <input
+                          className="input-field"
+                          type="number"
+                          min="0"
+                          value={capsForm[r.key] ?? '0'}
+                          onChange={(e) => setCapsForm((f) => ({ ...f, [r.key]: e.target.value }))}
+                        />
+                      ) : (
+                        <div className="cp-readonly-value">
+                          ₹{Number(policy?.[r.column] ?? 0).toLocaleString('en-IN')}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="cp-field-label" style={{ marginTop: 20, marginBottom: 10 }}>
+                Approval buffers — a booking exceeding its cap by up to this amount still books without approval.
+              </div>
+              <div className="cp-field-grid-a">
+                {CAP_ROWS.map(r => {
+                  const Icon = r.icon
+                  return (
+                    <div key={r.bufferKey}>
+                      <label className="cp-field-label">
+                        <Icon size={13} style={{ marginRight: 5, verticalAlign: -2 }} />
+                        {r.label.replace(' Cap', '')} Buffer (₹)
+                      </label>
+                      {capsEditing ? (
+                        <input
+                          className="input-field"
+                          type="number"
+                          min="0"
+                          value={capsForm[r.bufferKey] ?? '0'}
+                          onChange={(e) => setCapsForm((f) => ({ ...f, [r.bufferKey]: e.target.value }))}
+                        />
+                      ) : (
+                        <div className="cp-readonly-value">
+                          ₹{Number(policy?.[r.bufferColumn] ?? 0).toLocaleString('en-IN')}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </section>
 

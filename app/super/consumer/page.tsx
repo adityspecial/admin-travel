@@ -3,14 +3,24 @@ import { useEffect, useState, useCallback } from 'react'
 import { adminFetch } from '@/lib/api'
 import { Percent, Plane, Receipt } from 'lucide-react'
 
+// segment keys must match what the real pricing routes actually send to
+// resolveFeeQuote() — cab_airport/cab_outstation come from /api/cabs/quote;
+// a plain 'hotel'/'bus' segment was offered here before but never matched
+// any real booking flow's segment key (bus has no live fee resolution at
+// all yet, so it's still left out).
 const SEGMENTS = [
   { key: 'flight_domestic',      label: 'Flight — Domestic',      color: '#2563EB', bg: '#EFF6FF' },
-  { key: 'flight_international', label: 'Flight — International',  color: '#7C3AED', bg: '#F5F3FF' },
-  { key: 'hotel',                label: 'Hotel',                   color: '#059669', bg: '#ECFDF5' },
-  { key: 'bus',                  label: 'Bus',                     color: '#D97706', bg: '#FFFBEB' },
+  { key: 'flight_international', label: 'Flight — International', color: '#7C3AED', bg: '#F5F3FF' },
+  { key: 'hotel_domestic',       label: 'Hotel — Domestic',       color: '#059669', bg: '#ECFDF5' },
+  { key: 'hotel_international',  label: 'Hotel — International',  color: '#0D9488', bg: '#F0FDFA' },
+  { key: 'insurance',            label: 'Insurance',              color: '#D97706', bg: '#FFFBEB' },
   { key: 'cab_outstation',       label: 'Cab — Outstation',       color: '#0891B2', bg: '#ECFEFF' },
   { key: 'cab_airport',          label: 'Cab — Airport Transfer', color: '#0F766E', bg: '#F0FDFA' },
 ] as const
+
+// Airline-code overrides only make sense for flight segments — a hotel,
+// cab, or insurance booking has no airline to override.
+const FLIGHT_SEGMENTS = SEGMENTS.filter(s => s.key.startsWith('flight_'))
 
 const COMPONENTS = [
   { key: 'markup',      label: 'Markup' },
@@ -143,7 +153,7 @@ function AirlineOverridesTable({ rows, onChange, onAdd, onRemove }: {
             <div key={i} className={`consumer-airline-row ${i % 2 !== 0 ? 'consumer-airline-row--alt' : ''}`}>
               <select className="form-input consumer-airline-select"
                 value={r.segment} onChange={e => onChange(i, 'segment', e.target.value)}>
-                {SEGMENTS.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                {FLIGHT_SEGMENTS.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
               </select>
               <select className="form-input consumer-airline-select"
                 value={r.component} onChange={e => onChange(i, 'component', e.target.value)}>

@@ -93,8 +93,8 @@ export function PromoModal({ onClose, onCreated }: { onClose: () => void; onCrea
               <label style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>Applicable To</label>
               <select value={form.applicable_to} onChange={e => set('applicable_to', e.target.value)} style={{ ...INP, background: '#fff' }}>
                 <option value="all">All bookings</option>
-                <option value="flights">Flights only</option>
-                <option value="hotels">Hotels only</option>
+                <option value="flight">Flights only</option>
+                <option value="hotel">Hotels only</option>
               </select>
             </div>
             <div />

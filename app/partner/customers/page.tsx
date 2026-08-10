@@ -1,11 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { adminFetch } from '@/lib/api'
+import { adminFetch, adminDownload } from '@/lib/api'
 import { Pagination, usePagination } from '@/components/Pagination'
 import { StatCard } from '@/components/ui/StatCard'
 import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { AppInput } from '@/components/ui/AppInput'
-import { Users, IdCard, AlertTriangle, Search } from 'lucide-react'
+import { Users, IdCard, AlertTriangle, Search, Download } from 'lucide-react'
 import './cutomer.css'
 
 interface Customer { id: string; name: string; email?: string; phone?: string; passport_no?: string; passport_expiry?: string; gender?: string; created_at: string }
@@ -31,6 +31,11 @@ export default function PartnerCustomersPage() {
   function handleSearch(q: string) {
     setSearch(q)
     if (q.length > 1 || q.length === 0) load(q)
+  }
+
+  function exportCsv() {
+    adminDownload('/api/admin/partner/customers/export', 'customer-crm.csv', { agentId })
+      .catch((e: any) => alert(e.message ?? 'Export failed'))
   }
 
   const { slice: pageCustomers, page, setPage, total } = usePagination(customers, 20)
@@ -98,14 +103,19 @@ export default function PartnerCustomersPage() {
             title="Customer CRM"
             subtitle="All traveller profiles saved by this agent."
             headerAction={
-              <div className="customer-search-wrapper">
-                <AppInput
-                  placeholder="Search by name, email or phone…"
-                  value={search}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  icon={<Search size={15} />}
-                  wrapperClassName="m-0"
-                />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div className="customer-search-wrapper">
+                  <AppInput
+                    placeholder="Search by name, email or phone…"
+                    value={search}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    icon={<Search size={15} />}
+                    wrapperClassName="m-0"
+                  />
+                </div>
+                <button className="btn-secondary" onClick={exportCsv}>
+                  <Download size={14} /> Export CSV
+                </button>
               </div>
             }
             columns={columns}

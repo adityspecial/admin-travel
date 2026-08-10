@@ -7,7 +7,7 @@ import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { AppInput } from '@/components/ui/AppInput'
 import { AppImageModal } from '@/components/ui/AppImageModal'
 import { Pagination } from '@/components/Pagination'
-import { Package, Sparkles, CheckCircle2, Compass, Search, Pencil, Star, MapPin } from 'lucide-react'
+import { Package, Sparkles, CheckCircle2, Compass, Search, Pencil, Star, MapPin, Plus } from 'lucide-react'
 
 interface HolidayPackage {
   id: string
@@ -33,6 +33,7 @@ export default function SuperPackagesPage() {
   const [search, setSearch]             = useState('')
   const [page, setPage]                 = useState(1)
   const [editId, setEditId]             = useState<string | null>(null)
+  const [showCreate, setShowCreate]     = useState(false)
   const [msg, setMsg]                   = useState('')
   const [previewImage, setPreviewImage] = useState<{ src: string; title: string; subtitle?: string } | null>(null)
 
@@ -208,6 +209,9 @@ export default function SuperPackagesPage() {
       <div className="admin-topbar">
         <h2>Holiday Packages</h2>
         <span className="topbar-meta">{total.toLocaleString('en-IN')} packages total</span>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowCreate(true)}>
+          <Plus size={14} /> Add Package
+        </button>
       </div>
 
       <div className="admin-content">
@@ -299,12 +303,12 @@ export default function SuperPackagesPage() {
         </div>
       </div>
 
-      {editId && (
+      {(editId || showCreate) && (
         <PackageEditModal
           pkgId={editId}
-          onClose={() => setEditId(null)}
+          onClose={() => { setEditId(null); setShowCreate(false) }}
           onSaved={() => {
-            setMsg('Package updated successfully!')
+            setMsg(editId ? 'Package updated successfully!' : 'Package created successfully!')
             load(search, page)
             setTimeout(() => setMsg(''), 3000)
           }}

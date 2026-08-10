@@ -1,33 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createHmac } from 'crypto'
+import { isRateLimited } from '@/lib/rateLimit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET ?? 'airdunia_admin_dev_only'
+if (!process.env.ADMIN_SESSION_SECRET) throw new Error('ADMIN_SESSION_SECRET env var is required')
+const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET
 const TOKEN_TTL_MS   = 24 * 60 * 60 * 1000 // 24 hours
-
-// ── In-memory rate limiter (5 attempts per IP per 15 min) ────────────────────
-const attempts = new Map<string, { count: number; resetAt: number }>()
-
-function checkRate(ip: string): { ok: boolean; retryAfter?: number } {
-  const now   = Date.now()
-  const entry = attempts.get(ip)
-  if (!entry || entry.resetAt < now) {
-    attempts.set(ip, { count: 1, resetAt: now + 15 * 60 * 1000 })
-    return { ok: true }
-  }
-  if (entry.count >= 5) {
-    return { ok: false, retryAfter: Math.ceil((entry.resetAt - now) / 1000) }
-  }
-  entry.count++
-  return { ok: true }
-}
-
-function clearRate(ip: string) { attempts.delete(ip) }
 
 // ── HMAC-SHA256 token (must match backend/lib/supabase/adminAuth.ts) ──────────
 function signToken(email: string, role: string, orgId?: string | null): string {
@@ -47,11 +30,10 @@ export async function POST(req: NextRequest) {
            ?? req.headers.get('x-real-ip')
            ?? '127.0.0.1'
 
-  const rate = checkRate(ip)
-  if (!rate.ok) {
+  if (await isRateLimited(ip, { windowSec: 15 * 60, max: 5 })) {
     return NextResponse.json(
-      { error: `Too many attempts. Try again in ${Math.ceil((rate.retryAfter ?? 900) / 60)} minutes.` },
-      { status: 429, headers: { 'Retry-After': String(rate.retryAfter ?? 900) } },
+      { error: 'Too many attempts. Try again in 15 minutes.' },
+      { status: 429, headers: { 'Retry-After': String(15 * 60) } },
     )
   }
 
@@ -91,7 +73,6 @@ export async function POST(req: NextRequest) {
     agentId = link?.agent_id ?? null
   }
 
-  clearRate(ip)
   return NextResponse.json({
     token: signToken(normalised, adminUser.role, adminUser.org_id),
     role: adminUser.role,

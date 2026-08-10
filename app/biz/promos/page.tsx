@@ -34,6 +34,7 @@ interface Promo {
   valid_until: string
   is_active: boolean
   created_at: string
+  created_by_role: 'super' | 'biz_admin' | 'partner_agent'
 }
 
 function fmtDate(d: string) {
@@ -166,7 +167,7 @@ export default function BizPromosPage() {
             <table className="bprm-table">
               <thead>
                 <tr className="bprm-thead-row">
-                  {['PROMO CODE', 'DISCOUNT VALUE', 'MIN BOOKING', 'REDEMPTION USES', 'APPLIES TO', 'VALID UNTIL', 'STATUS', 'ACTIONS'].map((h) => (
+                  {['PROMO CODE', 'DISCOUNT VALUE', 'MIN BOOKING', 'REDEMPTION USES', 'APPLIES TO', 'VALID UNTIL', 'STATUS', 'SOURCE', 'ACTIONS'].map((h) => (
                     <th key={h} className="bprm-th">
                       {h}
                     </th>
@@ -176,13 +177,13 @@ export default function BizPromosPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="bprm-loading-cell">
+                    <td colSpan={9} className="bprm-loading-cell">
                       Loading corporate promo vouchers…
                     </td>
                   </tr>
                 ) : slice.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="bprm-empty-cell">
+                    <td colSpan={9} className="bprm-empty-cell">
                       <Ticket size={36} color="#9CA3AF" className="bprm-empty-icon" />
                       <div className="bprm-empty-title">No Promo Codes Found</div>
                       <div className="bprm-empty-sub">Create your first promo campaign using the "+ New Promo Code" button.</div>
@@ -239,15 +240,28 @@ export default function BizPromosPage() {
                         </span>
                       </td>
 
+                      {/* Source */}
+                      <td className="bprm-td">
+                        {p.created_by_role === 'biz_admin' ? (
+                          <span className="bprm-applies-pill">Self-created</span>
+                        ) : (
+                          <span className="bprm-status-pill bprm-status-pill--inactive">Granted by AirDunia</span>
+                        )}
+                      </td>
+
                       {/* Actions */}
                       <td className="bprm-td">
-                        <button
-                          onClick={() => toggle(p)}
-                          disabled={toggling === p.id}
-                          className="btn-secondary bprm-toggle-btn"
-                        >
-                          {toggling === p.id ? 'Updating…' : p.is_active ? 'Deactivate' : 'Activate'}
-                        </button>
+                        {p.created_by_role === 'biz_admin' ? (
+                          <button
+                            onClick={() => toggle(p)}
+                            disabled={toggling === p.id}
+                            className="btn-secondary bprm-toggle-btn"
+                          >
+                            {toggling === p.id ? 'Updating…' : p.is_active ? 'Deactivate' : 'Activate'}
+                          </button>
+                        ) : (
+                          <span className="bprm-uses-muted">View only</span>
+                        )}
                       </td>
                     </tr>
                   ))

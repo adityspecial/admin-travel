@@ -1009,6 +1009,11 @@
   color: #475569;
 }
 
+.agents-tier-badge--bronze {
+  background: #fdf2e9;
+  color: #9a5b13;
+}
+
 .agents-status-pill-pending {
   background: #ffedd5;
   color: #c2410c;
@@ -1111,8 +1116,9 @@
 
 .consumer-segment--flight_domestic { --seg-color: #2563EB; --seg-bg: #EFF6FF; --seg-border: #2563EB30; --seg-border-light: #2563EB20; }
 .consumer-segment--flight_international { --seg-color: #7C3AED; --seg-bg: #F5F3FF; --seg-border: #7C3AED30; --seg-border-light: #7C3AED20; }
-.consumer-segment--hotel { --seg-color: #059669; --seg-bg: #ECFDF5; --seg-border: #05966930; --seg-border-light: #05966920; }
-.consumer-segment--bus { --seg-color: #D97706; --seg-bg: #FFFBEB; --seg-border: #D9770630; --seg-border-light: #D9770620; }
+.consumer-segment--hotel_domestic { --seg-color: #059669; --seg-bg: #ECFDF5; --seg-border: #05966930; --seg-border-light: #05966920; }
+.consumer-segment--hotel_international { --seg-color: #0D9488; --seg-bg: #F0FDFA; --seg-border: #0D948830; --seg-border-light: #0D948820; }
+.consumer-segment--insurance { --seg-color: #D97706; --seg-bg: #FFFBEB; --seg-border: #D9770630; --seg-border-light: #D9770620; }
 .consumer-segment--cab_outstation { --seg-color: #0891B2; --seg-bg: #ECFEFF; --seg-border: #0891B230; --seg-border-light: #0891B220; }
 .consumer-segment--cab_airport { --seg-color: #0F766E; --seg-bg: #F0FDFA; --seg-border: #0F766E30; --seg-border-light: #0F766E20; }
 
@@ -4503,6 +4509,42 @@
   border: none;
   cursor: pointer;
   padding: 2px;
+}
+
+.perm-oe-row--pending {
+  background: #FFFBEB;
+  outline: 1px dashed #F59E0B;
+  outline-offset: -1px;
+}
+
+.perm-oe-commit-bar {
+  position: sticky;
+  bottom: 0;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #111827;
+  color: #fff;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.perm-oe-commit-count {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.perm-oe-commit-error {
+  font-size: 12px;
+  color: #FCA5A5;
+}
+
+.perm-oe-commit-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .perm-toggle {

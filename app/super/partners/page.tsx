@@ -11,6 +11,7 @@ import { ShieldCheck, UserCheck, UserPlus, Search, Plus, Mail, Lock, Building2 }
 interface Partner {
   id: string
   adminId: string
+  roleId: string | null
   agentId: string
   agentName: string
   agentCode: string
@@ -40,19 +41,38 @@ export default function PartnersPage() {
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
   const [createSuccess, setCreateSuccess] = useState('')
+  const [roles, setRoles] = useState<{ id: string; name: string; label: string }[]>([])
+  const [savingRole, setSavingRole] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([
       adminFetch('/api/admin/super/partners'),
       adminFetch('/api/admin/super/agents'),
+      adminFetch('/api/admin/super/permissions/roles?portal=partner'),
     ])
-      .then(([pData, aData]) => {
+      .then(([pData, aData, rData]) => {
         setPartners(pData.partners ?? [])
         setAgents(aData.agents ?? [])
+        setRoles(rData.roles ?? [])
       })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+
+  async function changeRole(partnerId: string, roleId: string) {
+    setSavingRole(partnerId)
+    const prev = partners.find(p => p.id === partnerId)?.roleId ?? null
+    setPartners(prevList => prevList.map(p => p.id === partnerId ? { ...p, roleId: roleId || null } : p))
+    try {
+      await adminFetch('/api/admin/super/partners', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: partnerId, roleId: roleId || null }),
+      })
+    } catch {
+      setPartners(prevList => prevList.map(p => p.id === partnerId ? { ...p, roleId: prev } : p))
+    }
+    setSavingRole(null)
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -75,6 +95,7 @@ export default function PartnersPage() {
         {
           id: result.adminId,
           adminId: result.adminId,
+          roleId: null,
           agentId: form.agentId,
           agentName: result.agentName,
           agentCode: '',
@@ -183,6 +204,23 @@ export default function PartnersPage() {
         <span className={`data-table-status-pill ${p.status === 'active' ? 'active' : 'inactive'}`}>
           {p.status === 'active' ? '● Active' : '● Inactive'}
         </span>
+      ),
+    },
+    {
+      key: 'role',
+      header: 'Permission Role',
+      render: (p) => (
+        <select
+          className="app-input"
+          value={p.roleId ?? ''}
+          disabled={savingRole === p.id}
+          onChange={(e) => changeRole(p.id, e.target.value)}
+        >
+          <option value="">Default (Agent Admin)</option>
+          {roles.filter(r => r.name !== 'agent').map(r => (
+            <option key={r.id} value={r.id}>{r.label}</option>
+          ))}
+        </select>
       ),
     },
     {

@@ -16,6 +16,23 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
+// Days/hours/minutes/seconds instead of a big flat hour count — computed
+// from the raw timestamp (not the backend's hoursPending, which is
+// hour-granularity only) so minutes/seconds are actually meaningful.
+function formatPending(iso: string) {
+  const totalSeconds = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000))
+  const days    = Math.floor(totalSeconds / 86400)
+  const hours   = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  const parts: string[] = []
+  if (days)              parts.push(`${days}d`)
+  if (days || hours)     parts.push(`${hours}h`)
+  if (days || hours || minutes) parts.push(`${minutes}m`)
+  parts.push(`${seconds}s`)
+  return parts.join(' ')
+}
+
 export default function RefundAgingPage() {
   const [refunds, setRefunds] = useState<RefundRow[]>([])
   const [stats, setStats] = useState<{ count: number; totalAmount: number } | null>(null)
@@ -103,7 +120,7 @@ export default function RefundAgingPage() {
                 ) : refunds.map(r => (
                   <tr key={r.id}>
                     <td style={{ whiteSpace: 'nowrap' }}>{formatDate(r.createdAt)}</td>
-                    <td style={{ fontWeight: 800, color: r.hoursPending > 96 ? '#DC2626' : '#D97706' }}>{r.hoursPending}h</td>
+                    <td style={{ fontWeight: 800, color: r.hoursPending > 96 ? '#DC2626' : '#D97706', whiteSpace: 'nowrap' }}>{formatPending(r.createdAt)}</td>
                     <td>{TYPE_LABELS[r.bookingType] ?? r.bookingType}</td>
                     <td style={{ fontWeight: 800 }}>₹{Number(r.amount).toLocaleString('en-IN')}</td>
                     <td><code style={{ fontSize: 11 }}>{r.razorpayPaymentId ?? '--'}</code></td>

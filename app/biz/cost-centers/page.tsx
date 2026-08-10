@@ -24,16 +24,20 @@ interface CostCenter {
   code: string
   description?: string
   is_active: boolean
+  monthly_cap: number | null
 }
 
 export default function CostCentersPage() {
   const [items, setItems] = useState<CostCenter[]>([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ name: '', code: '', description: '' })
+  const [form, setForm] = useState({ name: '', code: '', description: '', monthlyCap: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  const [editingCapId, setEditingCapId] = useState<string | null>(null)
+  const [capInput, setCapInput] = useState('')
+  const [savingCap, setSavingCap] = useState(false)
 
   useEffect(() => {
     load()
@@ -52,13 +56,34 @@ export default function CostCentersPage() {
     setSaving(true)
     setError('')
     try {
-      await adminFetch('/api/admin/biz/cost-centers', { method: 'POST', body: JSON.stringify(form) })
-      setForm({ name: '', code: '', description: '' })
+      await adminFetch('/api/admin/biz/cost-centers', {
+        method: 'POST',
+        body: JSON.stringify({ ...form, monthlyCap: form.monthlyCap.trim() === '' ? null : Number(form.monthlyCap) }),
+      })
+      setForm({ name: '', code: '', description: '', monthlyCap: '' })
       load()
     } catch (err: any) {
       setError(err.message || 'Failed to add cost center')
     }
     setSaving(false)
+  }
+
+  function startEditCap(c: CostCenter) {
+    setEditingCapId(c.id)
+    setCapInput(c.monthly_cap != null ? String(c.monthly_cap) : '')
+  }
+
+  async function saveCap(id: string) {
+    setSavingCap(true)
+    try {
+      const monthlyCap = capInput.trim() === '' ? null : Number(capInput)
+      await adminFetch('/api/admin/biz/cost-centers', { method: 'PATCH', body: JSON.stringify({ id, monthlyCap }) })
+      setItems((prev) => prev.map((c) => (c.id === id ? { ...c, monthly_cap: monthlyCap } : c)))
+      setEditingCapId(null)
+    } catch (err: any) {
+      alert(err.message || 'Failed to update cap')
+    }
+    setSavingCap(false)
   }
 
   async function toggleActive(id: string, current: boolean) {
@@ -206,6 +231,19 @@ export default function CostCentersPage() {
                   className="input-field"
                 />
               </div>
+
+              <div>
+                <label className="cc-field-label">
+                  Monthly Cap (Optional)
+                </label>
+                <input
+                  type="number" min="0"
+                  placeholder="No cap"
+                  value={form.monthlyCap}
+                  onChange={(e) => setForm((f) => ({ ...f, monthlyCap: e.target.value }))}
+                  className="input-field"
+                />
+              </div>
             </div>
 
             <div className="cc-submit-row">
@@ -259,7 +297,7 @@ export default function CostCentersPage() {
             <table className="cc-table">
               <thead>
                 <tr className="cc-thead-row">
-                  {['CODE', 'COST CENTER NAME', 'DESCRIPTION', 'STATUS', 'ACTIONS'].map((h) => (
+                  {['CODE', 'COST CENTER NAME', 'DESCRIPTION', 'MONTHLY CAP', 'STATUS', 'ACTIONS'].map((h) => (
                     <th key={h} className="cc-th">
                       {h}
                     </th>
@@ -269,13 +307,13 @@ export default function CostCentersPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="cc-loading-cell">
+                    <td colSpan={6} className="cc-loading-cell">
                       Loading cost centers…
                     </td>
                   </tr>
                 ) : filteredItems.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="cc-empty-cell">
+                    <td colSpan={6} className="cc-empty-cell">
                       <Layers size={32} color="#9CA3AF" className="cc-empty-icon" />
                       <div className="cc-empty-title">No Cost Center Found</div>
                       <div className="cc-empty-sub">Create your first cost center using the form above.</div>
@@ -293,6 +331,27 @@ export default function CostCentersPage() {
                         <div className="cc-name-cell">{c.name}</div>
                       </td>
                       <td className="cc-td cc-desc-cell">{c.description ?? '—'}</td>
+                      <td className="cc-td">
+                        {editingCapId === c.id ? (
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                            <input
+                              type="number" min="0" value={capInput}
+                              onChange={e => setCapInput(e.target.value)}
+                              placeholder="No cap"
+                              style={{ width: 90, padding: '4px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 12 }}
+                            />
+                            <button className="btn-secondary" disabled={savingCap} onClick={() => saveCap(c.id)}>Save</button>
+                            <button className="btn-secondary" onClick={() => setEditingCapId(null)}>Cancel</button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                            <span style={{ fontSize: 13 }}>
+                              {c.monthly_cap != null ? `Rs ${Number(c.monthly_cap).toLocaleString('en-IN')}` : 'No cap'}
+                            </span>
+                            <button className="btn-secondary" onClick={() => startEditCap(c)}>Edit</button>
+                          </div>
+                        )}
+                      </td>
                       <td className="cc-td">
                         <span className={`cc-status-badge ${c.is_active ? 'cc-status-badge--active' : 'cc-status-badge--inactive'}`}>
                           <span className={`cc-status-dot ${c.is_active ? 'cc-status-dot--active' : 'cc-status-dot--inactive'}`} />

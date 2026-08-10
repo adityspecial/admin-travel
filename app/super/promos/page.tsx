@@ -24,7 +24,12 @@ export interface Promo {
   valid_until: string
   is_active: boolean
   created_at: string
+  scope: 'global' | 'biz_org' | 'partner_agent'
+  scope_id: string | null
+  created_by_role: 'super' | 'biz_admin' | 'partner_agent'
 }
+
+export interface ScopeOption { id: string; label: string }
 
 export function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -46,6 +51,8 @@ export default function SuperPromosPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [editPromo, setEditPromo]   = useState<Promo | null>(null)
   const [usagePromo, setUsagePromo] = useState<Promo | null>(null)
+  const [orgs, setOrgs]   = useState<ScopeOption[]>([])
+  const [agents, setAgents] = useState<ScopeOption[]>([])
 
   function load() {
     setLoading(true)
@@ -55,7 +62,21 @@ export default function SuperPromosPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    adminFetch('/api/admin/super/orgs')
+      .then((d: { orgs: Array<{ id: string; name: string }> }) => setOrgs((d.orgs ?? []).map(o => ({ id: o.id, label: o.name }))))
+      .catch(() => {})
+    adminFetch('/api/admin/super/agents')
+      .then((d: { agents: Array<{ id: string; agency_name: string }> }) => setAgents((d.agents ?? []).map(a => ({ id: a.id, label: a.agency_name }))))
+      .catch(() => {})
+  }, [])
+
+  function scopeLabel(p: Promo): string {
+    if (p.scope === 'global') return 'Global'
+    if (p.scope === 'biz_org') return `Org: ${orgs.find(o => o.id === p.scope_id)?.label ?? p.scope_id?.slice(0, 8)}`
+    return `Agent: ${agents.find(a => a.id === p.scope_id)?.label ?? p.scope_id?.slice(0, 8)}`
+  }
 
   const filtered = promos.filter(p => {
     if (filter === 'active'   && !p.is_active) return false
@@ -121,6 +142,11 @@ export default function SuperPromosPage() {
       key: 'applicable_to',
       header: 'Applies To',
       render: (p) => <span className="badge badge-gray">{p.applicable_to ?? 'all'}</span>,
+    },
+    {
+      key: 'scope',
+      header: 'Scope',
+      render: (p) => <span className={`badge ${p.scope === 'global' ? 'badge-gray' : 'badge-blue'}`}>{scopeLabel(p)}</span>,
     },
     {
       key: 'valid_until',
@@ -205,6 +231,8 @@ export default function SuperPromosPage() {
 
       {showCreate && (
         <CreatePromoModal
+          orgs={orgs}
+          agents={agents}
           onClose={() => setShowCreate(false)}
           onCreated={p => { setPromos(prev => [p, ...prev]); setShowCreate(false) }}
         />
@@ -212,6 +240,8 @@ export default function SuperPromosPage() {
       {editPromo && (
         <EditPromoModal
           promo={editPromo}
+          orgs={orgs}
+          agents={agents}
           onClose={() => setEditPromo(null)}
           onSaved={patch => {
             setPromos(prev => prev.map(x => x.id === editPromo.id ? { ...x, ...patch } : x))

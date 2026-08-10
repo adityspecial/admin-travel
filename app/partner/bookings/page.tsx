@@ -5,7 +5,7 @@ import { Pagination, usePagination } from '@/components/Pagination'
 import { StatCard } from '@/components/ui/StatCard'
 import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { AppInput } from '@/components/ui/AppInput'
-import { Ticket, CreditCard, TrendingUp, Search } from 'lucide-react'
+import { Ticket, CreditCard, TrendingUp, Search, Eye } from 'lucide-react'
 
 interface Booking {
   id: string
@@ -24,6 +24,16 @@ interface Booking {
 
 const STATUSES = ['all', 'confirmed', 'pending', 'cancelled']
 
+// partner_bookings.booking_type only ever has these 3 real values — mypartner
+// has no cab (or bus/package) booking route at all, so a "Cabs" option here
+// would always show zero results.
+const BOOKING_TYPES = [
+  { value: 'flight',  label: 'Flights' },
+  { value: 'hotel',   label: 'Hotels' },
+  { value: 'charter', label: 'Fixed Flights (Charter)' },
+  { value: 'all',     label: 'All Types' },
+]
+
 // The real badge system (globals.css) only ships green/red/yellow/blue/gray —
 // no teal or violet — so booking types and payment methods are mapped onto
 // those five tones instead of classes that don't exist.
@@ -39,8 +49,9 @@ function formatCurrency(value: number) {
 export default function PartnerBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading,  setLoading]  = useState(true)
-  const [search,   setSearch]   = useState('')
-  const [filter,   setFilter]   = useState('all')
+  const [search,     setSearch]     = useState('')
+  const [filter,     setFilter]     = useState('all')
+  const [typeFilter, setTypeFilter] = useState('flight')
 
   useEffect(() => {
     const agentId = typeof window !== 'undefined' ? sessionStorage.getItem('partner_agent_id') : null
@@ -52,12 +63,13 @@ export default function PartnerBookingsPage() {
   }, [])
 
   const filtered = bookings.filter(b => {
+    const matchType = typeFilter === 'all' || b.booking_type === typeFilter
     const matchStatus = filter === 'all' || b.status === filter
     const matchSearch = !search ||
       b.booking_ref?.toLowerCase().includes(search.toLowerCase()) ||
       b.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
       b.agent?.agency_name?.toLowerCase().includes(search.toLowerCase())
-    return matchStatus && matchSearch
+    return matchType && matchStatus && matchSearch
   })
 
   const totalAmount     = bookings.reduce((s, b) => s + b.amount,     0)
@@ -138,6 +150,18 @@ export default function PartnerBookingsPage() {
         )
       },
     },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (b) => (
+        <div className="data-table-actions">
+          <a href={`/partner/bookings/${b.id}`} className="data-table-btn data-table-btn-edit">
+            <Eye size={12} />
+            <span>View</span>
+          </a>
+        </div>
+      ),
+    },
   ]
 
   return (
@@ -160,6 +184,17 @@ export default function PartnerBookingsPage() {
             subtitle="Bookings made by you and all your sub-agents."
             headerAction={
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <select
+                  className="app-input"
+                  style={{ width: 200 }}
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                >
+                  {BOOKING_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+
                 <div style={{ width: 260 }}>
                   <AppInput
                     placeholder="Search ref, customer, agent…"

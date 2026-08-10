@@ -25,6 +25,31 @@ function decodeTokenPayload(token: string): { role?: string; email?: string; org
   }
 }
 
+// For endpoints that return a file (CSV export) instead of JSON — adminFetch
+// always parses the body as JSON, which would break on a text/csv response.
+export async function adminDownload(path: string, filename: string, opts?: { agentId?: string; orgId?: string }) {
+  const devToken = typeof window !== 'undefined' ? sessionStorage.getItem(DEV_TOKEN_KEY) : null
+  const { data: { session } } = await supabase.auth.getSession()
+  const token = devToken ?? session?.access_token ?? ''
+
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  if (opts?.agentId) headers['x-agent-id'] = opts.agentId
+  if (opts?.orgId) headers['x-org-id'] = opts.orgId
+
+  const res = await fetch(path, { headers })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(data.error ?? res.statusText)
+  }
+
+  const blob = await res.blob()
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href = url; a.download = filename; a.click()
+  URL.revokeObjectURL(url)
+}
+
 export async function adminFetch(
   path: string,
   options: RequestInit & { agentId?: string; orgId?: string } = {},
@@ -33,7 +58,7 @@ export async function adminFetch(
   const { data: { session } } = await supabase.auth.getSession()
   const token = devToken ?? session?.access_token ?? ''
 
-  const { agentId, orgId: explicitOrgId, ...fetchOptions } = options as any
+  const { agentId: explicitAgentId, orgId: explicitOrgId, ...fetchOptions } = options as any
 
   // Auto-extract orgId from token for biz admin routes
   let orgId = explicitOrgId
@@ -41,6 +66,19 @@ export async function adminFetch(
     const decoded = decodeTokenPayload(devToken)
     if (decoded.role === 'biz' && decoded.orgId) {
       orgId = decoded.orgId
+    }
+  }
+
+  // Auto-extract agentId for partner admin routes — same reasoning as orgId
+  // above. Unlike orgId, agentId was never embedded in the signed token
+  // itself, so it comes from sessionStorage (set at login) instead. Without
+  // this, any partner-admin page/component that forgets to pass agentId
+  // explicitly (e.g. OverrideEngine) silently loses agent scoping.
+  let agentId = explicitAgentId
+  if (!agentId && devToken) {
+    const decoded = decodeTokenPayload(devToken)
+    if (decoded.role === 'partner') {
+      agentId = (typeof window !== 'undefined' ? sessionStorage.getItem('partner_agent_id') : null) ?? undefined
     }
   }
 

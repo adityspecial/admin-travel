@@ -5,8 +5,12 @@ import { adminFetch } from '@/lib/api'
 interface Dispute {
   id: string; reason: string; status: 'open' | 'resolved'; admin_response: string | null
   created_at: string; resolved_at: string | null
+  source: 'partner' | 'biz'
+  booking_type: string | null
   partner_bookings?: { booking_ref: string; booking_type: string; customer_name: string | null }
   partner_agents?: { agency_name: string; agent_code: string; email: string }
+  biz_organizations?: { name: string; org_code: string }
+  biz_members?: { work_email: string }
 }
 
 function formatDate(iso: string) {
@@ -40,8 +44,8 @@ export default function BookingDisputesPage() {
   return (
     <div>
       <div className="admin-topbar">
-        <h2>myPartner Booking Disputes</h2>
-        <span className="topbar-meta">Agent-raised problems on a specific PNR/booking</span>
+        <h2>Booking Disputes</h2>
+        <span className="topbar-meta">Problems raised on a specific booking, by partner agents or corporate members</span>
       </div>
       <div className="admin-content">
         <div className="page-stack">
@@ -60,18 +64,25 @@ export default function BookingDisputesPage() {
           <div className="table-card">
             <table>
               <thead>
-                <tr><th>Raised</th><th>Agent</th><th>Booking</th><th>Reason</th><th>Status</th><th>Actions</th></tr>
+                <tr><th>Raised</th><th>Source</th><th>Raised By</th><th>Booking</th><th>Reason</th><th>Status</th><th>Actions</th></tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={6} className="empty-state">Loading…</td></tr>
+                  <tr><td colSpan={7} className="empty-state">Loading…</td></tr>
                 ) : disputes.length === 0 ? (
-                  <tr><td colSpan={6} className="empty-state">No disputes.</td></tr>
+                  <tr><td colSpan={7} className="empty-state">No disputes.</td></tr>
                 ) : disputes.map(d => (
                   <tr key={d.id}>
                     <td style={{ whiteSpace: 'nowrap' }}>{formatDate(d.created_at)}</td>
-                    <td>{d.partner_agents?.agency_name ?? '--'} <span style={{ color: '#9CA3AF', fontSize: 11 }}>({d.partner_agents?.agent_code})</span></td>
-                    <td><code style={{ fontSize: 11 }}>{d.partner_bookings?.booking_ref ?? '--'}</code></td>
+                    <td><span className={`badge ${d.source === 'partner' ? 'badge-blue' : 'badge-purple'}`}>{d.source === 'partner' ? 'Partner' : 'Corporate'}</span></td>
+                    <td>
+                      {d.source === 'partner' ? (
+                        <>{d.partner_agents?.agency_name ?? '--'} <span style={{ color: '#9CA3AF', fontSize: 11 }}>({d.partner_agents?.agent_code})</span></>
+                      ) : (
+                        <>{d.biz_organizations?.name ?? '--'} <span style={{ color: '#9CA3AF', fontSize: 11 }}>({d.biz_members?.work_email})</span></>
+                      )}
+                    </td>
+                    <td><code style={{ fontSize: 11 }}>{d.partner_bookings?.booking_ref ?? d.booking_type ?? '--'}</code></td>
                     <td style={{ maxWidth: 320, fontSize: 13 }}>{d.reason}</td>
                     <td><span className={`badge ${d.status === 'open' ? 'badge-yellow' : 'badge-green'}`}>{d.status}</span></td>
                     <td>
