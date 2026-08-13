@@ -24,6 +24,7 @@ import {
   ChevronDown,
   LogOut,
   Home,
+  Gift,
 } from 'lucide-react'
 import './navbar.css'
 
@@ -56,6 +57,8 @@ export interface NavbarProps {
   pendingCount?: number
   walletBalance?: number
   walletHref?: string
+  promoBalance?: number
+  promoHref?: string
   notificationsHref?: string
   homeHref?: string
   onLogout?: () => void
@@ -74,6 +77,8 @@ export default function Navbar({
   pendingCount = 0,
   walletBalance,
   walletHref = '/biz/wallet',
+  promoBalance,
+  promoHref = '/biz/wallet',
   notificationsHref = '/biz/notifications',
   homeHref = '/',
   onLogout,
@@ -337,6 +342,19 @@ export default function Navbar({
             >
               <Wallet size={15} strokeWidth={2.2} />
               <span>₹{walletBalance.toLocaleString('en-IN')}</span>
+            </Link>
+          )}
+
+          {/* Promo Cash Chip if balance provided — only shown once there's
+              something to show, same as the wallet chip above. */}
+          {!!promoBalance && (
+            <Link
+              href={promoHref}
+              className={`wallet-chip ${pathname.startsWith(promoHref) ? 'active_out' : ''}`}
+              title="Promo cash balance"
+            >
+              <Gift size={15} strokeWidth={2.2} />
+              <span>₹{promoBalance.toLocaleString('en-IN')}</span>
             </Link>
           )}
 

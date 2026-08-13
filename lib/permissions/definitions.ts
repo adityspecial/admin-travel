@@ -102,6 +102,7 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
       { key: 'manage_destinations', label: 'Manage Destinations',  description: 'Popular destinations and content' },
       { key: 'edit_fixed_flights',  label: 'Edit Fixed Flights',   description: 'Manage Nexus/FareGuide featured routes' },
       { key: 'manage_markup',       label: 'Manage Markup',        description: 'Set price markup on all bookings', dangerous: true },
+      { key: 'manage_visa',         label: 'Manage Visa Pages',    description: 'Create/edit visa content pages and respond to visa enquiries' },
     ],
   },
   {
@@ -221,6 +222,11 @@ export const BIZ_MODULES: ModuleDef[] = [
       { key: 'manage_promos',       label: 'Manage Promos',        description: 'Create/edit org-scoped promo codes' },
       { key: 'manage_cost_centers', label: 'Manage Cost Centers',  description: 'Create/edit cost centers and trip tags' },
       { key: 'respond_support',     label: 'Respond to Support',   description: "Respond to the org's support requests" },
+      { key: 'view_bookings',       label: 'View Bookings',        description: "View the org's real bookings across flight/hotel/cab/insurance" },
+      { key: 'view_reports',        label: 'View Reports',         description: "View the org's spend analytics and reports" },
+      { key: 'manage_disputes',     label: 'Manage Disputes',      description: "View and raise disputes on the org's bookings" },
+      { key: 'view_invoices',       label: 'View Invoices',        description: "View and download the org's GST invoices" },
+      { key: 'manage_permissions',  label: 'Manage Permissions',   description: "Manage the org's own employee permission roles and access levels", dangerous: true },
     ],
   },
 ]
@@ -302,6 +308,7 @@ export const PARTNER_MODULES: ModuleDef[] = [
       { key: 'manage_promos',          label: 'Manage Promos',          description: "Create/edit the agency's promo codes" },
       { key: 'respond_visa_enquiries', label: 'Respond to Visa Enquiries', description: 'Update status on visa enquiries from this agency and its sub-agents' },
       { key: 'view_bookings',          label: 'View Bookings',          description: 'See all bookings from this agency and its sub-agents' },
+      { key: 'view_earnings',          label: 'View Earnings',          description: 'See the agency dashboard, commission ledger, and GMV/earnings reports' },
     ],
   },
 ]

@@ -37,7 +37,7 @@ const DFLT: S = {
   preferred_airlines: '',
 }
 
-const TITLES: Record<string, string> = { domestic_flight: 'Flight' }
+const TITLES: Record<string, string> = { domestic_flight: 'Domestic Flight', international_flight: 'International Flight' }
 
 function Tog({ v, set }: { v: boolean; set: (x: boolean) => void }) {
   return (
@@ -87,7 +87,10 @@ export function FlightPolicy({ type }: { type: string }) {
         // admin/super/orgs never touched this). resolveApproval() already
         // ignores whatever's stored in tier[0].maxAmount in favor of the
         // live cap, so there's no reason to store or edit it here at all.
-        const cap = p.policy?.flight_cap != null ? Number(p.policy.flight_cap) : null
+        // Buffer is shared between domestic/international (one approval buffer,
+        // only the cap amount differs) — only the cap field branches on type.
+        const capField = type === 'international_flight' ? 'international_flight_cap' : 'flight_cap'
+        const cap = p.policy?.[capField] != null ? Number(p.policy[capField]) : null
         setOrgCap(cap)
         setOrgCapBuffer(Number(p.policy?.flight_cap_buffer ?? 0))
         // No tiers saved yet — seed 2 tiers from the existing flat in/out-of-policy

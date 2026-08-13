@@ -5,7 +5,7 @@ import { adminFetch } from '@/lib/api'
 import { AppInput } from '@/components/ui/AppInput'
 import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
-import { Building2, Hash, Globe, Plane, Bed, ShieldCheck, FileText, ArrowLeft, Trash2, Save, Check, Users, Calendar, Activity, UserX, Car, Stamp, Package, Wallet } from 'lucide-react'
+import { Building2, Hash, Globe, Plane, Bed, ShieldCheck, FileText, ArrowLeft, Trash2, Save, Check, Users, Calendar, Activity, UserX, Car, Stamp, Package, Wallet, Gift } from 'lucide-react'
 
 const ROLES = ['employee', 'manager', 'admin']
 
@@ -42,11 +42,49 @@ export default function EditOrgPage() {
       .catch(() => {})
   }
 
+  const [promoBalance, setPromoBalance] = useState<number | null>(null)
+  const [promoTxns,    setPromoTxns]    = useState<any[]>([])
+  const [promoAmount,  setPromoAmount]  = useState('')
+  const [promoDesc,    setPromoDesc]    = useState('')
+  const [promoBusy,    setPromoBusy]    = useState(false)
+  const [promoError,   setPromoError]   = useState('')
+  const [promoSuccess, setPromoSuccess] = useState(false)
+
+  function loadPromoCash() {
+    adminFetch(`/api/admin/super/orgs/${id}/promo-cash`)
+      .then(d => { setPromoBalance(d.balance ?? 0); setPromoTxns(d.transactions ?? []) })
+      .catch(() => {})
+  }
+
+  async function handlePromoCredit(e: React.FormEvent) {
+    e.preventDefault()
+    setPromoError(''); setPromoSuccess(false)
+    const amount = Number(promoAmount)
+    if (!amount || amount <= 0) { setPromoError('Enter a positive amount'); return }
+    setPromoBusy(true)
+    try {
+      const d = await adminFetch(`/api/admin/super/orgs/${id}/promo-cash`, {
+        method: 'POST',
+        body: JSON.stringify({ amount, description: promoDesc || undefined }),
+      })
+      setPromoBalance(d.newBalance)
+      setPromoTxns(prev => [{ id: crypto.randomUUID(), type: 'credit', amount, description: promoDesc, created_at: new Date().toISOString() }, ...prev])
+      setPromoAmount(''); setPromoDesc('')
+      setPromoSuccess(true)
+      setTimeout(() => setPromoSuccess(false), 3000)
+    } catch (err: any) {
+      setPromoError(err.message ?? 'Credit failed')
+    } finally {
+      setPromoBusy(false)
+    }
+  }
+
   const [form, setForm] = useState({
     name:          '',
     org_code:      '',
     domain:        '',
     flight_cap:           '',
+    international_flight_cap: '',
     hotel_cap:            '',
     insurance_cap:        '',
     cab_cap:              '',
@@ -59,8 +97,29 @@ export default function EditOrgPage() {
     visa_cap_buffer:      '',
     package_cap_buffer:   '',
     gst_number:    '',
+    credit_limit:  '',
+    promo_rate_type:     'percentage',
+    promo_rate_value:    '',
+    promo_validity_days: '',
     is_active:     true,
   })
+
+  const [noticeSending, setNoticeSending] = useState(false)
+  const [noticeSent,    setNoticeSent]    = useState(false)
+  const [noticeError,   setNoticeError]   = useState('')
+
+  async function sendCreditNotice() {
+    setNoticeSending(true); setNoticeError(''); setNoticeSent(false)
+    try {
+      await adminFetch(`/api/admin/super/orgs/${id}/credit-notice`, { method: 'POST' })
+      setNoticeSent(true)
+      setTimeout(() => setNoticeSent(false), 3000)
+    } catch (err: any) {
+      setNoticeError(err.message ?? 'Failed to send notice')
+    } finally {
+      setNoticeSending(false)
+    }
+  }
 
   useEffect(() => {
     adminFetch(`/api/admin/super/orgs/${id}`)
@@ -72,6 +131,7 @@ export default function EditOrgPage() {
           org_code:      d.org.org_code ?? '',
           domain:        d.org.domain ?? '',
           flight_cap:           String(d.org.flight_cap           ?? 10000),
+          international_flight_cap: String(d.org.international_flight_cap ?? 30000),
           hotel_cap:            String(d.org.hotel_cap            ?? 5000),
           insurance_cap:        String(d.org.insurance_cap        ?? 3000),
           cab_cap:              String(d.org.cab_cap              ?? 3000),
@@ -84,12 +144,17 @@ export default function EditOrgPage() {
           visa_cap_buffer:      String(d.org.visa_cap_buffer      ?? 0),
           package_cap_buffer:   String(d.org.package_cap_buffer   ?? 0),
           gst_number:    d.org.gst_number ?? '',
+          credit_limit:  String(d.org.credit_limit ?? 0),
+          promo_rate_type:     d.org.promo_rate_type ?? 'percentage',
+          promo_rate_value:    String(d.org.promo_rate_value ?? 0),
+          promo_validity_days: String(d.org.promo_validity_days ?? 90),
           is_active:     d.org.is_active  ?? true,
         })
       })
       .catch(() => setError('Organisation not found'))
       .finally(() => setLoading(false))
     loadWallet()
+    loadPromoCash()
     adminFetch(`/api/admin/super/orgs/${id}/health`).then(setHealth).catch(() => {})
   }, [id]) // eslint-disable-line
 
@@ -104,6 +169,7 @@ export default function EditOrgPage() {
           orgCode:      form.org_code,
           domain:       form.domain || null,
           flightCap:    Number(form.flight_cap),
+          internationalFlightCap: Number(form.international_flight_cap),
           hotelCap:     Number(form.hotel_cap),
           insuranceCap: Number(form.insurance_cap),
           cabCap:       Number(form.cab_cap),
@@ -116,6 +182,10 @@ export default function EditOrgPage() {
           visaCapBuffer:      Number(form.visa_cap_buffer),
           packageCapBuffer:   Number(form.package_cap_buffer),
           gstNumber:    form.gst_number || null,
+          creditLimit:  Number(form.credit_limit),
+          promoRateType:     form.promo_rate_type,
+          promoRateValue:    Number(form.promo_rate_value),
+          promoValidityDays: Number(form.promo_validity_days),
           isActive:     form.is_active,
         }),
       })
@@ -347,6 +417,15 @@ export default function EditOrgPage() {
                 icon={<Plane size={15} />}
               />
               <AppInput
+                label="International Flight Cap (₹ per trip)"
+                type="number"
+                min="0"
+                value={form.international_flight_cap}
+                onChange={e => setForm(f => ({ ...f, international_flight_cap: e.target.value }))}
+                placeholder="30000"
+                icon={<Globe size={15} />}
+              />
+              <AppInput
                 label="Hotel Cap (₹ per night)"
                 type="number"
                 min="0"
@@ -462,6 +541,49 @@ export default function EditOrgPage() {
               placeholder="22AAAAA0000A1Z5"
               icon={<FileText size={16} />}
             />
+
+            <AppInput
+              label="Credit Limit (₹)"
+              type="number"
+              min="0"
+              step="1000"
+              value={form.credit_limit}
+              onChange={e => setForm(f => ({ ...f, credit_limit: e.target.value }))}
+              placeholder="0"
+              helperText="Wallet balance may go negative down to this amount — an overdraft on top of the prepaid wallet."
+              icon={<Wallet size={16} />}
+            />
+
+            <div className="orgs-caps-grid">
+              <div className="app-input-group">
+                <label className="app-input-label">Promo Cash Rate Type</label>
+                <select
+                  value={form.promo_rate_type}
+                  onChange={e => setForm(f => ({ ...f, promo_rate_type: e.target.value }))}
+                  className="app-input"
+                >
+                  <option value="percentage">% of booking value</option>
+                  <option value="flat">Flat ₹ per booking</option>
+                </select>
+              </div>
+              <AppInput
+                label={form.promo_rate_type === 'flat' ? 'Promo Cash (₹ per booking)' : 'Promo Cash (% of booking)'}
+                type="number"
+                min="0"
+                step="0.5"
+                value={form.promo_rate_value}
+                onChange={e => setForm(f => ({ ...f, promo_rate_value: e.target.value }))}
+                helperText="0 disables promo cash for this org"
+              />
+              <AppInput
+                label="Promo Cash Validity (days)"
+                type="number"
+                min="1"
+                value={form.promo_validity_days}
+                onChange={e => setForm(f => ({ ...f, promo_validity_days: e.target.value }))}
+                helperText="Each credited amount expires this many days after being awarded"
+              />
+            </div>
 
             <div className="app-input-group orgs-checkbox-row">
               <input
@@ -611,11 +733,31 @@ export default function EditOrgPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #f1f5f9', marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #f1f5f9' }}>
             <span style={{ fontSize: 13, color: '#64748b', fontWeight: 700 }}>Current Balance</span>
-            <span style={{ fontSize: 20, fontWeight: 900, color: '#0f172a' }}>
+            <span style={{ fontSize: 20, fontWeight: 900, color: walletBalance !== null && walletBalance < 0 ? '#DC2626' : '#0f172a' }}>
               {walletBalance === null ? '—' : `₹${walletBalance.toLocaleString('en-IN')}`}
             </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #f1f5f9' }}>
+            <span style={{ fontSize: 13, color: '#64748b', fontWeight: 700 }}>Credit Limit</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>
+              ₹{Number(form.credit_limit || 0).toLocaleString('en-IN')}
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #f1f5f9', marginBottom: 16 }}>
+            <span style={{ fontSize: 13, color: '#64748b', fontWeight: 700 }}>Available to Spend</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#15803D' }}>
+              ₹{((walletBalance ?? 0) + Number(form.credit_limit || 0)).toLocaleString('en-IN')}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <button type="button" className="btn btn-ghost btn-sm" disabled={noticeSending} onClick={sendCreditNotice}>
+              {noticeSending ? 'Sending…' : 'Send Credit Notice Email'}
+            </button>
+            {noticeSent && <span style={{ color: '#16A34A', fontSize: 13, fontWeight: 700 }}>✓ Sent</span>}
+            {noticeError && <span style={{ color: '#DC2626', fontSize: 13 }}>{noticeError}</span>}
           </div>
 
           <form onSubmit={handleTopup} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -635,6 +777,69 @@ export default function EditOrgPage() {
             {topupSuccess && <span style={{ color: '#16A34A', fontSize: 13, fontWeight: 700 }}>✓ Credited</span>}
           </form>
           {topupError && <div style={{ marginTop: 8, color: '#DC2626', fontSize: 13 }}>{topupError}</div>}
+        </div>
+
+        {/* Promo Cash — corporate-side mirror of the agent promo cash panel */}
+        <div className="explore-admin-section" style={{ padding: 24, marginTop: 24 }}>
+          <div className="dashboard-card-header" style={{ marginBottom: 16 }}>
+            <div className="dashboard-card-title-group">
+              <div className="dashboard-card-icon-icon dashboard-card-icon-teal">
+                <Gift size={19} strokeWidth={2.2} />
+              </div>
+              <div>
+                <h3 className="dashboard-card-title">Promo Cash</h3>
+                <p className="dashboard-card-subtitle">Auto-awarded per booking (rate configured above) + manual credits</p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #f1f5f9', marginBottom: 16 }}>
+            <span style={{ fontSize: 13, color: '#64748b', fontWeight: 700 }}>Promo Cash Balance</span>
+            <span style={{ fontSize: 20, fontWeight: 900, color: '#0f172a' }}>
+              {promoBalance === null ? '—' : `₹${promoBalance.toLocaleString('en-IN')}`}
+            </span>
+          </div>
+
+          <form onSubmit={handlePromoCredit} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#6B7280', fontWeight: 600 }}>
+              Amount (₹)
+              <input type="number" min="1" value={promoAmount} onChange={e => setPromoAmount(e.target.value)}
+                style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 13, width: 140 }} />
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#6B7280', fontWeight: 600 }}>
+              Description (optional)
+              <input value={promoDesc} onChange={e => setPromoDesc(e.target.value)} placeholder="e.g. Manual promo bonus"
+                style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 13, width: 320 }} />
+            </label>
+            <button className="btn btn-primary btn-sm" type="submit" disabled={promoBusy}>
+              {promoBusy ? 'Crediting…' : 'Credit Promo Cash'}
+            </button>
+            {promoSuccess && <span style={{ color: '#16A34A', fontSize: 13, fontWeight: 700 }}>✓ Credited</span>}
+          </form>
+          {promoError && <div style={{ marginTop: 8, color: '#DC2626', fontSize: 13 }}>{promoError}</div>}
+
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#94A3B8', letterSpacing: '.6px', textTransform: 'uppercase', marginBottom: 8 }}>
+              Recent Transactions
+            </div>
+            {promoTxns.length === 0 ? (
+              <div style={{ fontSize: 13, color: '#94A3B8' }}>No promo cash transactions yet.</div>
+            ) : (
+              <div style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {promoTxns.map((t) => (
+                  <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, padding: '6px 0', borderBottom: '1px solid #F1F5F9' }}>
+                    <span style={{ color: '#64748B' }}>
+                      {new Date(t.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })}
+                      {' · '}{t.type}{t.description ? ` — ${t.description}` : ''}
+                    </span>
+                    <strong style={{ color: t.type === 'credit' ? '#15803D' : '#DC2626' }}>
+                      {t.type === 'credit' ? '+' : '-'}₹{Number(t.amount).toLocaleString('en-IN')}
+                    </strong>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Members DataTable */}

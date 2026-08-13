@@ -286,7 +286,7 @@ export default function ApprovalsPage() {
                 <div className="appr-metric-value appr-metric-value--expired">{counts.expired} Lapsed</div>
               </div>
               <div>
-                <div className="appr-metric-label">Total Booking Volume</div>
+                <div className="appr-metric-label">Total Requests</div>
                 <div className="appr-metric-value appr-metric-value--all">{counts.all} Recorded</div>
               </div>
             </div>
@@ -299,7 +299,7 @@ export default function ApprovalsPage() {
                 [
                   ['pending', 'PENDING REQUESTS', counts.pending],
                   ['expired', 'EXPIRED REQUESTS', counts.expired],
-                  ['all', 'ALL BOOKINGS', counts.all],
+                  ['all', 'ALL REQUESTS', counts.all],
                 ] as const
               ).map(([key, label, count]) => (
                 <button

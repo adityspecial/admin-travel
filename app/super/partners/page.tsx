@@ -12,6 +12,7 @@ interface Partner {
   id: string
   adminId: string
   roleId: string | null
+  isActive: boolean
   agentId: string
   agentName: string
   agentCode: string
@@ -43,12 +44,13 @@ export default function PartnersPage() {
   const [createSuccess, setCreateSuccess] = useState('')
   const [roles, setRoles] = useState<{ id: string; name: string; label: string }[]>([])
   const [savingRole, setSavingRole] = useState<string | null>(null)
+  const [savingActive, setSavingActive] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([
       adminFetch('/api/admin/super/partners'),
       adminFetch('/api/admin/super/agents'),
-      adminFetch('/api/admin/super/permissions/roles?portal=partner'),
+      adminFetch('/api/admin/super/permissions/roles?portal=partner&targetType=admin_staff'),
     ])
       .then(([pData, aData, rData]) => {
         setPartners(pData.partners ?? [])
@@ -74,6 +76,21 @@ export default function PartnersPage() {
     setSavingRole(null)
   }
 
+  async function toggleActive(partnerId: string, next: boolean) {
+    setSavingActive(partnerId)
+    const prev = partners.find(p => p.id === partnerId)?.isActive ?? true
+    setPartners(prevList => prevList.map(p => p.id === partnerId ? { ...p, isActive: next } : p))
+    try {
+      await adminFetch('/api/admin/super/partners', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: partnerId, isActive: next }),
+      })
+    } catch {
+      setPartners(prevList => prevList.map(p => p.id === partnerId ? { ...p, isActive: prev } : p))
+    }
+    setSavingActive(null)
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     setCreating(true)
@@ -96,6 +113,7 @@ export default function PartnersPage() {
           id: result.adminId,
           adminId: result.adminId,
           roleId: null,
+          isActive: true,
           agentId: form.agentId,
           agentName: result.agentName,
           agentCode: '',
@@ -199,7 +217,7 @@ export default function PartnersPage() {
     },
     {
       key: 'status',
-      header: 'Status',
+      header: 'Agency Status',
       render: (p) => (
         <span className={`data-table-status-pill ${p.status === 'active' ? 'active' : 'inactive'}`}>
           {p.status === 'active' ? '● Active' : '● Inactive'}
@@ -207,8 +225,26 @@ export default function PartnersPage() {
       ),
     },
     {
+      key: 'isActive',
+      header: 'Login Access',
+      render: (p) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className={`data-table-status-pill ${p.isActive ? 'active' : 'inactive'}`}>
+            {p.isActive ? '● Active' : '● Inactive'}
+          </span>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => toggleActive(p.id, !p.isActive)}
+            disabled={savingActive === p.id}
+          >
+            {savingActive === p.id ? 'Updating…' : p.isActive ? 'Deactivate' : 'Activate'}
+          </button>
+        </div>
+      ),
+    },
+    {
       key: 'role',
-      header: 'Permission Role',
+      header: 'Access Level',
       render: (p) => (
         <select
           className="app-input"

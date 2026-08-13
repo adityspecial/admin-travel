@@ -26,7 +26,8 @@ import {
 } from 'lucide-react'
 
 const TYPES = [
-  { key: 'domestic_flight', label: 'Flight Policy', icon: Plane },
+  { key: 'domestic_flight', label: 'Domestic Flight Policy', icon: Plane },
+  { key: 'international_flight', label: 'International Flight Policy', icon: Globe },
   { key: 'hotel', label: 'Hotel Policy', icon: Hotel },
   { key: 'cab', label: 'Cab Services', icon: Car },
   { key: 'bus', label: 'Bus Travel', icon: Bus },
@@ -48,7 +49,7 @@ const TYPES = [
 // Soon" placeholder) belongs here — drives both the sidebar LIVE/SOON badge
 // and the "Active Policy"/"Under Development" status. visa/package route to
 // SimpleCapPolicy (cap + buffer), which is genuinely saved and enforced.
-const LIVE = new Set(['domestic_flight', 'hotel', 'cab', 'insurance', 'visa', 'package'])
+const LIVE = new Set(['domestic_flight', 'international_flight', 'hotel', 'cab', 'insurance', 'visa', 'package'])
 
 export default function PolicyPage() {
   const [sel, setSel] = useState('domestic_flight')

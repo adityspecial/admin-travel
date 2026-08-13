@@ -2,12 +2,12 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { supabase } from '@/lib/api'
+import { supabase, adminFetch } from '@/lib/api'
 import { RouteLoader } from '@/components/ui/RouteLoader'
 import {
   LayoutDashboard, Network, Ticket, Users, Layers,
   BarChart3, ArrowDownToLine, FileText, Shield, LogOut, Tag, Globe,
-  ChevronLeft, ChevronRight, ChevronUp, ChevronDown,
+  ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Gift,
 } from 'lucide-react'
 
 const NAV = [
@@ -29,6 +29,7 @@ export default function PartnerAdminLayout({ children }: { children: React.React
   const router   = useRouter()
   const checked  = useRef(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [promoBalance, setPromoBalance] = useState(0)
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar_collapsed')
@@ -53,6 +54,12 @@ export default function PartnerAdminLayout({ children }: { children: React.React
         router.replace(parsed.role === 'super' ? '/super' : parsed.role === 'biz' ? '/biz' : '/login')
       }
     } catch { router.replace('/login') }
+  }, [])
+
+  useEffect(() => {
+    adminFetch('/api/admin/partner/promo-cash')
+      .then(d => setPromoBalance(d.balance ?? 0))
+      .catch(() => {})
   }, [])
 
   async function logout() {
@@ -86,6 +93,25 @@ export default function PartnerAdminLayout({ children }: { children: React.React
             </span>
           </button>
         </div>
+
+        {/* Promo cash meter — small balance chip, hidden when there's nothing to show */}
+        {!!promoBalance && (
+          <Link
+            href="/partner"
+            data-tooltip="Promo cash balance"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              margin: '0 12px 12px', padding: '8px 10px',
+              borderRadius: 8, background: 'rgba(34,197,94,0.12)',
+              color: '#16A34A', fontSize: 12.5, fontWeight: 800,
+              textDecoration: 'none',
+            }}
+          >
+            <Gift size={14} strokeWidth={2.2} />
+            {!isCollapsed && <span>₹{promoBalance.toLocaleString('en-IN')} Promo Cash</span>}
+          </Link>
+        )}
+
         <nav className="sidebar-nav">
           {NAV.map(item => (
             <Link key={item.href} href={item.href}

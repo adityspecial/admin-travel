@@ -6,7 +6,10 @@ import { StatCard } from '@/components/ui/StatCard'
 import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { AppInput } from '@/components/ui/AppInput'
 import { AppPopup } from '@/components/ui/AppPopup'
-import { ShieldCheck, UserCheck, UserPlus, Search, Plus, Mail, Lock, Building2 } from 'lucide-react'
+import { SUPER_ADMIN_MODULES } from '@/lib/permissions/definitions'
+import { ShieldCheck, UserCheck, Search, Plus, Mail, Lock, Building2 } from 'lucide-react'
+
+const CUSTOM_SENTINEL = '__custom__'
 
 interface Staff {
   id: string
@@ -19,65 +22,42 @@ interface Staff {
   created_at: string
 }
 
-interface Org { id: string; name: string }
-
-const ROLE_TO_PORTAL: Record<Staff['role'], 'super_admin' | 'biz' | 'partner'> = {
-  super: 'super_admin', biz: 'biz', partner: 'partner',
-}
-
-// Temporarily restored to cover super/biz/partner again, alongside the
-// dedicated Corporate Admins / Partner Admins pages — kept duplicated on
-// purpose pending a decision on which to keep.
+// AirDunia's own internal accounts only (role='super') — biz/partner-role
+// admin_users accounts live on their own dedicated pages (Corporate Admins,
+// Partner Admins) so this list never mixes a client organisation's assigned
+// staffer in with actual AirDunia employees.
 export default function StaffPage() {
   const [staff, setStaff] = useState<Staff[]>([])
-  const [orgs, setOrgs] = useState<Org[]>([])
-  // Roles for the currently-open create form's selected role/org — refetched
-  // whenever either changes, since biz roles are per-org.
   const [formRoles, setFormRoles] = useState<{ id: string; name: string; label: string }[]>([])
-  // roleId options already loaded for each staff row's own portal/org, keyed
-  // by "portal" for super/partner and "biz:{orgId}" for biz — avoids
-  // re-fetching per row when many staffers share the same portal/org.
-  const [rowRoles, setRowRoles] = useState<Record<string, { id: string; name: string; label: string }[]>>({})
+  const [rowRoles, setRowRoles] = useState<{ id: string; name: string; label: string }[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [form, setForm] = useState({ email: '', password: '', role: 'biz' as Staff['role'], orgId: '', roleId: '' })
+  const [form, setForm] = useState({ email: '', password: '', roleId: '' })
+  const [customModules, setCustomModules] = useState<Set<string>>(new Set())
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
   const [savingRole, setSavingRole] = useState<string | null>(null)
+  const [savingActive, setSavingActive] = useState<string | null>(null)
 
   useEffect(() => {
-    Promise.all([
-      adminFetch('/api/admin/super/staff'),
-      adminFetch('/api/admin/super/orgs'),
-    ])
-      .then(([sData, oData]) => {
-        setStaff(sData.staff ?? [])
-        setOrgs((oData.orgs ?? []).map((o: any) => ({ id: o.id, name: o.name })))
-      })
+    adminFetch('/api/admin/super/staff?role=super')
+      .then(d => setStaff(d.staff ?? []))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
-  // Roles for the create form — refetch on role/org change.
   useEffect(() => {
     if (!showCreateForm) return
-    const portal = ROLE_TO_PORTAL[form.role]
-    if (portal === 'biz' && !form.orgId) { setFormRoles([]); return }
-    const qs = portal === 'biz' ? `portal=biz&orgId=${form.orgId}` : `portal=${portal}`
-    adminFetch(`/api/admin/super/permissions/roles?${qs}`)
+    adminFetch('/api/admin/super/permissions/roles?portal=super_admin&targetType=admin_staff')
       .then(d => setFormRoles(d.roles ?? []))
       .catch(() => setFormRoles([]))
-  }, [showCreateForm, form.role, form.orgId])
+  }, [showCreateForm])
 
-  async function rolesForRow(s: Staff): Promise<{ id: string; name: string; label: string }[]> {
-    const portal = ROLE_TO_PORTAL[s.role]
-    const cacheKey = portal === 'biz' ? `biz:${s.org_id}` : portal
-    if (rowRoles[cacheKey]) return rowRoles[cacheKey]
-    if (portal === 'biz' && !s.org_id) return []
-    const qs = portal === 'biz' ? `portal=biz&orgId=${s.org_id}` : `portal=${portal}`
-    const d = await adminFetch(`/api/admin/super/permissions/roles?${qs}`).catch(() => ({ roles: [] }))
-    setRowRoles(prev => ({ ...prev, [cacheKey]: d.roles ?? [] }))
+  async function loadRowRoles(): Promise<{ id: string; name: string; label: string }[]> {
+    if (rowRoles) return rowRoles
+    const d = await adminFetch('/api/admin/super/permissions/roles?portal=super_admin&targetType=admin_staff').catch(() => ({ roles: [] }))
+    setRowRoles(d.roles ?? [])
     return d.roles ?? []
   }
 
@@ -96,27 +76,81 @@ export default function StaffPage() {
     setSavingRole(null)
   }
 
+  async function toggleActive(staffId: string, next: boolean) {
+    setSavingActive(staffId)
+    const prev = staff.find(s => s.id === staffId)?.is_active ?? true
+    setStaff(prevList => prevList.map(s => s.id === staffId ? { ...s, is_active: next } : s))
+    try {
+      await adminFetch(`/api/admin/super/staff/${staffId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isActive: next }),
+      })
+    } catch {
+      setStaff(prevList => prevList.map(s => s.id === staffId ? { ...s, is_active: prev } : s))
+    }
+    setSavingActive(null)
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     setCreating(true)
     setCreateError('')
     try {
+      let roleId = form.roleId
+
+      // Custom access: build a one-off role scoped to just the sections
+      // checked below, instead of forcing a detour through /super/permissions
+      // first. Grants every permission within a checked module (module-wise,
+      // not permission-by-permission) — fine-tuning individual actions can
+      // still be done later on the Permissions page if ever needed.
+      if (roleId === CUSTOM_SENTINEL) {
+        if (!customModules.size) throw new Error('Pick at least one section for custom access.')
+        const emailSlug = form.email.trim().split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_')
+        const role = await adminFetch('/api/admin/super/permissions/roles', {
+          method: 'POST',
+          body: JSON.stringify({
+            portal: 'super_admin',
+            name: `custom_${emailSlug}_${Date.now().toString(36)}`,
+            label: `Custom — ${form.email.trim()}`,
+          }),
+        })
+        const matrix: Record<string, Record<string, boolean>> = {}
+        for (const mod of SUPER_ADMIN_MODULES) {
+          if (!customModules.has(mod.key)) continue
+          matrix[mod.key] = Object.fromEntries(mod.permissions.map(p => [p.key, true]))
+        }
+        await adminFetch('/api/admin/super/permissions/matrix', {
+          method: 'PUT',
+          body: JSON.stringify({ roleId: role.id, portal: 'super_admin', matrix }),
+        })
+        roleId = role.id
+      }
+
       const result = await adminFetch('/api/admin/super/staff', {
         method: 'POST',
         body: JSON.stringify({
-          email: form.email.trim(), password: form.password, role: form.role,
-          orgId: form.role === 'biz' ? form.orgId : undefined,
-          roleId: form.roleId || undefined,
+          email: form.email.trim(), password: form.password, role: 'super',
+          roleId: roleId || undefined,
         }),
       })
       setStaff(prev => [result.staff, ...prev])
-      setForm({ email: '', password: '', role: 'biz', orgId: '', roleId: '' })
+      setForm({ email: '', password: '', roleId: '' })
+      setCustomModules(new Set())
       setShowCreateForm(false)
     } catch (error: any) {
       try { setCreateError(JSON.parse(error.message).error ?? error.message) }
       catch { setCreateError(error.message) }
     }
     setCreating(false)
+  }
+
+  function toggleCustomModule(key: string) {
+    setCustomModules(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
   }
 
   const filtered = staff.filter(s => !search || s.email.toLowerCase().includes(search.toLowerCase()))
@@ -130,15 +164,24 @@ export default function StaffPage() {
   const columns: ColumnDef<Staff>[] = [
     { key: 'email', header: 'Email', render: (s) => <span className="data-table-cell-bold">{s.email}</span> },
     {
-      key: 'role_id', header: 'Permission Role',
-      render: (s) => <RoleCell staff={s} savingRole={savingRole} onLoadRoles={rolesForRow} onChange={changeRole} />,
+      key: 'role_id', header: 'Access Level',
+      render: (s) => <RoleCell staff={s} savingRole={savingRole} onLoadRoles={loadRowRoles} onChange={changeRole} />,
     },
     {
       key: 'is_active', header: 'Status',
       render: (s) => (
-        <span className={`data-table-status-pill ${s.is_active ? 'active' : 'inactive'}`}>
-          {s.is_active ? '● Active' : '● Inactive'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className={`data-table-status-pill ${s.is_active ? 'active' : 'inactive'}`}>
+            {s.is_active ? '● Active' : '● Inactive'}
+          </span>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => toggleActive(s.id, !s.is_active)}
+            disabled={savingActive === s.id}
+          >
+            {savingActive === s.id ? 'Updating…' : s.is_active ? 'Deactivate' : 'Activate'}
+          </button>
+        </div>
       ),
     },
     { key: 'created_at', header: 'Created', render: (s) => <span className="data-table-muted-cell">{new Date(s.created_at).toLocaleDateString('en-IN')}</span> },
@@ -159,7 +202,7 @@ export default function StaffPage() {
 
           <DataTable
             title="AirDunia Staff"
-            subtitle="Manage internal super-admin accounts and which permission role each one has."
+            subtitle="Internal AirDunia employees who can access this admin panel directly (super admin level) — not staff assigned to manage a specific client, that's Corporate Admins / Partner Admins."
             headerAction={
               <div className="partners-header-actions">
                 <div className="partners-search-wrapper">
@@ -190,7 +233,7 @@ export default function StaffPage() {
       <AppPopup
         isOpen={showCreateForm}
         title="Add Staff Account"
-        subtitle="Create an internal AirDunia admin account"
+        subtitle="Create an internal AirDunia employee account for this admin panel."
         icon={<Building2 size={22} strokeWidth={2.2} />}
         iconTone="blue"
         maxWidth={480}
@@ -200,12 +243,29 @@ export default function StaffPage() {
 
         <form onSubmit={handleCreate}>
           <div className="app-input-group">
-            <label className="app-input-label">Permission Role</label>
+            <label className="app-input-label">Access Level</label>
             <select className="app-input" value={form.roleId} onChange={(e) => setForm(f => ({ ...f, roleId: e.target.value }))}>
-              <option value="">Default</option>
+              <option value="">Standard (Super Admin)</option>
               {formRoles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+              <option value={CUSTOM_SENTINEL}>Custom — choose sections…</option>
             </select>
+            <p className="app-input-helper">What this employee can do across the whole admin panel.</p>
           </div>
+
+          {form.roleId === CUSTOM_SENTINEL && (
+            <div className="app-input-group">
+              <label className="app-input-label">Sections this employee can access</label>
+              <div style={{ display: 'grid', gap: 6, maxHeight: 220, overflowY: 'auto', border: '1px solid #E5E7EB', borderRadius: 8, padding: 10 }}>
+                {SUPER_ADMIN_MODULES.map(mod => (
+                  <label key={mod.key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={customModules.has(mod.key)} onChange={() => toggleCustomModule(mod.key)} />
+                    <span>{mod.icon} {mod.label}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="app-input-helper">Grants everything in each checked section — fine-tune individual actions later on the Permissions page if needed.</p>
+            </div>
+          )}
 
           <AppInput
             label="Work Email" type="email" required
@@ -231,20 +291,20 @@ export default function StaffPage() {
   )
 }
 
-// Lazily loads this row's role options (portal/org-scoped) the first time
-// it's rendered, rather than fetching per-portal/org options for every row
-// up front on page load.
+// Lazily loads role options the first time any row is rendered — all rows on
+// this page share the same portal (super_admin, no org scoping), so one
+// shared fetch (via the parent's loadRowRoles cache) covers every row.
 function RoleCell({
   staff, savingRole, onLoadRoles, onChange,
 }: {
   staff: Staff
   savingRole: string | null
-  onLoadRoles: (s: Staff) => Promise<{ id: string; name: string; label: string }[]>
+  onLoadRoles: () => Promise<{ id: string; name: string; label: string }[]>
   onChange: (staffId: string, roleId: string) => void
 }) {
   const [options, setOptions] = useState<{ id: string; name: string; label: string }[] | null>(null)
 
-  useEffect(() => { onLoadRoles(staff).then(setOptions) }, [staff.id])
+  useEffect(() => { onLoadRoles().then(setOptions) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!options) return <span className="data-table-muted-cell">Loading…</span>
 
@@ -255,7 +315,7 @@ function RoleCell({
       disabled={savingRole === staff.id}
       onChange={(e) => onChange(staff.id, e.target.value)}
     >
-      <option value="">Default</option>
+      <option value="">Standard (Super Admin)</option>
       {options.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
     </select>
   )

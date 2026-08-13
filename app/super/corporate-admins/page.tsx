@@ -37,6 +37,7 @@ export default function CorporateAdminsPage() {
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
   const [savingRole, setSavingRole] = useState<string | null>(null)
+  const [savingActive, setSavingActive] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([
@@ -53,7 +54,7 @@ export default function CorporateAdminsPage() {
 
   useEffect(() => {
     if (!showCreateForm || !form.orgId) { setFormRoles([]); return }
-    adminFetch(`/api/admin/super/permissions/roles?portal=biz&orgId=${form.orgId}`)
+    adminFetch(`/api/admin/super/permissions/roles?portal=biz&orgId=${form.orgId}&targetType=admin_staff`)
       .then(d => setFormRoles(d.roles ?? []))
       .catch(() => setFormRoles([]))
   }, [showCreateForm, form.orgId])
@@ -62,7 +63,7 @@ export default function CorporateAdminsPage() {
     const cacheKey = `biz:${s.org_id}`
     if (rowRoles[cacheKey]) return rowRoles[cacheKey]
     if (!s.org_id) return []
-    const d = await adminFetch(`/api/admin/super/permissions/roles?portal=biz&orgId=${s.org_id}`).catch(() => ({ roles: [] }))
+    const d = await adminFetch(`/api/admin/super/permissions/roles?portal=biz&orgId=${s.org_id}&targetType=admin_staff`).catch(() => ({ roles: [] }))
     setRowRoles(prev => ({ ...prev, [cacheKey]: d.roles ?? [] }))
     return d.roles ?? []
   }
@@ -80,6 +81,21 @@ export default function CorporateAdminsPage() {
       setStaff(prevList => prevList.map(s => s.id === staffId ? { ...s, role_id: prev } : s))
     }
     setSavingRole(null)
+  }
+
+  async function toggleActive(staffId: string, next: boolean) {
+    setSavingActive(staffId)
+    const prev = staff.find(s => s.id === staffId)?.is_active ?? true
+    setStaff(prevList => prevList.map(s => s.id === staffId ? { ...s, is_active: next } : s))
+    try {
+      await adminFetch(`/api/admin/super/staff/${staffId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isActive: next }),
+      })
+    } catch {
+      setStaff(prevList => prevList.map(s => s.id === staffId ? { ...s, is_active: prev } : s))
+    }
+    setSavingActive(null)
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -123,9 +139,18 @@ export default function CorporateAdminsPage() {
     {
       key: 'is_active', header: 'Status',
       render: (s) => (
-        <span className={`data-table-status-pill ${s.is_active ? 'active' : 'inactive'}`}>
-          {s.is_active ? '● Active' : '● Inactive'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className={`data-table-status-pill ${s.is_active ? 'active' : 'inactive'}`}>
+            {s.is_active ? '● Active' : '● Inactive'}
+          </span>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => toggleActive(s.id, !s.is_active)}
+            disabled={savingActive === s.id}
+          >
+            {savingActive === s.id ? 'Updating…' : s.is_active ? 'Deactivate' : 'Activate'}
+          </button>
+        </div>
       ),
     },
     { key: 'created_at', header: 'Created', render: (s) => <span className="data-table-muted-cell">{new Date(s.created_at).toLocaleDateString('en-IN')}</span> },
@@ -135,7 +160,7 @@ export default function CorporateAdminsPage() {
     <div>
       <div className="admin-topbar">
         <h2>Corporate Admins</h2>
-        <span className="topbar-meta">{staff.length.toLocaleString('en-IN')} org admin accounts</span>
+        <span className="topbar-meta">{staff.length.toLocaleString('en-IN')} AirDunia staff accounts for managing client organisations</span>
       </div>
 
       <div className="admin-content">
@@ -146,7 +171,7 @@ export default function CorporateAdminsPage() {
 
           <DataTable
             title="Corporate Admins"
-            subtitle="Admin accounts for each organisation's own /biz portal login."
+            subtitle="AirDunia staff logins for managing one organisation from this internal admin panel — not the organisation's own employee login (that's a separate system)."
             headerAction={
               <div className="partners-header-actions">
                 <div className="partners-search-wrapper">
@@ -177,7 +202,7 @@ export default function CorporateAdminsPage() {
       <AppPopup
         isOpen={showCreateForm}
         title="Add Corporate Admin Account"
-        subtitle="Create an admin login for an organisation's /biz portal"
+        subtitle="Creates an AirDunia staff login for managing one organisation here in the internal admin panel."
         icon={<Building2 size={22} strokeWidth={2.2} />}
         iconTone="blue"
         maxWidth={480}
@@ -195,11 +220,12 @@ export default function CorporateAdminsPage() {
           </div>
 
           <div className="app-input-group">
-            <label className="app-input-label">Permission Role</label>
+            <label className="app-input-label">Access Level</label>
             <select className="app-input" value={form.roleId} onChange={(e) => setForm(f => ({ ...f, roleId: e.target.value }))}>
-              <option value="">Default</option>
+              <option value="">Standard (Org Manager)</option>
               {formRoles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
             </select>
+            <p className="app-input-helper">What this staffer can do when managing this organisation here — separate from the organisation's own internal roles.</p>
           </div>
 
           <AppInput

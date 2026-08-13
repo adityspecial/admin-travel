@@ -12,6 +12,7 @@ export default function BizAdminLayout({ children }: { children: React.ReactNode
   const [email, setEmail] = useState('')
   const [pendingCount, setPendingCount] = useState(0)
   const [logoUrl, setLogoUrl] = useState('')
+  const [promoBalance, setPromoBalance] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
   const prevPending = useRef<number | null>(null)
 
@@ -40,6 +41,12 @@ export default function BizAdminLayout({ children }: { children: React.ReactNode
   useEffect(() => {
     adminFetch('/api/admin/biz/policy')
       .then(d => setLogoUrl(d.policy?.logo_url ?? ''))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    adminFetch('/api/admin/biz/promo-cash')
+      .then(d => setPromoBalance(d.balance ?? 0))
       .catch(() => {})
   }, [])
 
@@ -78,6 +85,7 @@ export default function BizAdminLayout({ children }: { children: React.ReactNode
         userEmail={email}
         pendingCount={pendingCount}
         logoUrl={logoUrl}
+        promoBalance={promoBalance}
         onLogout={logout}
       />
 

@@ -154,6 +154,7 @@
 }
 
 .pp-item-icon--domestic_flight { background: #EFF6FF; color: #2563EB; }
+.pp-item-icon--international_flight { background: #ECFEFF; color: #0891B2; }
 .pp-item-icon--hotel { background: #ECFDF5; color: #047857; }
 .pp-item-icon--cab { background: #FFFBEB; color: #D97706; }
 .pp-item-icon--bus { background: #FEF2F2; color: #DC2626; }

@@ -4,10 +4,10 @@ import { adminFetch } from '@/lib/api'
 
 interface CompanySettings {
   name: string; address: string; gstin: string; pan: string; cin: string
-  hsn_sac_flight: string; hsn_sac_hotel: string
+  hsn_sac_flight: string; hsn_sac_hotel: string; hsn_sac_cab: string
 }
 
-const EMPTY: CompanySettings = { name: '', address: '', gstin: '', pan: '', cin: '', hsn_sac_flight: '998551', hsn_sac_hotel: '998552' }
+const EMPTY: CompanySettings = { name: '', address: '', gstin: '', pan: '', cin: '', hsn_sac_flight: '998551', hsn_sac_hotel: '998552', hsn_sac_cab: '996411' }
 
 export default function CompanySettingsPage() {
   const [form, setForm] = useState<CompanySettings>(EMPTY)
@@ -78,6 +78,10 @@ export default function CompanySettingsPage() {
                 <div>
                   <label className="form-label">HSN/SAC — Hotel</label>
                   <input className="app-input" style={{ width: '100%' }} value={form.hsn_sac_hotel} onChange={set('hsn_sac_hotel')} />
+                </div>
+                <div>
+                  <label className="form-label">HSN/SAC — Cab</label>
+                  <input className="app-input" style={{ width: '100%' }} value={form.hsn_sac_cab} onChange={set('hsn_sac_cab')} />
                 </div>
               </div>
               <div>

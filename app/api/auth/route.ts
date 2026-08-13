@@ -13,12 +13,12 @@ const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET
 const TOKEN_TTL_MS   = 24 * 60 * 60 * 1000 // 24 hours
 
 // ── HMAC-SHA256 token (must match backend/lib/supabase/adminAuth.ts) ──────────
-function signToken(email: string, role: string, orgId?: string | null): string {
+function signToken(email: string, role: string, iat: number, orgId?: string | null): string {
   const payload = Buffer.from(JSON.stringify({
     email, role,
     ...(orgId ? { orgId } : {}),
-    iat: Date.now(),
-    exp: Date.now() + TOKEN_TTL_MS,
+    iat,
+    exp: iat + TOKEN_TTL_MS,
   })).toString('base64url')
   const sig = createHmac('sha256', SESSION_SECRET).update(payload).digest('hex')
   return `${payload}.${sig}`
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { email, password } = await req.json()
+  const { email, password, force } = await req.json()
   if (!email || !password) {
     return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
   }
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   const { data: adminUser, error } = await supabaseAdmin
     .from('admin_users')
-    .select('id, role, password_hash, org_id')
+    .select('id, role, password_hash, org_id, current_session_iat, is_active')
     .eq('email', normalised)
     .single()
 
@@ -63,6 +63,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
   }
 
+  if (adminUser.is_active === false) {
+    return NextResponse.json({ error: 'This account has been deactivated.' }, { status: 403 })
+  }
+
+  // Another login is already active (its token hasn't naturally expired yet)
+  // — ask before silently kicking it out, unless the caller already confirmed.
+  const existingSessionLive = !!adminUser.current_session_iat
+    && adminUser.current_session_iat + TOKEN_TTL_MS > Date.now()
+  if (existingSessionLive && !force) {
+    return NextResponse.json({ error: 'already_logged_in', conflict: true }, { status: 409 })
+  }
+
   let agentId: string | null = null
   if (adminUser.role === 'partner') {
     const { data: link } = await supabaseAdmin
@@ -73,8 +85,11 @@ export async function POST(req: NextRequest) {
     agentId = link?.agent_id ?? null
   }
 
+  const iat = Date.now()
+  await supabaseAdmin.from('admin_users').update({ current_session_iat: iat }).eq('id', adminUser.id)
+
   return NextResponse.json({
-    token: signToken(normalised, adminUser.role, adminUser.org_id),
+    token: signToken(normalised, adminUser.role, iat, adminUser.org_id),
     role: adminUser.role,
     orgId: adminUser.org_id ?? null,
     agentId,

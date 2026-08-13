@@ -34,7 +34,11 @@ import {
 // key/bufferKey match the PATCH body field names backend/app/api/admin/biz/policy/route.ts's
 // CAP_FIELDS expects; column/bufferColumn match what GET actually returns (snake_case).
 const CAP_ROWS: { key: string; bufferKey: string; column: string; bufferColumn: string; label: string; unit: string; icon: any }[] = [
-  { key: 'flightCap',    bufferKey: 'flightCapBuffer',    column: 'flight_cap',    bufferColumn: 'flight_cap_buffer',    label: 'Flight Cap',    unit: 'per trip',        icon: Plane },
+  { key: 'flightCap',    bufferKey: 'flightCapBuffer',    column: 'flight_cap',    bufferColumn: 'flight_cap_buffer',    label: 'Domestic Flight Cap', unit: 'per trip', icon: Plane },
+  // Shares flightCapBuffer/flight_cap_buffer with the domestic row above —
+  // one approval buffer for both, only the cap amount differs. The buffer
+  // grid below dedupes by bufferKey so this doesn't render a second buffer input.
+  { key: 'internationalFlightCap', bufferKey: 'flightCapBuffer', column: 'international_flight_cap', bufferColumn: 'flight_cap_buffer', label: 'International Flight Cap', unit: 'per trip', icon: Plane },
   { key: 'hotelCap',     bufferKey: 'hotelCapBuffer',     column: 'hotel_cap',     bufferColumn: 'hotel_cap_buffer',     label: 'Hotel Cap',     unit: 'per night',       icon: BedDouble },
   { key: 'insuranceCap', bufferKey: 'insuranceCapBuffer', column: 'insurance_cap', bufferColumn: 'insurance_cap_buffer', label: 'Insurance Cap', unit: 'per policy',      icon: ShieldCheck },
   { key: 'cabCap',       bufferKey: 'cabCapBuffer',       column: 'cab_cap',       bufferColumn: 'cab_cap_buffer',       label: 'Cab Cap',       unit: 'per trip',        icon: Car },
@@ -496,7 +500,7 @@ export default function CompanyDetailsPage() {
                 Approval buffers — a booking exceeding its cap by up to this amount still books without approval.
               </div>
               <div className="cp-field-grid-a">
-                {CAP_ROWS.map(r => {
+                {CAP_ROWS.filter((r, i) => CAP_ROWS.findIndex(x => x.bufferKey === r.bufferKey) === i).map(r => {
                   const Icon = r.icon
                   return (
                     <div key={r.bufferKey}>

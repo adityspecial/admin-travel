@@ -78,6 +78,7 @@ const NAV: NavEntry[] = [
       { href: '/super/visa',         label: 'Visa Pages',           Icon: FileCheck },
       { href: '/super/featured-content', label: 'Featured Content', Icon: Megaphone },
       { href: '/super/notifications', label: 'Notification Center', Icon: Send },
+      { href: '/super/trip-requests', label: 'Trip Requests', Icon: Plane },
     ],
   },
   {
