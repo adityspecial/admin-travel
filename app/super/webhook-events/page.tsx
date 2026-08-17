@@ -1,6 +1,7 @@
 'use client'
 import { Fragment, useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
 
 interface WebhookEvent {
   id: string; razorpay_event_id: string; event_type: string
@@ -15,16 +16,17 @@ export default function WebhookEventsPage() {
   const [events, setEvents] = useState<WebhookEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
   const [type, setType] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
 
   function load() {
-    setLoading(true); setError('')
+    setLoading(true); setError(''); setPermissionDenied(false)
     const qs = new URLSearchParams()
     if (type) qs.set('type', type)
     adminFetch(`/api/admin/super/webhook-events?${qs.toString()}`)
       .then(d => setEvents(d.events ?? []))
-      .catch(e => setError(e.message))
+      .catch(e => { setError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }
 
@@ -66,7 +68,7 @@ export default function WebhookEventsPage() {
                 {loading ? (
                   <tr><td colSpan={3} className="empty-state">Loading…</td></tr>
                 ) : error ? (
-                  <tr><td colSpan={3} className="empty-state" style={{ color: '#DC2626' }}>{error}</td></tr>
+                  <tr><td colSpan={3} className="empty-state">{permissionDenied ? <PermissionDenied message={error} /> : <span style={{ color: '#DC2626' }}>{error}</span>}</td></tr>
                 ) : events.length === 0 ? (
                   <tr><td colSpan={3} className="empty-state">No webhook events recorded yet.</td></tr>
                 ) : events.map(ev => (

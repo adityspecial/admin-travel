@@ -3,12 +3,18 @@ import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { Pagination, usePagination } from '@/components/Pagination'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Booking {
   id: string; bookingType: string; bookingRef: string | null; status: string
   amount: number; customerName: string | null; source: string; createdAt: string
-  resolvedAt?: string | null
+  resolvedAt?: string | null; rawDate: string | null
 }
+
+interface Org { id: string; name: string }
+
+function pad2(n: number) { return String(n).padStart(2, '0') }
 
 const TYPE_LABELS: Record<string, string> = {
   flight: 'Flight', hotel: 'Hotel', cab: 'Cab', bus: 'Bus',
@@ -32,10 +38,17 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
 
   const [type, setType] = useState('flight')
   const [source, setSource] = useState('')
   const [q, setQ] = useState('')
+  const [orgId, setOrgId] = useState('')
+  const [orgs, setOrgs] = useState<Org[]>([])
+
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
+  const [calendarMonth, setCalendarMonth] = useState(() => { const d = new Date(); d.setDate(1); return d })
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null)
   const [remarks, setRemarks] = useState('')
@@ -49,20 +62,44 @@ export default function BookingsPage() {
   const [resolveError, setResolveError] = useState('')
 
   function load() {
-    setLoading(true); setError('')
+    setLoading(true); setError(''); setPermissionDenied(false)
     const qs = new URLSearchParams()
     if (type) qs.set('type', type)
     if (source) qs.set('source', source)
     if (q.trim()) qs.set('q', q.trim())
+    if (orgId) qs.set('orgId', orgId)
     adminFetch(`/api/admin/super/bookings?${qs.toString()}`)
       .then(d => setBookings(d.bookings ?? []))
-      .catch(e => setError(e.message))
+      .catch(e => { setError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }
 
-  // Reload whenever the type filter changes, so switching from Flight to
-  // Hotel queries only the hotel table instead of loading every type.
-  useEffect(() => { load() }, [type]) // eslint-disable-line
+  // Reload whenever the type or org filter changes, so switching from Flight
+  // to Hotel (or picking a different org) queries fresh instead of stale data.
+  useEffect(() => { load() }, [type, orgId]) // eslint-disable-line
+
+  useEffect(() => {
+    adminFetch('/api/admin/super/orgs').then(d => setOrgs(d.orgs ?? [])).catch(() => {})
+  }, [])
+
+  const tripsByDate = new Map<string, Booking[]>()
+  for (const b of bookings) {
+    if (!b.rawDate) continue
+    const arr = tripsByDate.get(b.rawDate) ?? []
+    arr.push(b)
+    tripsByDate.set(b.rawDate, arr)
+  }
+  const selectedDayBookings = selectedDate ? (tripsByDate.get(selectedDate) ?? []) : []
+
+  const calYear = calendarMonth.getFullYear()
+  const calMonthIdx = calendarMonth.getMonth()
+  const firstWeekday = new Date(calYear, calMonthIdx, 1).getDay()
+  const daysInMonth = new Date(calYear, calMonthIdx + 1, 0).getDate()
+  const calendarCells: Array<{ day: number; key: string } | null> = []
+  for (let i = 0; i < firstWeekday; i++) calendarCells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) calendarCells.push({ day: d, key: `${calYear}-${pad2(calMonthIdx + 1)}-${pad2(d)}` })
+  while (calendarCells.length % 7 !== 0) calendarCells.push(null)
+  const todayKey = (() => { const t = new Date(); return `${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}` })()
 
   const { slice: pageBookings, page, setPage, total } = usePagination(bookings, 20)
 
@@ -142,18 +179,112 @@ export default function BookingsPage() {
                 </select>
               </label>
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#6B7280', fontWeight: 600 }}>
+                Organisation
+                <select value={orgId} onChange={e => setOrgId(e.target.value)}
+                  style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 13, minWidth: 160 }}>
+                  <option value="">All orgs</option>
+                  {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                </select>
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#6B7280', fontWeight: 600 }}>
                 Search
                 <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && load()}
                   placeholder="Booking ref or name"
                   style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 13, minWidth: 200 }} />
               </label>
-              <div style={{ alignSelf: 'flex-end' }}>
+              <div style={{ alignSelf: 'flex-end', display: 'flex', gap: 10, alignItems: 'center' }}>
                 <button className="btn btn-primary btn-sm" onClick={load}>Apply</button>
+                <div className="segmented-row">
+                  <button type="button" className={`segment-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>List</button>
+                  <button type="button" className={`segment-btn ${viewMode === 'calendar' ? 'active' : ''}`} onClick={() => setViewMode('calendar')}>Calendar</button>
+                </div>
               </div>
             </div>
           </section>
 
-          {/* Bookings table */}
+          {permissionDenied ? (
+            <section className="table-card"><PermissionDenied message={error} /></section>
+          ) : viewMode === 'calendar' ? (
+            <section className="table-card" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => { setCalendarMonth(m => { const d = new Date(m); d.setMonth(d.getMonth() - 1); return d }); setSelectedDate(null) }}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)' }}>
+                  {calendarMonth.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+                </div>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => { setCalendarMonth(m => { const d = new Date(m); d.setMonth(d.getMonth() + 1); return d }); setSelectedDate(null) }}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, marginBottom: 8 }}>
+                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                  <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase' }}>{d}</div>
+                ))}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
+                {calendarCells.map((cell, i) => {
+                  if (!cell) return <div key={i} />
+                  const isSelected = selectedDate === cell.key
+                  const isToday = cell.key === todayKey
+                  const dayBookings = tripsByDate.get(cell.key) ?? []
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedDate(isSelected ? null : cell.key)}
+                      disabled={!dayBookings.length}
+                      style={{
+                        minHeight: 64, borderRadius: 10, padding: '8px 6px',
+                        border: `1.5px solid ${isSelected ? 'var(--accent)' : isToday ? 'var(--accent-lt)' : 'var(--border)'}`,
+                        backgroundColor: isSelected ? 'var(--accent-lt)' : 'var(--surface)',
+                        cursor: dayBookings.length ? 'pointer' : 'default',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                        opacity: dayBookings.length ? 1 : 0.55,
+                      }}
+                    >
+                      <span style={{ fontSize: 13, fontWeight: 700, color: isToday ? 'var(--accent)' : 'var(--ink)' }}>{cell.day}</span>
+                      {dayBookings.length > 0 && (
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, backgroundColor: 'var(--accent)', color: '#fff' }}>
+                          {dayBookings.length}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {selectedDate && (
+                <div style={{ marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)', marginBottom: 12 }}>
+                    {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    <span style={{ color: 'var(--ink-3)', fontWeight: 500 }}> · {selectedDayBookings.length} booking{selectedDayBookings.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {selectedDayBookings.map(b => (
+                      <div key={`${b.bookingType}-${b.id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border)', backgroundColor: 'var(--surface-2)' }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>{TYPE_LABELS[b.bookingType] ?? b.bookingType} · {b.customerName ?? '--'}</div>
+                          <div style={{ fontSize: 11, color: 'var(--ink-3)' }}><code>{b.bookingRef ?? '--'}</code> · {SOURCE_LABELS[b.source] ?? b.source}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span className={`badge ${STATUS_BADGE[b.status] ?? ''}`}>{b.status}</span>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>₹{Number(b.amount ?? 0).toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          ) : (
           <div className="table-card">
             <div className="table-header">
               <div>
@@ -213,6 +344,7 @@ export default function BookingsPage() {
             </table>
             <Pagination total={total} page={page} perPage={20} onPage={setPage} />
           </div>
+          )}
         </div>
       </div>
 

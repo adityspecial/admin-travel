@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
 
 interface Dispute {
   id: string; reason: string; status: 'open' | 'resolved'; admin_response: string | null
@@ -23,12 +24,15 @@ export default function BookingDisputesPage() {
   const [status, setStatus] = useState('open')
   const [resolvingId, setResolvingId] = useState<string | null>(null)
   const [responseText, setResponseText] = useState('')
+  const [error, setError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
 
   function load() {
-    setLoading(true)
+    setLoading(true); setError(''); setPermissionDenied(false)
     const qs = status ? `?status=${status}` : ''
     adminFetch(`/api/admin/super/booking-disputes${qs}`)
       .then(d => setDisputes(d.disputes ?? []))
+      .catch(e => { setError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }
   useEffect(() => { load() }, [status]) // eslint-disable-line
@@ -69,6 +73,8 @@ export default function BookingDisputesPage() {
               <tbody>
                 {loading ? (
                   <tr><td colSpan={7} className="empty-state">Loading…</td></tr>
+                ) : error ? (
+                  <tr><td colSpan={7} className="empty-state">{permissionDenied ? <PermissionDenied message={error} /> : <span style={{ color: '#DC2626' }}>{error}</span>}</td></tr>
                 ) : disputes.length === 0 ? (
                   <tr><td colSpan={7} className="empty-state">No disputes.</td></tr>
                 ) : disputes.map(d => (

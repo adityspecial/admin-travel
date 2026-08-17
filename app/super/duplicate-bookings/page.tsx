@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
 
 interface Group {
   passengerName: string; route: string; date: string
@@ -15,11 +16,14 @@ export default function DuplicateBookingsPage() {
   const [groups, setGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState(true)
   const [days, setDays] = useState('90')
+  const [error, setError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
 
   function load() {
-    setLoading(true)
+    setLoading(true); setError(''); setPermissionDenied(false)
     adminFetch(`/api/admin/super/duplicate-bookings?days=${days}`)
       .then(d => setGroups(d.groups ?? []))
+      .catch(e => { setError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }
   useEffect(() => { load() }, []) // eslint-disable-line
@@ -55,6 +59,8 @@ export default function DuplicateBookingsPage() {
             </div>
             {loading ? (
               <div className="empty-state">Loading…</div>
+            ) : error ? (
+              permissionDenied ? <PermissionDenied message={error} /> : <div className="empty-state" style={{ color: '#DC2626' }}>{error}</div>
             ) : groups.length === 0 ? (
               <div className="empty-state">No duplicates found in this period.</div>
             ) : (

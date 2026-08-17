@@ -7,7 +7,8 @@ import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { AppInput } from '@/components/ui/AppInput'
 import { AppImageModal } from '@/components/ui/AppImageModal'
 import { Pagination } from '@/components/Pagination'
-import { Package, Sparkles, CheckCircle2, Compass, Search, Pencil, Star, MapPin, Plus } from 'lucide-react'
+import { Package, Sparkles, CheckCircle2, Compass, Search, Pencil, Star, MapPin, Plus, FileText } from 'lucide-react'
+import { WhatsAppNumberCard } from '@/components/WhatsAppNumberCard'
 
 interface HolidayPackage {
   id: string
@@ -216,6 +217,8 @@ export default function SuperPackagesPage() {
 
       <div className="admin-content">
         <div className="page-stack">
+          <WhatsAppNumberCard />
+
           {/* Stat Cards */}
           <div className="stat-grid">
             <StatCard
@@ -246,6 +249,14 @@ export default function SuperPackagesPage() {
               sub="Average catalog pricing"
               badge="Pricing"
             />
+            <StatCard
+              Icon={FileText}
+              label="Enquiries Portal"
+              value="Applications"
+              sub="View customer package leads"
+              badge="Leads"
+              onClick={() => (window.location.href = '/super/packages/enquiries')}
+            />
           </div>
 
           {/* Alert Message Banner */}
@@ -260,31 +271,37 @@ export default function SuperPackagesPage() {
             title="Package Inventory"
             subtitle="Browse, filter, toggle featured status, and edit itinerary details for all holiday packages."
             headerAction={
-              <form onSubmit={handleSearch} className="pkg-search-form">
-                <div className="pkg-flex-1">
-                  <AppInput
-                    placeholder="Search name, destination, operator..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    icon={<Search size={15} />}
-                    wrapperClassName="m-0"
-                    className="pkg-search-input"
-                  />
-                </div>
-                {search && (
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => {
-                      setSearch('')
-                      setPage(1)
-                      load('', 1)
-                    }}
-                  >
-                    Clear
-                  </button>
-                )}
-              </form>
+              <>
+                <form onSubmit={handleSearch} className="pkg-search-form">
+                  <div className="pkg-flex-1">
+                    <AppInput
+                      placeholder="Search name, destination, operator..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      icon={<Search size={15} />}
+                      wrapperClassName="m-0"
+                      className="pkg-search-input"
+                    />
+                  </div>
+                  {search && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => {
+                        setSearch('')
+                        setPage(1)
+                        load('', 1)
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </form>
+                <a href="/super/packages/enquiries" className="btn btn-muted btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <FileText size={14} />
+                  <span>Enquiries</span>
+                </a>
+              </>
             }
             columns={columns}
             data={packages}

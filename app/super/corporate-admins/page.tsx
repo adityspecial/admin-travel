@@ -6,7 +6,15 @@ import { StatCard } from '@/components/ui/StatCard'
 import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { AppInput } from '@/components/ui/AppInput'
 import { AppPopup } from '@/components/ui/AppPopup'
+import { BIZ_MODULES } from '@/lib/permissions/definitions'
 import { Briefcase, UserCheck, UserPlus, Search, Plus, Mail, Lock, Building2 } from 'lucide-react'
+
+const CUSTOM_SENTINEL = '__custom__'
+// The only module admin_staff/portal=biz roles are ever checked against —
+// requireOrgAdminPermission hardcodes module='org_admin' — the other BIZ_MODULES
+// (Travel, Team, Approval...) govern the org's OWN employees (biz_member), a
+// different target type entirely, so they're irrelevant to this account type.
+const ORG_ADMIN_MODULE = BIZ_MODULES.find(m => m.key === 'org_admin')!
 
 // Filtered view over the same admin_users data as /super/staff — every
 // backend route here (staff list/create/role-assign, orgs, roles) already
@@ -34,6 +42,7 @@ export default function CorporateAdminsPage() {
   const [search, setSearch] = useState('')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [form, setForm] = useState({ email: '', password: '', orgId: '', roleId: '' })
+  const [customPerms, setCustomPerms] = useState<Set<string>>(new Set())
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
   const [savingRole, setSavingRole] = useState<string | null>(null)
@@ -55,7 +64,10 @@ export default function CorporateAdminsPage() {
   useEffect(() => {
     if (!showCreateForm || !form.orgId) { setFormRoles([]); return }
     adminFetch(`/api/admin/super/permissions/roles?portal=biz&orgId=${form.orgId}&targetType=admin_staff`)
-      .then(d => setFormRoles(d.roles ?? []))
+      // Same reasoning as the Staff page's Add Staff dropdown — a disposable
+      // one-off "Custom — <email>" role built for a specific past admin
+      // shouldn't be offered as a reusable option for a new one.
+      .then(d => setFormRoles((d.roles ?? []).filter((r: any) => !(r.name?.startsWith('custom_') && r.label?.startsWith('Custom — ')))))
       .catch(() => setFormRoles([]))
   }, [showCreateForm, form.orgId])
 
@@ -102,22 +114,61 @@ export default function CorporateAdminsPage() {
     e.preventDefault()
     setCreating(true)
     setCreateError('')
+    let createdRoleId: string | null = null
     try {
+      let roleId = form.roleId
+
+      if (roleId === CUSTOM_SENTINEL) {
+        if (!customPerms.size) throw new Error('Pick at least one permission for custom access.')
+        const emailSlug = form.email.trim().split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_')
+        const role = await adminFetch('/api/admin/super/permissions/roles', {
+          method: 'POST',
+          body: JSON.stringify({
+            portal: 'biz', orgId: form.orgId,
+            name: `custom_${emailSlug}_${Date.now().toString(36)}`,
+            label: `Custom — ${form.email.trim()}`,
+          }),
+        })
+        createdRoleId = role.id
+        // Unlike super_admin, a missing row on a biz role already defaults
+        // to denied (see middleware.ts) — only the checked permissions need
+        // an explicit true row, nothing to write for the unchecked ones.
+        const matrix = { org_admin: Object.fromEntries(ORG_ADMIN_MODULE.permissions.map(p => [p.key, customPerms.has(p.key)])) }
+        await adminFetch('/api/admin/super/permissions/matrix', {
+          method: 'PUT',
+          body: JSON.stringify({ roleId: role.id, portal: 'biz', matrix }),
+        })
+        roleId = role.id
+      }
+
       const result = await adminFetch('/api/admin/super/staff', {
         method: 'POST',
         body: JSON.stringify({
           email: form.email.trim(), password: form.password, role: 'biz',
-          orgId: form.orgId, roleId: form.roleId || undefined,
+          orgId: form.orgId, roleId: roleId || undefined,
         }),
       })
       setStaff(prev => [result.staff, ...prev])
       setForm({ email: '', password: '', orgId: '', roleId: '' })
+      setCustomPerms(new Set())
       setShowCreateForm(false)
     } catch (error: any) {
+      if (createdRoleId) {
+        adminFetch(`/api/admin/super/permissions/roles?id=${createdRoleId}&portal=biz`, { method: 'DELETE' }).catch(() => {})
+      }
       try { setCreateError(JSON.parse(error.message).error ?? error.message) }
       catch { setCreateError(error.message) }
     }
     setCreating(false)
+  }
+
+  function toggleCustomPerm(key: string) {
+    setCustomPerms(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
   }
 
   const filtered = staff.filter(s => !search || s.email.toLowerCase().includes(search.toLowerCase()))
@@ -224,9 +275,25 @@ export default function CorporateAdminsPage() {
             <select className="app-input" value={form.roleId} onChange={(e) => setForm(f => ({ ...f, roleId: e.target.value }))}>
               <option value="">Standard (Org Manager)</option>
               {formRoles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+              <option value={CUSTOM_SENTINEL}>Custom — choose permissions…</option>
             </select>
             <p className="app-input-helper">What this staffer can do when managing this organisation here — separate from the organisation's own internal roles.</p>
           </div>
+
+          {form.roleId === CUSTOM_SENTINEL && (
+            <div className="app-input-group">
+              <label className="app-input-label">Permissions this staffer can use</label>
+              <div style={{ display: 'grid', gap: 6, maxHeight: 220, overflowY: 'auto', border: '1px solid #E5E7EB', borderRadius: 8, padding: 10 }}>
+                {ORG_ADMIN_MODULE.permissions.map(perm => (
+                  <label key={perm.key} title={perm.description} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={customPerms.has(perm.key)} onChange={() => toggleCustomPerm(perm.key)} />
+                    <span>{perm.label}{perm.dangerous ? ' ⚠' : ''}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="app-input-helper">Only Org Admin Module permissions apply here — the org's own employee-facing modules (Travel, Team, etc.) don't govern this account type.</p>
+            </div>
+          )}
 
           <AppInput
             label="Work Email" type="email" required
@@ -266,6 +333,12 @@ function RoleCell({
 
   if (!options) return <span className="data-table-muted-cell">Loading…</span>
 
+  // Same as Staff's row dropdown — hide other admins' disposable one-off
+  // custom roles, but keep showing this row's own if it currently holds one.
+  const visibleOptions = options.filter(r =>
+    r.id === staff.role_id || !(r.name.startsWith('custom_') && r.label.startsWith('Custom — '))
+  )
+
   return (
     <select
       className="app-input"
@@ -274,7 +347,7 @@ function RoleCell({
       onChange={(e) => onChange(staff.id, e.target.value)}
     >
       <option value="">Default</option>
-      {options.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+      {visibleOptions.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
     </select>
   )
 }

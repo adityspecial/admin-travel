@@ -10,6 +10,7 @@ import { AppImageModal } from '@/components/ui/AppImageModal'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Pagination } from '@/components/Pagination'
 import { Globe, CheckCircle2, Clock, FileText, Search, Plus, Pencil, Trash2, Globe2 } from 'lucide-react'
+import { WhatsAppNumberCard } from '@/components/WhatsAppNumberCard'
 
 interface VisaSummary {
   id: string
@@ -224,6 +225,8 @@ export default function SuperVisaPage() {
 
       <div className="admin-content">
         <div className="page-stack">
+          <WhatsAppNumberCard />
+
           {/* Stat Cards */}
           <div className="stat-grid">
             <StatCard

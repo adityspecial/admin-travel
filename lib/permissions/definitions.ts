@@ -24,16 +24,10 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
   {
     key: 'booking', label: 'Booking Module', icon: '✈️',
     permissions: [
-      { key: 'book_flight',       label: 'Book Flight',       description: 'Search and book flights for customers' },
-      { key: 'book_hotel',        label: 'Book Hotel',        description: 'Search and book hotels' },
-      { key: 'book_bus',          label: 'Book Bus',          description: 'Search and book bus tickets' },
-      { key: 'book_fixed_flight', label: 'Book Fixed Flight', description: 'Book fixed departure (Nexus/FareGuide) flights' },
       { key: 'cancel_booking',    label: 'Cancel Booking',    description: 'Cancel any booking on the platform', dangerous: true },
       { key: 'modify_booking',    label: 'Modify Booking',    description: 'Modify passenger/date details' },
-      { key: 'issue_refund',      label: 'Issue Refund',      description: 'Trigger Razorpay refund', dangerous: true },
       { key: 'view_all_bookings', label: 'View All Bookings', description: 'See every booking across all users' },
       { key: 'view_pnr',          label: 'View PNR',          description: 'View airline PNR and booking reference' },
-      { key: 'download_ticket',   label: 'Download Ticket',   description: 'Download e-ticket PDF' },
     ],
   },
   {
@@ -44,9 +38,6 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
       { key: 'ban_agent',      label: 'Ban Agent',        description: 'Suspend or ban a partner agent', dangerous: true },
       { key: 'verify_kyc',     label: 'Verify KYC',       description: 'Approve agent KYC documents' },
       { key: 'set_commission', label: 'Set Commission',   description: 'Change agent commission percentage' },
-      { key: 'view_wallet',    label: 'View Wallet',      description: 'See agent wallet balance and transactions' },
-      { key: 'process_payout', label: 'Process Payout',   description: 'Trigger wallet payout to agent', dangerous: true },
-      { key: 'view_bookings',  label: 'View Agent Bookings', description: 'See all bookings made by agents' },
     ],
   },
   {
@@ -56,7 +47,6 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
       { key: 'create_org',     label: 'Create Org',         description: 'Onboard a new corporate organisation' },
       { key: 'edit_org',       label: 'Edit Org',           description: 'Edit org details and caps' },
       { key: 'delete_org',     label: 'Delete Org',         description: 'Permanently delete an organisation', dangerous: true },
-      { key: 'set_policy',     label: 'Set Policy',         description: 'Override org travel policy caps' },
       { key: 'view_members',   label: 'View Members',       description: 'See all members in any org' },
       { key: 'manage_members', label: 'Manage Members',     description: 'Add/remove/role-change org members', dangerous: true },
       { key: 'view_spend',     label: 'View Spend',         description: 'See org-level spend dashboard' },
@@ -77,7 +67,8 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
       { key: 'process_payout',    label: 'Process Payout',    description: 'Approve and trigger agent payouts', dangerous: true },
       { key: 'view_wallet',       label: 'View Wallet',       description: 'View any user or agent wallet' },
       { key: 'manage_rules',      label: 'Manage Rules',      description: 'Set commission and markup rules' },
-      { key: 'view_revenue',      label: 'View Revenue',      description: 'Platform-wide revenue dashboard' },
+      { key: 'manage_markup',     label: 'Manage Markup',     description: 'Set price markup on all bookings', dangerous: true },
+      { key: 'manage_disputes',   label: 'Manage Disputes',   description: 'Handle Razorpay chargebacks, approval disputes, and booking disputes', dangerous: true },
     ],
   },
   {
@@ -99,9 +90,7 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
       { key: 'manage_promos',       label: 'Manage Promos',        description: 'Create/edit/delete promo codes' },
       { key: 'manage_banners',      label: 'Manage Banners',       description: 'Home screen banner management' },
       { key: 'manage_packages',     label: 'Manage Packages',      description: 'Curated holiday packages' },
-      { key: 'manage_destinations', label: 'Manage Destinations',  description: 'Popular destinations and content' },
       { key: 'edit_fixed_flights',  label: 'Edit Fixed Flights',   description: 'Manage Nexus/FareGuide featured routes' },
-      { key: 'manage_markup',       label: 'Manage Markup',        description: 'Set price markup on all bookings', dangerous: true },
       { key: 'manage_visa',         label: 'Manage Visa Pages',    description: 'Create/edit visa content pages and respond to visa enquiries' },
     ],
   },
@@ -109,7 +98,6 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
     key: 'report', label: 'Report Module', icon: '📊',
     permissions: [
       { key: 'view_revenue',          label: 'View Revenue',         description: 'Platform revenue dashboard' },
-      { key: 'view_bookings_report',  label: 'Bookings Report',      description: 'All bookings with filters' },
       { key: 'view_agent_report',     label: 'Agent Report',         description: 'Per-agent performance report' },
       { key: 'view_org_report',       label: 'Corporate Report',     description: 'Per-org spend and travel report' },
       { key: 'view_geo_report',       label: 'Geo Report',           description: 'Booking geography heatmap' },
@@ -121,7 +109,6 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
     permissions: [
       { key: 'view_flags',         label: 'View Flags',         description: 'See fraud/risk flagged transactions' },
       { key: 'manage_ip_block',    label: 'Manage IP Block',    description: 'Block/unblock IP addresses', dangerous: true },
-      { key: 'view_logs',          label: 'View Logs',          description: 'Access system and API logs' },
       { key: 'device_fingerprint', label: 'Device Fingerprint', description: 'View device fingerprint data' },
       { key: 'view_suspicious',    label: 'View Suspicious',    description: 'Suspicious activity dashboard' },
       { key: 'block_user',         label: 'Block User',         description: 'Emergency block any user', dangerous: true },
@@ -137,6 +124,8 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
       { key: 'view_audit_log',     label: 'View Audit Log',     description: 'Full admin action audit trail' },
       { key: 'manage_api_keys',    label: 'Manage API Keys',    description: 'TekTravels/TBO/Razorpay key management', dangerous: true },
       { key: 'manage_admin_staff', label: 'Manage Admin Staff', description: 'Assign/remove which AirDunia staff manage which orgs', dangerous: true },
+      { key: 'view_provider_health', label: 'View Provider Health', description: 'Monitor supplier API errors, webhook delivery, and PNR sync health' },
+      { key: 'resolve_provider_issues', label: 'Resolve Provider Issues', description: 'Resolve PNR mismatches and failed bookings', dangerous: true },
     ],
   },
 ]
@@ -152,8 +141,8 @@ export const BIZ_MODULES: ModuleDef[] = [
       { key: 'book_bus',            label: 'Book Bus',            description: 'Book bus tickets' },
       { key: 'book_cab',            label: 'Book Cab',            description: 'Book cabs within policy cap' },
       { key: 'book_insurance',      label: 'Book Insurance',      description: 'Purchase travel insurance' },
-      { key: 'book_package',        label: 'Book Package',        description: 'Book holiday packages' },
       { key: 'book_fixed_flight',   label: 'Book Fixed Flight',   description: 'Book fixed-departure/alt-source flights (Nexus, FareGuide, AirIQ, Kafila)' },
+      { key: 'book_package',        label: 'Book Package',        description: 'Book holiday packages' },
       { key: 'book_international',  label: 'Book International',  description: 'Book international flights' },
       { key: 'book_business_class', label: 'Book Business Class', description: 'Allowed to book business class seats' },
       { key: 'book_first_class',    label: 'Book First Class',    description: 'Allowed to book first class seats' },
@@ -186,7 +175,6 @@ export const BIZ_MODULES: ModuleDef[] = [
   {
     key: 'report', label: 'Report Module', icon: '📊',
     permissions: [
-      { key: 'view_own_trips',    label: 'View Own Trips',    description: 'See own booking history only' },
       { key: 'view_team_trips',   label: 'View Team Trips',   description: "See own department's trips" },
       { key: 'view_all_trips',    label: 'View All Trips',    description: 'See all trips across the org' },
       { key: 'view_spend_report', label: 'View Spend Report', description: 'Org-wide spend analytics' },
@@ -198,7 +186,6 @@ export const BIZ_MODULES: ModuleDef[] = [
     key: 'finance', label: 'Finance Module', icon: '💰',
     permissions: [
       { key: 'view_invoices',    label: 'View Invoices',    description: 'Download booking invoices' },
-      { key: 'view_gst_reports', label: 'View GST Reports', description: 'GST-compliant expense reports' },
       { key: 'view_wallet',      label: 'View Wallet',      description: 'See org prepaid wallet balance' },
     ],
   },
@@ -245,7 +232,6 @@ export const PARTNER_MODULES: ModuleDef[] = [
       { key: 'book_international', label: 'Book International', description: 'Book international flights' },
       { key: 'cancel_booking',     label: 'Cancel Booking',     description: 'Cancel a customer booking', dangerous: true },
       { key: 'view_pnr',           label: 'View PNR',           description: 'See airline PNR details' },
-      { key: 'download_ticket',    label: 'Download Ticket',    description: 'Download e-ticket PDF' },
     ],
   },
   {
@@ -265,7 +251,6 @@ export const PARTNER_MODULES: ModuleDef[] = [
       { key: 'remove_sub_agent',      label: 'Remove Sub-Agent',      description: 'Remove a sub-agent', dangerous: true },
       { key: 'set_commission',        label: 'Set Commission',        description: 'Set sub-agent commission %' },
       { key: 'view_sub_bookings',     label: 'View Sub Bookings',     description: "See sub-agent's bookings" },
-      { key: 'view_sub_earnings',     label: 'View Sub Earnings',     description: "See sub-agent's earnings" },
       { key: 'override_permissions',  label: 'Override Permissions',  description: 'Grant/revoke individual sub-agent permissions', dangerous: true },
     ],
   },
@@ -274,7 +259,6 @@ export const PARTNER_MODULES: ModuleDef[] = [
     permissions: [
       { key: 'view_wallet',        label: 'View Wallet',        description: 'See wallet balance' },
       { key: 'request_payout',     label: 'Request Payout',     description: 'Request withdrawal to bank' },
-      { key: 'view_commissions',   label: 'View Commissions',   description: 'See commission breakdown' },
       { key: 'view_ledger',        label: 'View Ledger',        description: 'Full transaction ledger' },
       { key: 'view_sub_earnings',  label: 'View Sub Earnings',  description: "See sub-agents' earnings" },
     ],
@@ -282,7 +266,6 @@ export const PARTNER_MODULES: ModuleDef[] = [
   {
     key: 'report', label: 'Report Module', icon: '📊',
     permissions: [
-      { key: 'view_own_bookings',    label: 'View Own Bookings',   description: 'Own booking history' },
       { key: 'view_team_bookings',   label: 'View Team Bookings',  description: "All sub-agents' bookings" },
       { key: 'view_earnings_report', label: 'Earnings Report',     description: 'Commission and earnings analytics' },
       { key: 'export_csv',           label: 'Export CSV',          description: 'Download reports as CSV' },

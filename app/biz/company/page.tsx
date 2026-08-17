@@ -39,7 +39,10 @@ const CAP_ROWS: { key: string; bufferKey: string; column: string; bufferColumn: 
   // one approval buffer for both, only the cap amount differs. The buffer
   // grid below dedupes by bufferKey so this doesn't render a second buffer input.
   { key: 'internationalFlightCap', bufferKey: 'flightCapBuffer', column: 'international_flight_cap', bufferColumn: 'flight_cap_buffer', label: 'International Flight Cap', unit: 'per trip', icon: Plane },
-  { key: 'hotelCap',     bufferKey: 'hotelCapBuffer',     column: 'hotel_cap',     bufferColumn: 'hotel_cap_buffer',     label: 'Hotel Cap',     unit: 'per night',       icon: BedDouble },
+  { key: 'hotelCap',     bufferKey: 'hotelCapBuffer',     column: 'hotel_cap',     bufferColumn: 'hotel_cap_buffer',     label: 'Domestic Hotel Cap', unit: 'per night', icon: BedDouble },
+  // Shares hotelCapBuffer/hotel_cap_buffer with the domestic row above, same
+  // shared-buffer design as the international flight row.
+  { key: 'internationalHotelCap', bufferKey: 'hotelCapBuffer', column: 'international_hotel_cap', bufferColumn: 'hotel_cap_buffer', label: 'International Hotel Cap', unit: 'per night', icon: BedDouble },
   { key: 'insuranceCap', bufferKey: 'insuranceCapBuffer', column: 'insurance_cap', bufferColumn: 'insurance_cap_buffer', label: 'Insurance Cap', unit: 'per policy',      icon: ShieldCheck },
   { key: 'cabCap',       bufferKey: 'cabCapBuffer',       column: 'cab_cap',       bufferColumn: 'cab_cap_buffer',       label: 'Cab Cap',       unit: 'per trip',        icon: Car },
   { key: 'visaCap',      bufferKey: 'visaCapBuffer',      column: 'visa_cap',      bufferColumn: 'visa_cap_buffer',      label: 'Visa Cap',      unit: 'per application', icon: Stamp },

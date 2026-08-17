@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { adminFetch, adminDownload } from '@/lib/api'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
 
 interface ByType { table: string; promoSpend: number; walletSpend: number }
 interface Report {
@@ -18,13 +19,14 @@ export default function PromoBurnPage() {
   const [report, setReport] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
   const [days, setDays] = useState('30')
 
   function load() {
-    setLoading(true); setError('')
+    setLoading(true); setError(''); setPermissionDenied(false)
     adminFetch(`/api/admin/super/reports/promo-burn?days=${days}`)
       .then(setReport)
-      .catch(e => setError(e.message))
+      .catch(e => { setError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }
 
@@ -66,7 +68,7 @@ export default function PromoBurnPage() {
           </section>
 
           {error ? (
-            <div style={{ color: '#DC2626', fontSize: 13 }}>{error}</div>
+            permissionDenied ? <section className="table-card"><PermissionDenied message={error} /></section> : <div style={{ color: '#DC2626', fontSize: 13 }}>{error}</div>
           ) : loading ? (
             <div style={{ color: '#9CA3AF', fontSize: 13 }}>Loading…</div>
           ) : report && (

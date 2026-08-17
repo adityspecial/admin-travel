@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
 
 interface TripRequest {
   id: string
@@ -31,11 +32,14 @@ export default function SuperTripRequestsPage() {
   const [requests, setRequests] = useState<TripRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending')
+  const [error, setError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
 
   function load(status: typeof statusFilter) {
-    setLoading(true)
+    setLoading(true); setError(''); setPermissionDenied(false)
     adminFetch(`/api/admin/super/trip-requests?status=${status}`)
       .then(d => setRequests(d.requests ?? []))
+      .catch(e => { setError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }
 
@@ -86,6 +90,8 @@ export default function SuperTripRequestsPage() {
               <tbody>
                 {loading ? (
                   <tr><td colSpan={8} className="empty-state">Loading…</td></tr>
+                ) : error ? (
+                  <tr><td colSpan={8} className="empty-state">{permissionDenied ? <PermissionDenied message={error} /> : <span style={{ color: '#DC2626' }}>{error}</span>}</td></tr>
                 ) : requests.length === 0 ? (
                   <tr><td colSpan={8} className="empty-state">No trip requests found.</td></tr>
                 ) : requests.map(r => {

@@ -4,6 +4,7 @@ import { adminFetch } from '@/lib/api'
 import { Pagination, usePagination } from '@/components/Pagination'
 import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
 import { Pencil, Power, Plus } from 'lucide-react'
 
 function formatCurrency(value: number) {
@@ -15,12 +16,15 @@ export default function OrgsPage() {
   const [loading, setLoading] = useState(true)
   const [confirmOrg, setConfirmOrg] = useState<{ id: string; name: string; is_active: boolean } | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
 
   const { slice: pageOrgs, page, setPage, total } = usePagination(orgs, 20)
 
   useEffect(() => {
     adminFetch('/api/admin/super/orgs')
       .then((data) => setOrgs(data.orgs ?? []))
+      .catch((e) => { setError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }, [])
 
@@ -116,16 +120,20 @@ export default function OrgsPage() {
       </div>
       <div className="admin-content">
         <div className="page-stack">
-          <DataTable
-            title="Business Accounts"
-            subtitle="Manage active organisations, caps, and basic configuration."
-            columns={columns}
-            data={pageOrgs}
-            loading={loading}
-            emptyMessage="No organisations configured yet."
-            keyExtractor={(org) => org.id}
-            footer={<Pagination total={total} page={page} perPage={20} onPage={setPage} />}
-          />
+          {permissionDenied ? (
+            <div className="table-card"><PermissionDenied message={error} /></div>
+          ) : (
+            <DataTable
+              title="Business Accounts"
+              subtitle="Manage active organisations, caps, and basic configuration."
+              columns={columns}
+              data={pageOrgs}
+              loading={loading}
+              emptyMessage="No organisations configured yet."
+              keyExtractor={(org) => org.id}
+              footer={<Pagination total={total} page={page} perPage={20} onPage={setPage} />}
+            />
+          )}
         </div>
       </div>
 

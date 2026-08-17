@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import '../public/css/style.css'
 import ThemeCustomizer from "@/components/ui/ThemeCustomizer";
+import FaqWidget from "@/components/ui/FaqWidget";
 
 // Inter — the definitive product UI typeface: optical sizing, variable weight, superb at density
 const inter = Inter({
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body suppressHydrationWarning>
         {children}
         <ThemeCustomizer />
+        <FaqWidget />
       </body>
     </html>
   )

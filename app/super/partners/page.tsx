@@ -6,7 +6,15 @@ import { StatCard } from '@/components/ui/StatCard'
 import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { AppInput } from '@/components/ui/AppInput'
 import { AppPopup } from '@/components/ui/AppPopup'
+import { PARTNER_MODULES } from '@/lib/permissions/definitions'
 import { ShieldCheck, UserCheck, UserPlus, Search, Plus, Mail, Lock, Building2 } from 'lucide-react'
+
+const CUSTOM_SENTINEL = '__custom__'
+// requireAgentAdminPermission hardcodes module='agent_admin' — the other
+// PARTNER_MODULES (Booking, Customer, Sub-Agent...) govern the agency's own
+// self-service capabilities (targetType 'partner_agent'), a different
+// account type entirely, irrelevant to an admin_id-linked partner admin.
+const AGENT_ADMIN_MODULE = PARTNER_MODULES.find(m => m.key === 'agent_admin')!
 
 interface Partner {
   id: string
@@ -38,7 +46,8 @@ export default function PartnersPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [form, setForm] = useState({ email: '', password: '', agentId: '' })
+  const [form, setForm] = useState({ email: '', password: '', agentId: '', roleId: '' })
+  const [customPerms, setCustomPerms] = useState<Set<string>>(new Set())
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
   const [createSuccess, setCreateSuccess] = useState('')
@@ -96,14 +105,41 @@ export default function PartnersPage() {
     setCreating(true)
     setCreateError('')
     setCreateSuccess('')
+    let createdRoleId: string | null = null
 
     try {
+      let roleId = form.roleId
+
+      if (roleId === CUSTOM_SENTINEL) {
+        if (!customPerms.size) throw new Error('Pick at least one permission for custom access.')
+        const emailSlug = form.email.trim().split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_')
+        const role = await adminFetch('/api/admin/super/permissions/roles', {
+          method: 'POST',
+          body: JSON.stringify({
+            portal: 'partner',
+            name: `custom_${emailSlug}_${Date.now().toString(36)}`,
+            label: `Custom — ${form.email.trim()}`,
+          }),
+        })
+        createdRoleId = role.id
+        // A missing row already defaults to denied for partner roles (see
+        // middleware.ts) — only the checked permissions need an explicit
+        // true row.
+        const matrix = { agent_admin: Object.fromEntries(AGENT_ADMIN_MODULE.permissions.map(p => [p.key, customPerms.has(p.key)])) }
+        await adminFetch('/api/admin/super/permissions/matrix', {
+          method: 'PUT',
+          body: JSON.stringify({ roleId: role.id, portal: 'partner', matrix }),
+        })
+        roleId = role.id
+      }
+
       const result = await adminFetch('/api/admin/super/partners', {
         method: 'POST',
         body: JSON.stringify({
           email: form.email.trim(),
           password: form.password,
           agentId: form.agentId,
+          roleId: roleId || undefined,
         }),
       })
 
@@ -112,7 +148,7 @@ export default function PartnersPage() {
         {
           id: result.adminId,
           adminId: result.adminId,
-          roleId: null,
+          roleId: roleId || null,
           isActive: true,
           agentId: form.agentId,
           agentName: result.agentName,
@@ -125,13 +161,23 @@ export default function PartnersPage() {
         },
       ])
 
+      if (roleId === createdRoleId) {
+        // Freshly-minted role wasn't in `roles` yet — add it so it shows up
+        // correctly in this row's own Access Level dropdown immediately.
+        setRoles(prev => [...prev, { id: createdRoleId!, name: `custom_${form.email}`, label: `Custom — ${form.email.trim()}` }])
+      }
+
       setCreateSuccess(`Created admin account for ${result.agentName}`)
-      setForm({ email: '', password: '', agentId: '' })
+      setForm({ email: '', password: '', agentId: '', roleId: '' })
+      setCustomPerms(new Set())
       setTimeout(() => {
         setShowCreateForm(false)
         setCreateSuccess('')
       }, 1500)
     } catch (error: any) {
+      if (createdRoleId) {
+        adminFetch(`/api/admin/super/permissions/roles?id=${createdRoleId}&portal=partner`, { method: 'DELETE' }).catch(() => {})
+      }
       try {
         setCreateError(JSON.parse(error.message).error ?? error.message)
       } catch {
@@ -139,6 +185,15 @@ export default function PartnersPage() {
       }
     }
     setCreating(false)
+  }
+
+  function toggleCustomPerm(key: string) {
+    setCustomPerms(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
   }
 
   const filtered = partners.filter(
@@ -253,9 +308,14 @@ export default function PartnersPage() {
           onChange={(e) => changeRole(p.id, e.target.value)}
         >
           <option value="">Default (Agent Admin)</option>
-          {roles.filter(r => r.name !== 'agent').map(r => (
-            <option key={r.id} value={r.id}>{r.label}</option>
-          ))}
+          {roles
+            .filter(r => r.name !== 'agent')
+            // Same as Staff/Corporate Admins — hide other partners' disposable
+            // one-off custom roles, keep this row's own if it holds one.
+            .filter(r => r.id === p.roleId || !(r.name.startsWith('custom_') && r.label.startsWith('Custom — ')))
+            .map(r => (
+              <option key={r.id} value={r.id}>{r.label}</option>
+            ))}
         </select>
       ),
     },
@@ -356,6 +416,34 @@ export default function PartnersPage() {
               ))}
             </select>
           </div>
+
+          <div className="app-input-group">
+            <label className="app-input-label">Access Level</label>
+            <select className="app-input" value={form.roleId} onChange={(e) => setForm(f => ({ ...f, roleId: e.target.value }))}>
+              <option value="">Default (Agent Admin)</option>
+              {roles
+                .filter(r => r.name !== 'agent')
+                .filter(r => !(r.name.startsWith('custom_') && r.label.startsWith('Custom — ')))
+                .map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+              <option value={CUSTOM_SENTINEL}>Custom — choose permissions…</option>
+            </select>
+            <p className="app-input-helper">What this admin can do managing this agency here.</p>
+          </div>
+
+          {form.roleId === CUSTOM_SENTINEL && (
+            <div className="app-input-group">
+              <label className="app-input-label">Permissions this admin can use</label>
+              <div style={{ display: 'grid', gap: 6, maxHeight: 220, overflowY: 'auto', border: '1px solid #E5E7EB', borderRadius: 8, padding: 10 }}>
+                {AGENT_ADMIN_MODULE.permissions.map(perm => (
+                  <label key={perm.key} title={perm.description} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={customPerms.has(perm.key)} onChange={() => toggleCustomPerm(perm.key)} />
+                    <span>{perm.label}{perm.dangerous ? ' ⚠' : ''}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="app-input-helper">Only Partner Admin Module permissions apply here — the agency's own self-service modules (Booking, Customer, etc.) don't govern this account type.</p>
+            </div>
+          )}
 
           <AppInput
             label="Admin Work Email"

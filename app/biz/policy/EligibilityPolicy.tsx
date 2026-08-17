@@ -34,10 +34,15 @@ export function EligibilityPolicy({ type, title }: { type: string; title: string
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const capField       = type === 'hotel' ? 'hotelCap'       : 'cabCap'
-  const bufferField     = type === 'hotel' ? 'hotelCapBuffer' : 'cabCapBuffer'
-  const capColumn       = type === 'hotel' ? 'hotel_cap'      : 'cab_cap'
-  const bufferColumn    = type === 'hotel' ? 'hotel_cap_buffer' : 'cab_cap_buffer'
+  // International hotel shares hotel_cap_buffer (same shared-buffer design as
+  // flight's domestic/international split) — only the cap field/column and
+  // travel_policies type actually differ.
+  const FIELDS: Record<string, { capField: string; bufferField: string; capColumn: string; bufferColumn: string }> = {
+    hotel:               { capField: 'hotelCap',              bufferField: 'hotelCapBuffer', capColumn: 'hotel_cap',              bufferColumn: 'hotel_cap_buffer' },
+    international_hotel: { capField: 'internationalHotelCap', bufferField: 'hotelCapBuffer', capColumn: 'international_hotel_cap', bufferColumn: 'hotel_cap_buffer' },
+    cab:                 { capField: 'cabCap',                bufferField: 'cabCapBuffer',   capColumn: 'cab_cap',                bufferColumn: 'cab_cap_buffer' },
+  }
+  const { capField, bufferField, capColumn, bufferColumn } = FIELDS[type] ?? FIELDS.cab
 
   useEffect(() => {
     setLoading(true)

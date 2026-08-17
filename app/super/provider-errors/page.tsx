@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
 
 interface ProviderError {
   id: string; provider: string; endpoint: string | null
@@ -16,16 +17,17 @@ export default function ProviderErrorsPage() {
   const [errors, setErrors] = useState<ProviderError[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
   const [provider, setProvider] = useState('')
   const [days, setDays] = useState('7')
 
   function load() {
-    setLoading(true); setError('')
+    setLoading(true); setError(''); setPermissionDenied(false)
     const qs = new URLSearchParams({ days })
     if (provider) qs.set('provider', provider)
     adminFetch(`/api/admin/super/provider-errors?${qs.toString()}`)
       .then(d => setErrors(d.errors ?? []))
-      .catch(e => setError(e.message))
+      .catch(e => { setError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }
 
@@ -85,7 +87,7 @@ export default function ProviderErrorsPage() {
                 {loading ? (
                   <tr><td colSpan={4} className="empty-state">Loading…</td></tr>
                 ) : error ? (
-                  <tr><td colSpan={4} className="empty-state" style={{ color: '#DC2626' }}>{error}</td></tr>
+                  <tr><td colSpan={4} className="empty-state">{permissionDenied ? <PermissionDenied message={error} /> : <span style={{ color: '#DC2626' }}>{error}</span>}</td></tr>
                 ) : errors.length === 0 ? (
                   <tr><td colSpan={4} className="empty-state">No provider errors in this period.</td></tr>
                 ) : errors.map(e => (

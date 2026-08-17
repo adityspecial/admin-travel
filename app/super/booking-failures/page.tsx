@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
 
 interface Failure {
   id: string; bookingType: string; profileId: string | null
@@ -26,6 +27,7 @@ export default function BookingFailuresPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
   const [type, setType] = useState('')
   const [days, setDays] = useState('30')
 
@@ -35,12 +37,12 @@ export default function BookingFailuresPage() {
   const [resolving, setResolving] = useState(false)
 
   function load() {
-    setLoading(true); setError('')
+    setLoading(true); setError(''); setPermissionDenied(false)
     const qs = new URLSearchParams({ days })
     if (type) qs.set('type', type)
     adminFetch(`/api/admin/super/booking-failures?${qs.toString()}`)
       .then(d => { setFailures(d.failures ?? []); setStats(d.stats ?? null) })
-      .catch(e => setError(e.message))
+      .catch(e => { setError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }
 
@@ -148,7 +150,7 @@ export default function BookingFailuresPage() {
                 {loading ? (
                   <tr><td colSpan={6} className="empty-state">Loading…</td></tr>
                 ) : error ? (
-                  <tr><td colSpan={6} className="empty-state" style={{ color: '#DC2626' }}>{error}</td></tr>
+                  <tr><td colSpan={6} className="empty-state">{permissionDenied ? <PermissionDenied message={error} /> : <span style={{ color: '#DC2626' }}>{error}</span>}</td></tr>
                 ) : failures.length === 0 ? (
                   <tr><td colSpan={6} className="empty-state">No booking failures in this period.</td></tr>
                 ) : failures.map(f => (

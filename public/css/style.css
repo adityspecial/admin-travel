@@ -1118,6 +1118,7 @@
 .consumer-segment--flight_international { --seg-color: #7C3AED; --seg-bg: #F5F3FF; --seg-border: #7C3AED30; --seg-border-light: #7C3AED20; }
 .consumer-segment--hotel_domestic { --seg-color: #059669; --seg-bg: #ECFDF5; --seg-border: #05966930; --seg-border-light: #05966920; }
 .consumer-segment--hotel_international { --seg-color: #0D9488; --seg-bg: #F0FDFA; --seg-border: #0D948830; --seg-border-light: #0D948820; }
+.consumer-segment--hotel_offline { --seg-color: #DB2777; --seg-bg: #FDF2F8; --seg-border: #DB277730; --seg-border-light: #DB277720; }
 .consumer-segment--insurance { --seg-color: #D97706; --seg-bg: #FFFBEB; --seg-border: #D9770630; --seg-border-light: #D9770620; }
 .consumer-segment--cab_outstation { --seg-color: #0891B2; --seg-bg: #ECFEFF; --seg-border: #0891B230; --seg-border-light: #0891B220; }
 .consumer-segment--cab_airport { --seg-color: #0F766E; --seg-bg: #F0FDFA; --seg-border: #0F766E30; --seg-border-light: #0F766E20; }

@@ -13,6 +13,7 @@ const SEGMENTS = [
   { key: 'flight_international', label: 'Flight — International', color: '#7C3AED', bg: '#F5F3FF' },
   { key: 'hotel_domestic',       label: 'Hotel — Domestic',       color: '#059669', bg: '#ECFDF5' },
   { key: 'hotel_international',  label: 'Hotel — International',  color: '#0D9488', bg: '#F0FDFA' },
+  { key: 'hotel_offline',        label: 'Hotel — Offline (Direct Partner)', color: '#DB2777', bg: '#FDF2F8' },
   { key: 'insurance',            label: 'Insurance',              color: '#D97706', bg: '#FFFBEB' },
   { key: 'cab_outstation',       label: 'Cab — Outstation',       color: '#0891B2', bg: '#ECFEFF' },
   { key: 'cab_airport',          label: 'Cab — Airport Transfer', color: '#0F766E', bg: '#F0FDFA' },

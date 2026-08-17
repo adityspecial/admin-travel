@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
 
 interface RefundRow {
   id: string; paymentId: string; bookingType: string; bookingId: string | null
@@ -38,13 +39,14 @@ export default function RefundAgingPage() {
   const [stats, setStats] = useState<{ count: number; totalAmount: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
   const [hours, setHours] = useState('48')
 
   function load() {
-    setLoading(true); setError('')
+    setLoading(true); setError(''); setPermissionDenied(false)
     adminFetch(`/api/admin/super/refunds/aging?hours=${hours}`)
       .then(d => { setRefunds(d.refunds ?? []); setStats(d.stats ?? null) })
-      .catch(e => setError(e.message))
+      .catch(e => { setError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }
 
@@ -114,7 +116,7 @@ export default function RefundAgingPage() {
                 {loading ? (
                   <tr><td colSpan={6} className="empty-state">Loading…</td></tr>
                 ) : error ? (
-                  <tr><td colSpan={6} className="empty-state" style={{ color: '#DC2626' }}>{error}</td></tr>
+                  <tr><td colSpan={6} className="empty-state">{permissionDenied ? <PermissionDenied message={error} /> : <span style={{ color: '#DC2626' }}>{error}</span>}</td></tr>
                 ) : refunds.length === 0 ? (
                   <tr><td colSpan={6} className="empty-state">No refunds stuck past this threshold.</td></tr>
                 ) : refunds.map(r => (

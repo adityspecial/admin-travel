@@ -5,6 +5,7 @@ import { Pagination, usePagination } from '@/components/Pagination'
 import { StatCard } from '@/components/ui/StatCard'
 import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { Clock, Wallet, CheckCircle2 } from 'lucide-react'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
 import './payout.css'
 
 interface Payout { id: string; amount: number; status: string; bank_name?: string; account_no?: string; upi_id?: string; notes?: string; created_at: string; processed_at?: string }
@@ -18,12 +19,15 @@ export default function PartnerPayoutsPage() {
   const [payouts, setPayouts] = useState<Payout[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving]   = useState<string | null>(null)
+  const [error, setError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
 
   useEffect(() => {
     if (!agentId) return
-    setLoading(true)
+    setLoading(true); setError(''); setPermissionDenied(false)
     adminFetch('/api/admin/partner/payouts', { agentId })
       .then(d => setPayouts(d.payouts ?? []))
+      .catch(e => { setError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }, [agentId])
 
@@ -112,15 +116,19 @@ export default function PartnerPayoutsPage() {
             <StatCard Icon={CheckCircle2} label="Total Paid Out" value={fmt(totalPaid)} sub="Settled payouts" badge="Complete" iconBg="#f0fdf4" iconColor="#0d9488" badgeBg="#ccfbf1" badgeColor="#0f766e" />
           </div>
 
-          <DataTable
-            title="Payout Requests"
-            columns={columns}
-            data={pagePayouts}
-            loading={loading}
-            emptyMessage="No payout requests."
-            keyExtractor={(p) => p.id}
-            footer={<Pagination total={total} page={page} perPage={20} onPage={setPage} />}
-          />
+          {permissionDenied ? (
+            <div className="table-card"><PermissionDenied message={error} /></div>
+          ) : (
+            <DataTable
+              title="Payout Requests"
+              columns={columns}
+              data={pagePayouts}
+              loading={loading}
+              emptyMessage="No payout requests."
+              keyExtractor={(p) => p.id}
+              footer={<Pagination total={total} page={page} perPage={20} onPage={setPage} />}
+            />
+          )}
         </div>
       </div>
     </div>

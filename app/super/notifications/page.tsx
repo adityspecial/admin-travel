@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
 
 interface Notification {
   id: string; target_type: string; target_label: string | null
@@ -26,11 +27,14 @@ export default function NotificationsPage() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [loadError, setLoadError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
 
   function load() {
-    setLoading(true)
+    setLoading(true); setLoadError(''); setPermissionDenied(false)
     adminFetch('/api/admin/super/notifications')
       .then(d => setHistory(d.notifications ?? []))
+      .catch(e => { setLoadError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }
 
@@ -131,6 +135,8 @@ export default function NotificationsPage() {
               <tbody>
                 {loading ? (
                   <tr><td colSpan={4} className="empty-state">Loading…</td></tr>
+                ) : loadError ? (
+                  <tr><td colSpan={4} className="empty-state">{permissionDenied ? <PermissionDenied message={loadError} /> : <span style={{ color: '#DC2626' }}>{loadError}</span>}</td></tr>
                 ) : history.length === 0 ? (
                   <tr><td colSpan={4} className="empty-state">No notifications sent yet.</td></tr>
                 ) : history.map(n => (

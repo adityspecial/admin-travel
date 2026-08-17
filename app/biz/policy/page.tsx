@@ -28,7 +28,8 @@ import {
 const TYPES = [
   { key: 'domestic_flight', label: 'Domestic Flight Policy', icon: Plane },
   { key: 'international_flight', label: 'International Flight Policy', icon: Globe },
-  { key: 'hotel', label: 'Hotel Policy', icon: Hotel },
+  { key: 'hotel', label: 'Domestic Hotel Policy', icon: Hotel },
+  { key: 'international_hotel', label: 'International Hotel Policy', icon: Globe },
   { key: 'cab', label: 'Cab Services', icon: Car },
   { key: 'bus', label: 'Bus Travel', icon: Bus },
   { key: 'train', label: 'Train Journeys', icon: Train },
@@ -49,7 +50,7 @@ const TYPES = [
 // Soon" placeholder) belongs here — drives both the sidebar LIVE/SOON badge
 // and the "Active Policy"/"Under Development" status. visa/package route to
 // SimpleCapPolicy (cap + buffer), which is genuinely saved and enforced.
-const LIVE = new Set(['domestic_flight', 'international_flight', 'hotel', 'cab', 'insurance', 'visa', 'package'])
+const LIVE = new Set(['domestic_flight', 'international_flight', 'hotel', 'international_hotel', 'cab', 'insurance', 'visa', 'package'])
 
 export default function PolicyPage() {
   const [sel, setSel] = useState('domestic_flight')
@@ -171,7 +172,9 @@ export default function PolicyPage() {
             {sel === 'insurance' ? (
               <InsurancePolicy />
             ) : sel === 'hotel' ? (
-              <EligibilityPolicy key={sel} type="hotel" title="Hotel" />
+              <EligibilityPolicy key={sel} type="hotel" title="Domestic Hotel" />
+            ) : sel === 'international_hotel' ? (
+              <EligibilityPolicy key={sel} type="international_hotel" title="International Hotel" />
             ) : sel === 'cab' ? (
               <EligibilityPolicy key={sel} type="cab" title="Cab" />
             ) : sel === 'visa' ? (

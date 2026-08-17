@@ -86,6 +86,7 @@ export default function EditOrgPage() {
     flight_cap:           '',
     international_flight_cap: '',
     hotel_cap:            '',
+    international_hotel_cap: '',
     insurance_cap:        '',
     cab_cap:              '',
     visa_cap:             '',
@@ -133,6 +134,7 @@ export default function EditOrgPage() {
           flight_cap:           String(d.org.flight_cap           ?? 10000),
           international_flight_cap: String(d.org.international_flight_cap ?? 30000),
           hotel_cap:            String(d.org.hotel_cap            ?? 5000),
+          international_hotel_cap: String(d.org.international_hotel_cap ?? 15000),
           insurance_cap:        String(d.org.insurance_cap        ?? 3000),
           cab_cap:              String(d.org.cab_cap              ?? 3000),
           visa_cap:             String(d.org.visa_cap             ?? 8000),
@@ -171,6 +173,7 @@ export default function EditOrgPage() {
           flightCap:    Number(form.flight_cap),
           internationalFlightCap: Number(form.international_flight_cap),
           hotelCap:     Number(form.hotel_cap),
+          internationalHotelCap: Number(form.international_hotel_cap),
           insuranceCap: Number(form.insurance_cap),
           cabCap:       Number(form.cab_cap),
           visaCap:      Number(form.visa_cap),
@@ -433,6 +436,15 @@ export default function EditOrgPage() {
                 onChange={e => setForm(f => ({ ...f, hotel_cap: e.target.value }))}
                 placeholder="5000"
                 icon={<Bed size={15} />}
+              />
+              <AppInput
+                label="International Hotel Cap (₹ per night)"
+                type="number"
+                min="0"
+                value={form.international_hotel_cap}
+                onChange={e => setForm(f => ({ ...f, international_hotel_cap: e.target.value }))}
+                placeholder="15000"
+                icon={<Globe size={15} />}
               />
               <AppInput
                 label="Insurance Cap (₹ per policy)"

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
+import { PermissionDenied } from '@/components/ui/PermissionDenied'
 
 interface Flag {
   id: string; booking_id: string; booking_type: string; pnr: string | null; our_status: string
@@ -21,11 +22,14 @@ export default function PnrHealthPage() {
   const [flags, setFlags] = useState<Flag[]>([])
   const [loading, setLoading] = useState(true)
   const [resolvingId, setResolvingId] = useState<string | null>(null)
+  const [error, setError] = useState('')
+  const [permissionDenied, setPermissionDenied] = useState(false)
 
   function load() {
-    setLoading(true)
+    setLoading(true); setError(''); setPermissionDenied(false)
     adminFetch('/api/admin/super/pnr-health')
       .then(d => setFlags(d.flags ?? []))
+      .catch(e => { setError(e.message); setPermissionDenied(!!e.isPermissionDenied) })
       .finally(() => setLoading(false))
   }
   useEffect(() => { load() }, [])
@@ -59,6 +63,8 @@ export default function PnrHealthPage() {
               <tbody>
                 {loading ? (
                   <tr><td colSpan={6} className="empty-state">Loading…</td></tr>
+                ) : error ? (
+                  <tr><td colSpan={6} className="empty-state">{permissionDenied ? <PermissionDenied message={error} /> : <span style={{ color: '#DC2626' }}>{error}</span>}</td></tr>
                 ) : flags.length === 0 ? (
                   <tr><td colSpan={6} className="empty-state">No flagged bookings.</td></tr>
                 ) : flags.map(f => (

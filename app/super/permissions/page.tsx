@@ -5,7 +5,7 @@ import { SUPER_ADMIN_MODULES } from '@/lib/permissions/definitions'
 import { ModuleCard } from './ModuleCard'
 import { OverrideEngine } from './OverrideEngine'
 import { AppPopup } from '@/components/ui/AppPopup'
-import { Plus, Pencil } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 
 const PORTAL = 'super_admin'
 
@@ -24,6 +24,7 @@ interface Role {
   is_system: boolean
   is_custom: boolean
   matrix: Record<string, Record<string, boolean>>
+  assignedCount?: number
 }
 
 export default function PermissionsPage() {
@@ -42,6 +43,8 @@ export default function PermissionsPage() {
   const [renaming,      setRenaming]     = useState(false)
   const [renameLabel,   setRenameLabel]  = useState('')
   const [renameSaving,  setRenameSaving] = useState(false)
+  const [deletingRole,  setDeletingRole] = useState(false)
+  const [deleteError,   setDeleteError]  = useState('')
 
   const activeRole = roles.find(r => r.id === activeRoleId) ?? null
 
@@ -110,6 +113,22 @@ export default function PermissionsPage() {
     setRenameSaving(false)
   }
 
+  async function deleteRole() {
+    if (!activeRole) return
+    setDeletingRole(true); setDeleteError('')
+    try {
+      await adminFetch(`/api/admin/super/permissions/roles?id=${activeRole.id}&portal=${PORTAL}`, { method: 'DELETE' })
+      const remaining = roles.filter(r => r.id !== activeRole.id)
+      setRoles(remaining)
+      if (remaining.length) { setActiveRoleId(remaining[0].id); setLocalMatrix(remaining[0].matrix ?? {}) }
+      else setActiveRoleId(null)
+    } catch (err: any) {
+      try { setDeleteError(JSON.parse(err.message).error ?? err.message) }
+      catch { setDeleteError(err.message) }
+    }
+    setDeletingRole(false)
+  }
+
   function selectRole(role: Role) {
     setActiveRoleId(role.id)
     setLocalMatrix(role.matrix ?? {})
@@ -139,6 +158,27 @@ export default function PermissionsPage() {
     })
 
     setSaving(null)
+  }
+
+  async function handleBulkToggle(module: string, permissions: string[], enabled: boolean) {
+    if (!activeRoleId) return
+    setLocalMatrix(prev => ({
+      ...prev,
+      [module]: { ...(prev[module] ?? {}), ...Object.fromEntries(permissions.map(p => [p, enabled])) },
+    }))
+    await Promise.all(permissions.map(permission =>
+      adminFetch('/api/admin/super/permissions/matrix', {
+        method: 'PATCH',
+        body: JSON.stringify({ roleId: activeRoleId, portal: PORTAL, module, permission, enabled }),
+      })
+    )).catch(() => {
+      // Best-effort revert — re-fetch is simpler and more reliable than
+      // trying to know which of the N parallel PATCHes actually failed.
+      fetchRoles().then(loaded => {
+        const refreshed = loaded.find((r: Role) => r.id === activeRoleId)
+        if (refreshed) setLocalMatrix(refreshed.matrix ?? {})
+      })
+    })
   }
 
   async function commitArchitecture() {
@@ -210,8 +250,19 @@ export default function PermissionsPage() {
               key={role.id}
               onClick={() => { selectRole(role); setView('roles') }}
               className={`perm-role-btn ${activeRoleId === role.id && view === 'roles' ? 'perm-role-btn--active' : ''} ${activeRoleId === role.id ? 'perm-role-btn--current' : ''}`}
+              style={role.assignedCount === 0 ? { opacity: 0.55 } : undefined}
+              title={role.assignedCount !== undefined ? `${role.assignedCount} staff account${role.assignedCount === 1 ? '' : 's'} on this role` : undefined}
             >
               <span className="perm-role-label">{role.label}</span>
+              {role.assignedCount !== undefined && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 999,
+                  background: role.assignedCount > 0 ? 'var(--accent-lt)' : 'var(--surface-2)',
+                  color: role.assignedCount > 0 ? 'var(--accent)' : 'var(--ink-3)', marginLeft: 6,
+                }}>
+                  {role.assignedCount}
+                </span>
+              )}
               {activeRoleId === role.id && view === 'roles' && (
                 <span className="perm-active-dot" />
               )}
@@ -257,10 +308,22 @@ export default function PermissionsPage() {
                   {activeRole.is_custom && (
                     <span className="perm-custom-badge">CUSTOM ROLE</span>
                   )}
+                  {deleteError && <div style={{ color: '#DC2626', fontSize: 12, marginTop: 4 }}>{deleteError}</div>}
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {activeRole.is_custom && (activeRole.assignedCount ?? 0) === 0 && (
+                  <button
+                    onClick={() => { if (confirm(`Delete "${activeRole.label}"? This can't be undone.`)) deleteRole() }}
+                    disabled={deletingRole}
+                    title="Delete this unused custom role"
+                    className="btn btn-ghost btn-sm"
+                    style={{ color: '#DC2626' }}
+                  >
+                    <Trash2 size={14} /> {deletingRole ? 'Deleting…' : 'Delete'}
+                  </button>
+                )}
                 {activeRole.is_custom && TEMPLATED_ROLE_NAMES.has(activeRole.name) && (
                   <button
                     onClick={applyTemplate}
@@ -291,6 +354,7 @@ export default function PermissionsPage() {
                   highlight={systemModules.includes(mod.key)}
                   saving={saving?.startsWith(mod.key + '.') ? saving.split('.')[1] : null}
                   onChange={(perm, enabled) => handleToggle(mod.key, perm, enabled)}
+                  onBulkChange={(perms, enabled) => handleBulkToggle(mod.key, perms, enabled)}
                 />
               ))}
             </div>

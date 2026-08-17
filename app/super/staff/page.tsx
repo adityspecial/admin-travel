@@ -6,8 +6,9 @@ import { StatCard } from '@/components/ui/StatCard'
 import { DataTable, ColumnDef } from '@/components/ui/DataTable'
 import { AppInput } from '@/components/ui/AppInput'
 import { AppPopup } from '@/components/ui/AppPopup'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { SUPER_ADMIN_MODULES } from '@/lib/permissions/definitions'
-import { ShieldCheck, UserCheck, Search, Plus, Mail, Lock, Building2 } from 'lucide-react'
+import { ShieldCheck, UserCheck, Search, Plus, Mail, Lock, Building2, Trash2 } from 'lucide-react'
 
 const CUSTOM_SENTINEL = '__custom__'
 
@@ -39,6 +40,9 @@ export default function StaffPage() {
   const [createError, setCreateError] = useState('')
   const [savingRole, setSavingRole] = useState<string | null>(null)
   const [savingActive, setSavingActive] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Staff | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   useEffect(() => {
     adminFetch('/api/admin/super/staff?role=super')
@@ -50,7 +54,15 @@ export default function StaffPage() {
   useEffect(() => {
     if (!showCreateForm) return
     adminFetch('/api/admin/super/permissions/roles?portal=super_admin&targetType=admin_staff')
-      .then(d => setFormRoles(d.roles ?? []))
+      // Every "Custom — choose sections…" account spawns its own disposable,
+      // single-staffer role (name custom_<emailslug>_<ts>, label "Custom —
+      // <email>") — reusing one built for a specific past staffer doesn't
+      // make sense for a new account, and left in, this dropdown grows one
+      // junk entry per custom staffer forever. Existing staff who already
+      // have one assigned still see it (RoleCell's own fetch below isn't
+      // filtered), and it's still fully visible/editable on the Permissions
+      // page — only hidden from this "pick a role for a NEW account" list.
+      .then(d => setFormRoles((d.roles ?? []).filter((r: any) => !(r.name?.startsWith('custom_') && r.label?.startsWith('Custom — ')))))
       .catch(() => setFormRoles([]))
   }, [showCreateForm])
 
@@ -95,6 +107,12 @@ export default function StaffPage() {
     e.preventDefault()
     setCreating(true)
     setCreateError('')
+    // Tracked so a failure after the custom role is created (e.g. the staff
+    // account POST below fails on a duplicate email) doesn't leave an
+    // orphaned one-off role behind — previously every failed/retried attempt
+    // for the same email left another "Custom — <email>" entry cluttering
+    // this list forever, with nothing ever pointing at it.
+    let createdRoleId: string | null = null
     try {
       let roleId = form.roleId
 
@@ -114,16 +132,21 @@ export default function StaffPage() {
             label: `Custom — ${form.email.trim()}`,
           }),
         })
+        // Every module must get an explicit row, checked or not — a module
+        // left out entirely falls back to "allowed" for super_admin roles
+        // (see middleware.ts's missing-row fallback), which silently granted
+        // full access regardless of what was checked here.
         const matrix: Record<string, Record<string, boolean>> = {}
         for (const mod of SUPER_ADMIN_MODULES) {
-          if (!customModules.has(mod.key)) continue
-          matrix[mod.key] = Object.fromEntries(mod.permissions.map(p => [p.key, true]))
+          const enabled = customModules.has(mod.key)
+          matrix[mod.key] = Object.fromEntries(mod.permissions.map(p => [p.key, enabled]))
         }
         await adminFetch('/api/admin/super/permissions/matrix', {
           method: 'PUT',
           body: JSON.stringify({ roleId: role.id, portal: 'super_admin', matrix }),
         })
         roleId = role.id
+        createdRoleId = role.id
       }
 
       const result = await adminFetch('/api/admin/super/staff', {
@@ -138,10 +161,27 @@ export default function StaffPage() {
       setCustomModules(new Set())
       setShowCreateForm(false)
     } catch (error: any) {
+      if (createdRoleId) {
+        adminFetch(`/api/admin/super/permissions/roles?id=${createdRoleId}&portal=super_admin`, { method: 'DELETE' }).catch(() => {})
+      }
       try { setCreateError(JSON.parse(error.message).error ?? error.message) }
       catch { setCreateError(error.message) }
     }
     setCreating(false)
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    setDeleting(true); setDeleteError('')
+    try {
+      await adminFetch(`/api/admin/super/staff/${deleteTarget.id}`, { method: 'DELETE' })
+      setStaff(prev => prev.filter(s => s.id !== deleteTarget.id))
+      setDeleteTarget(null)
+    } catch (error: any) {
+      try { setDeleteError(JSON.parse(error.message).error ?? error.message) }
+      catch { setDeleteError(error.message) }
+    }
+    setDeleting(false)
   }
 
   function toggleCustomModule(key: string) {
@@ -185,6 +225,13 @@ export default function StaffPage() {
       ),
     },
     { key: 'created_at', header: 'Created', render: (s) => <span className="data-table-muted-cell">{new Date(s.created_at).toLocaleDateString('en-IN')}</span> },
+    {
+      key: 'actions', header: '', render: (s) => (
+        <button className="btn btn-ghost btn-sm" style={{ color: '#DC2626' }} onClick={() => { setDeleteTarget(s); setDeleteError('') }}>
+          <Trash2 size={12} /> Delete
+        </button>
+      ),
+    },
   ]
 
   return (
@@ -287,6 +334,24 @@ export default function StaffPage() {
           </div>
         </form>
       </AppPopup>
+
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        title="Delete Staff Account"
+        tone="danger"
+        loading={deleting}
+        confirmLabel="Delete Account"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        message={
+          <div>
+            <p style={{ margin: '0 0 10px' }}>
+              This permanently deletes <strong>{deleteTarget?.email}</strong>'s access to this admin panel. This cannot be undone.
+            </p>
+            {deleteError && <div style={{ color: '#DC2626', fontSize: 13 }}>{deleteError}</div>}
+          </div>
+        }
+      />
     </div>
   )
 }
@@ -308,6 +373,16 @@ function RoleCell({
 
   if (!options) return <span className="data-table-muted-cell">Loading…</span>
 
+  // Same disposable-one-off-role problem as the Add Staff dropdown, but here
+  // a role can't just be dropped outright — if it's the one THIS row already
+  // holds, it has to stay listed so the current value still displays
+  // correctly. Every other row's dropdown still hides it, since assigning
+  // someone else another staffer's one-off "Custom — <email>" role never
+  // makes sense.
+  const visibleOptions = options.filter(r =>
+    r.id === staff.role_id || !(r.name.startsWith('custom_') && r.label.startsWith('Custom — '))
+  )
+
   return (
     <select
       className="app-input"
@@ -316,7 +391,7 @@ function RoleCell({
       onChange={(e) => onChange(staff.id, e.target.value)}
     >
       <option value="">Standard (Super Admin)</option>
-      {options.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+      {visibleOptions.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
     </select>
   )
 }

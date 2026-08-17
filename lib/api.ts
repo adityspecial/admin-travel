@@ -1,5 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 
+// Thrown by adminFetch on any non-OK response — `.message` is already the
+// clean human-readable string (never the raw '{"error":"..."}' JSON body),
+// and `.status`/`.isPermissionDenied` let callers show a proper "no access"
+// state instead of dumping the error text into the page.
+export class AdminApiError extends Error {
+  status: number
+  isPermissionDenied: boolean
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'AdminApiError'
+    this.status = status
+    this.isPermissionDenied = status === 403
+  }
+}
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -95,7 +110,9 @@ export async function adminFetch(
 
   if (!res.ok) {
     const text = await res.text()
-    throw new Error(text || `HTTP ${res.status}`)
+    let message = text || `HTTP ${res.status}`
+    try { message = JSON.parse(text)?.error ?? message } catch {}
+    throw new AdminApiError(message, res.status)
   }
 
   return res.json()
