@@ -84,6 +84,7 @@ interface Room {
   meal_plan: string | null
   is_refundable: boolean
   base_price: number
+  purchase_price: number
   tax: number
 }
 
@@ -99,14 +100,22 @@ interface Hotel {
   images: string[]
   is_available: boolean
   offline_hotel_rooms: Room[]
+  billing_instructions: string | null
+  cancellation_policy_text: string | null
+  special_remarks: string | null
+  emergency_contact_no: string | null
+  inclusions: string | null
+  airport_transfer: string | null
 }
 
 const BLANK = {
   name: '', city_code: '', city_name: '', address: '', description: '',
   star_rating: '', amenities: '', images: [] as string[], is_available: true,
+  billing_instructions: '', cancellation_policy_text: '', special_remarks: '',
+  emergency_contact_no: '', inclusions: '', airport_transfer: '',
 }
 
-const BLANK_ROOM = { room_name: '', meal_plan: '', is_refundable: false, base_price: '', tax: '' }
+const BLANK_ROOM = { room_name: '', meal_plan: '', is_refundable: false, base_price: '', purchase_price: '', tax: '' }
 
 export default function OfflineHotelsPage() {
   const [items, setItems]               = useState<Hotel[]>([])
@@ -121,6 +130,9 @@ export default function OfflineHotelsPage() {
   const [deleting, setDeleting]         = useState(false)
   const [newRoom, setNewRoom]           = useState(BLANK_ROOM)
   const [savingRoom, setSavingRoom]     = useState(false)
+  // Set while editing an already-saved room (persisted, has a real id) —
+  // reuses the same newRoom form/inputs, just PATCHes instead of POSTs.
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null)
   // Room types staged while creating a NEW hotel (no id to attach them to
   // yet) — posted to /rooms one by one right after the hotel itself is
   // created. Edit mode still adds rooms immediately via newRoom/addRoom.
@@ -163,8 +175,15 @@ export default function OfflineHotelsPage() {
       amenities: (it.amenities ?? []).join(', '),
       images: it.images ?? [],
       is_available: it.is_available,
+      billing_instructions: it.billing_instructions ?? '',
+      cancellation_policy_text: it.cancellation_policy_text ?? '',
+      special_remarks: it.special_remarks ?? '',
+      emergency_contact_no: it.emergency_contact_no ?? '',
+      inclusions: it.inclusions ?? '',
+      airport_transfer: it.airport_transfer ?? '',
     })
     setNewRoom(BLANK_ROOM)
+    setEditingRoomId(null)
     setShowForm(true)
   }
 
@@ -230,6 +249,12 @@ export default function OfflineHotelsPage() {
         amenities: form.amenities.split(',').map(s => s.trim()).filter(Boolean),
         images: form.images,
         is_available: form.is_available,
+        billing_instructions: form.billing_instructions || null,
+        cancellation_policy_text: form.cancellation_policy_text || null,
+        special_remarks: form.special_remarks || null,
+        emergency_contact_no: form.emergency_contact_no || null,
+        inclusions: form.inclusions || null,
+        airport_transfer: form.airport_transfer || null,
       }
       if (editId) {
         await adminFetch(`/api/admin/super/offline-hotels/${editId}`, { method: 'PATCH', body: JSON.stringify(body) })
@@ -279,28 +304,55 @@ export default function OfflineHotelsPage() {
     }
   }
 
-  async function addRoom() {
+  async function saveRoom() {
     if (!editId || !newRoom.room_name || !newRoom.base_price) {
       flash('Room name and base price are required.')
       return
     }
     setSavingRoom(true)
     try {
-      await adminFetch(`/api/admin/super/offline-hotels/${editId}/rooms`, {
-        method: 'POST',
-        body: JSON.stringify({ ...newRoom, base_price: Number(newRoom.base_price), tax: Number(newRoom.tax) || 0 }),
-      })
+      const body = {
+        ...newRoom, base_price: Number(newRoom.base_price),
+        purchase_price: Number(newRoom.purchase_price) || 0,
+        tax: Number(newRoom.tax) || 0,
+      }
+      if (editingRoomId) {
+        await adminFetch(`/api/admin/super/offline-hotels/${editId}/rooms/${editingRoomId}`, {
+          method: 'PATCH', body: JSON.stringify(body),
+        })
+      } else {
+        await adminFetch(`/api/admin/super/offline-hotels/${editId}/rooms`, {
+          method: 'POST', body: JSON.stringify(body),
+        })
+      }
       setNewRoom(BLANK_ROOM)
+      setEditingRoomId(null)
       load()
     } catch (e: any) {
-      flash('Error: ' + (e.message ?? 'Could not add room'))
+      flash('Error: ' + (e.message ?? 'Could not save room'))
     } finally {
       setSavingRoom(false)
     }
   }
 
+  function startEditRoom(room: Room) {
+    setEditingRoomId(room.id)
+    setNewRoom({
+      room_name: room.room_name, meal_plan: room.meal_plan ?? '',
+      is_refundable: room.is_refundable,
+      base_price: String(room.base_price), purchase_price: String(room.purchase_price ?? 0),
+      tax: String(room.tax),
+    })
+  }
+
+  function cancelEditRoom() {
+    setEditingRoomId(null)
+    setNewRoom(BLANK_ROOM)
+  }
+
   async function deleteRoom(roomId: string) {
     if (!editId) return
+    if (editingRoomId === roomId) cancelEditRoom()
     await adminFetch(`/api/admin/super/offline-hotels/${editId}/rooms/${roomId}`, { method: 'DELETE' })
     load()
   }
@@ -377,7 +429,8 @@ export default function OfflineHotelsPage() {
         <button
           type="button"
           onClick={() => toggleAvailable(it)}
-          className={`data-table-status-pill ${it.is_available ? 'active' : 'inactive'}`}
+          className={`data-table-status-pill oh-status-toggle-btn ${it.is_available ? 'active' : 'inactive'}`}
+          title={it.is_available ? 'Click to mark unavailable' : 'Click to mark available'}
         >
           {it.is_available ? '● Available' : '● Unavailable'}
         </button>
@@ -461,7 +514,7 @@ export default function OfflineHotelsPage() {
         subtitle="Direct tie-up inventory — entered by hand, shown as 'Direct Partner Hotels' in search"
         icon={<Building2 size={22} strokeWidth={2.2} />}
         iconTone="blue"
-        maxWidth={640}
+        maxWidth={980}
         onClose={() => { setShowForm(false); setEditId(null) }}
       >
         <form onSubmit={(e) => { e.preventDefault(); save() }}>
@@ -521,6 +574,27 @@ export default function OfflineHotelsPage() {
                 </label>
               </div>
             </div>
+
+            <div className="fc-full-col" style={{ marginTop: 8, paddingTop: 16, borderTop: '1px solid #F1F5F9' }}>
+              <label className="app-input-label">Voucher &amp; Billing Details</label>
+              <div style={{ fontSize: 11.5, color: '#94A3B8', marginBottom: 10 }}>
+                Shown on every booking's voucher for this hotel — set once here, not per booking.
+              </div>
+            </div>
+            <div className="fc-full-col">
+              <AppInput label="Inclusions" value={form.inclusions} onChange={f('inclusions')} placeholder="e.g. Room + WiFi + Breakfast" />
+            </div>
+            <AppInput label="Airport Transfer" value={form.airport_transfer} onChange={f('airport_transfer')} placeholder="e.g. No, or pickup details" />
+            <AppInput label="Emergency Contact No" value={form.emergency_contact_no} onChange={f('emergency_contact_no')} placeholder="e.g. 8178270819" />
+            <div className="fc-full-col">
+              <AppInput label="Billing Instructions" value={form.billing_instructions} onChange={f('billing_instructions')} placeholder="e.g. Room BTC, Extra Direct by Guest" />
+            </div>
+            <div className="fc-full-col">
+              <AppInput label="Cancellation Clause" value={form.cancellation_policy_text} onChange={f('cancellation_policy_text')} placeholder="e.g. Free cancellation up to 72 hours before check-in" />
+            </div>
+            <div className="fc-full-col">
+              <AppInput label="Special Remarks (e.g. GST note)" value={form.special_remarks} onChange={f('special_remarks')} placeholder={'e.g. GST (18%) is applicable on final invoice'} />
+            </div>
           </div>
 
           <div className="app-popup-footer">
@@ -541,7 +615,13 @@ export default function OfflineHotelsPage() {
                 <div>
                   <div className="data-table-cell-bold">{room.room_name}</div>
                   <div className="data-table-muted-cell">
-                    ₹{room.base_price} + ₹{room.tax || 0} tax · {room.meal_plan || 'No meal plan'} · {room.is_refundable ? 'Refundable' : 'Non-refundable'}
+                    Sell ₹{room.base_price} · Cost ₹{room.purchase_price || 0}
+                    {room.base_price && (
+                      <span style={{ color: Number(room.base_price) - Number(room.purchase_price || 0) >= 0 ? '#16A34A' : '#DC2626', fontWeight: 700 }}>
+                        {' '}(margin ₹{Math.round(Number(room.base_price) - Number(room.purchase_price || 0))})
+                      </span>
+                    )}
+                    {' '}+ ₹{room.tax || 0} tax · {room.meal_plan || 'No meal plan'} · {room.is_refundable ? 'Refundable' : 'Non-refundable'}
                   </div>
                 </div>
                 <button type="button" className="data-table-btn data-table-btn-danger" onClick={() => setPendingRooms(p => p.filter((_, idx) => idx !== i))}>
@@ -553,7 +633,8 @@ export default function OfflineHotelsPage() {
             <div className="fc-form-grid" style={{ marginTop: 12 }}>
               <AppInput label="Room Name" value={newRoom.room_name} onChange={e => setNewRoom(p => ({ ...p, room_name: e.target.value }))} placeholder="e.g. Deluxe Room" />
               <AppInput label="Meal Plan" value={newRoom.meal_plan} onChange={e => setNewRoom(p => ({ ...p, meal_plan: e.target.value }))} placeholder="e.g. Breakfast Included" />
-              <AppInput label="Base Price / Night" type="number" value={newRoom.base_price} onChange={e => setNewRoom(p => ({ ...p, base_price: e.target.value }))} placeholder="e.g. 4500" />
+              <AppInput label="Selling Price / Night *" type="number" value={newRoom.base_price} onChange={e => setNewRoom(p => ({ ...p, base_price: e.target.value }))} placeholder="e.g. 4500" />
+              <AppInput label="Purchase Price / Night (our cost)" type="number" value={newRoom.purchase_price} onChange={e => setNewRoom(p => ({ ...p, purchase_price: e.target.value }))} placeholder="e.g. 3800" />
               <AppInput label="Tax / Night" type="number" value={newRoom.tax} onChange={e => setNewRoom(p => ({ ...p, tax: e.target.value }))} placeholder="e.g. 500" />
               <div className="fc-full-col fc-checkbox-row">
                 <input type="checkbox" checked={newRoom.is_refundable} onChange={e => setNewRoom(p => ({ ...p, is_refundable: e.target.checked }))} id="pendingRoomRefundable" className="fc-checkbox" />
@@ -577,32 +658,71 @@ export default function OfflineHotelsPage() {
           <div style={{ marginTop: 24, borderTop: '1px solid #E2E8F0', paddingTop: 18 }}>
             <div className="app-input-label" style={{ marginBottom: 10 }}>Rooms</div>
             {(editingHotel?.offline_hotel_rooms ?? []).map(room => (
-              <div key={room.id} className="data-table-actions" style={{ justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F1F5F9' }}>
-                <div>
-                  <div className="data-table-cell-bold">{room.room_name}</div>
-                  <div className="data-table-muted-cell">
-                    ₹{room.base_price} + ₹{room.tax} tax · {room.meal_plan || 'No meal plan'} · {room.is_refundable ? 'Refundable' : 'Non-refundable'}
+              editingRoomId === room.id ? (
+                <div key={room.id} style={{ padding: '12px', margin: '4px 0', borderRadius: 8, border: '1px solid #93C5FD', background: '#EFF6FF' }}>
+                  <div className="fc-form-grid">
+                    <AppInput label="Room Name" value={newRoom.room_name} onChange={e => setNewRoom(p => ({ ...p, room_name: e.target.value }))} placeholder="e.g. Deluxe Room" />
+                    <AppInput label="Meal Plan" value={newRoom.meal_plan} onChange={e => setNewRoom(p => ({ ...p, meal_plan: e.target.value }))} placeholder="e.g. Breakfast Included" />
+                    <AppInput label="Selling Price / Night *" type="number" value={newRoom.base_price} onChange={e => setNewRoom(p => ({ ...p, base_price: e.target.value }))} placeholder="e.g. 4500" />
+                    <AppInput label="Purchase Price / Night (our cost)" type="number" value={newRoom.purchase_price} onChange={e => setNewRoom(p => ({ ...p, purchase_price: e.target.value }))} placeholder="e.g. 3800" />
+                    <AppInput label="Tax / Night" type="number" value={newRoom.tax} onChange={e => setNewRoom(p => ({ ...p, tax: e.target.value }))} placeholder="e.g. 500" />
+                    <div className="fc-full-col fc-checkbox-row">
+                      <input type="checkbox" checked={newRoom.is_refundable} onChange={e => setNewRoom(p => ({ ...p, is_refundable: e.target.checked }))} id="roomRefundable" className="fc-checkbox" />
+                      <label htmlFor="roomRefundable" className="fc-checkbox-label">Refundable</label>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                    <button type="button" className="btn btn-primary btn-sm" onClick={saveRoom} disabled={savingRoom}>
+                      <span>{savingRoom ? 'Saving…' : 'Save Changes'}</span>
+                    </button>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={cancelEditRoom} disabled={savingRoom}>
+                      <span>Cancel</span>
+                    </button>
                   </div>
                 </div>
-                <button type="button" className="data-table-btn data-table-btn-danger" onClick={() => deleteRoom(room.id)}>
-                  <Trash2 size={12} /><span>Delete</span>
-                </button>
-              </div>
+              ) : (
+                <div key={room.id} className="data-table-actions" style={{ justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F1F5F9' }}>
+                  <div>
+                    <div className="data-table-cell-bold">{room.room_name}</div>
+                    <div className="data-table-muted-cell">
+                      Sell ₹{room.base_price} · Cost ₹{room.purchase_price || 0}
+                      <span style={{ color: Number(room.base_price) - Number(room.purchase_price || 0) >= 0 ? '#16A34A' : '#DC2626', fontWeight: 700 }}>
+                        {' '}(margin ₹{Math.round(Number(room.base_price) - Number(room.purchase_price || 0))})
+                      </span>
+                      {' '}+ ₹{room.tax} tax · {room.meal_plan || 'No meal plan'} · {room.is_refundable ? 'Refundable' : 'Non-refundable'}
+                    </div>
+                  </div>
+                  <div className="data-table-actions">
+                    <button type="button" className="data-table-btn data-table-btn-edit" onClick={() => startEditRoom(room)}>
+                      <Pencil size={12} /><span>Edit</span>
+                    </button>
+                    <button type="button" className="data-table-btn data-table-btn-danger" onClick={() => deleteRoom(room.id)}>
+                      <Trash2 size={12} /><span>Delete</span>
+                    </button>
+                  </div>
+                </div>
+              )
             ))}
 
-            <div className="fc-form-grid" style={{ marginTop: 12 }}>
-              <AppInput label="Room Name" value={newRoom.room_name} onChange={e => setNewRoom(p => ({ ...p, room_name: e.target.value }))} placeholder="e.g. Deluxe Room" />
-              <AppInput label="Meal Plan" value={newRoom.meal_plan} onChange={e => setNewRoom(p => ({ ...p, meal_plan: e.target.value }))} placeholder="e.g. Breakfast Included" />
-              <AppInput label="Base Price / Night" type="number" value={newRoom.base_price} onChange={e => setNewRoom(p => ({ ...p, base_price: e.target.value }))} placeholder="e.g. 4500" />
-              <AppInput label="Tax / Night" type="number" value={newRoom.tax} onChange={e => setNewRoom(p => ({ ...p, tax: e.target.value }))} placeholder="e.g. 500" />
-              <div className="fc-full-col fc-checkbox-row">
-                <input type="checkbox" checked={newRoom.is_refundable} onChange={e => setNewRoom(p => ({ ...p, is_refundable: e.target.checked }))} id="roomRefundable" className="fc-checkbox" />
-                <label htmlFor="roomRefundable" className="fc-checkbox-label">Refundable</label>
-              </div>
-            </div>
-            <button type="button" className="btn btn-primary btn-sm" style={{ marginTop: 10 }} onClick={addRoom} disabled={savingRoom}>
-              <Plus size={14} /><span>{savingRoom ? 'Adding…' : 'Add Room'}</span>
-            </button>
+            {!editingRoomId && (
+              <>
+                <div className="app-input-label" style={{ marginTop: 14, marginBottom: 4 }}>Add Room</div>
+                <div className="fc-form-grid" style={{ marginTop: 8 }}>
+                  <AppInput label="Room Name" value={newRoom.room_name} onChange={e => setNewRoom(p => ({ ...p, room_name: e.target.value }))} placeholder="e.g. Deluxe Room" />
+                  <AppInput label="Meal Plan" value={newRoom.meal_plan} onChange={e => setNewRoom(p => ({ ...p, meal_plan: e.target.value }))} placeholder="e.g. Breakfast Included" />
+                  <AppInput label="Selling Price / Night *" type="number" value={newRoom.base_price} onChange={e => setNewRoom(p => ({ ...p, base_price: e.target.value }))} placeholder="e.g. 4500" />
+                  <AppInput label="Purchase Price / Night (our cost)" type="number" value={newRoom.purchase_price} onChange={e => setNewRoom(p => ({ ...p, purchase_price: e.target.value }))} placeholder="e.g. 3800" />
+                  <AppInput label="Tax / Night" type="number" value={newRoom.tax} onChange={e => setNewRoom(p => ({ ...p, tax: e.target.value }))} placeholder="e.g. 500" />
+                  <div className="fc-full-col fc-checkbox-row">
+                    <input type="checkbox" checked={newRoom.is_refundable} onChange={e => setNewRoom(p => ({ ...p, is_refundable: e.target.checked }))} id="pendingRoomRefundable2" className="fc-checkbox" />
+                    <label htmlFor="pendingRoomRefundable2" className="fc-checkbox-label">Refundable</label>
+                  </div>
+                </div>
+                <button type="button" className="btn btn-primary btn-sm" style={{ marginTop: 10 }} onClick={saveRoom} disabled={savingRoom}>
+                  <Plus size={14} /><span>{savingRoom ? 'Adding…' : 'Add Room'}</span>
+                </button>
+              </>
+            )}
           </div>
         )}
       </AppPopup>

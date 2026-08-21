@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { adminFetch } from '@/lib/api'
 import { StatCard } from '@/components/ui/StatCard'
 import { Ticket, TrendingUp, Users, Building2 } from 'lucide-react'
+import { AIRLINES } from '@/lib/airlines'
 
 type TabType = 'bookings' | 'featured' | 'manual' | 'settings'
 
@@ -99,6 +100,7 @@ export default function FixedFlightsPage() {
   const [editFlightId, setEditFlightId]  = useState<string | null>(null)
   const [flightSaving, setFlightSaving]  = useState(false)
   const [flightErr,    setFlightErr]     = useState('')
+  const [showAirlineSuggestions, setShowAirlineSuggestions] = useState(false)
 
   // Load on mount
   useEffect(() => {
@@ -584,10 +586,50 @@ export default function FixedFlightsPage() {
                       { key: 'price_per_seat', label: 'Price Per Seat (₹)', placeholder: '4999', type: 'number' },
                       { key: 'booking_deadline', label: 'Booking Deadline', placeholder: '', type: 'date' },
                     ].map(({ key, label, placeholder, type }) => (
-                      <div key={key} className={key === 'title' ? 'ff-span-2' : ''}>
-                        <label className="ff-field-label">{label}</label>
-                        <input type={type ?? 'text'} value={(flightForm as any)[key]} placeholder={placeholder} onChange={e => setFlightForm(f => ({ ...f, [key]: e.target.value }))} className="ff-field-input" />
-                      </div>
+                      key === 'airline_code' ? (
+                        <div key={key} style={{ position: 'relative' }}>
+                          <label className="ff-field-label">{label}</label>
+                          <input
+                            type="text"
+                            value={flightForm.airline_code}
+                            placeholder={placeholder}
+                            onChange={e => setFlightForm(f => ({ ...f, airline_code: e.target.value.toUpperCase() }))}
+                            onFocus={() => setShowAirlineSuggestions(true)}
+                            onBlur={() => setTimeout(() => setShowAirlineSuggestions(false), 150)}
+                            className="ff-field-input"
+                            autoComplete="off"
+                          />
+                          {showAirlineSuggestions && (() => {
+                            const q = flightForm.airline_code.trim().toLowerCase()
+                            const matches = (q
+                              ? AIRLINES.filter(a => a.code.toLowerCase().startsWith(q) || a.name.toLowerCase().includes(q))
+                              : AIRLINES
+                            ).slice(0, 8)
+                            if (!matches.length) return null
+                            return (
+                              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#1E293B', border: '1px solid #334155', borderRadius: 8, maxHeight: 220, overflowY: 'auto', zIndex: 20, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+                                {matches.map(a => (
+                                  <div
+                                    key={a.code}
+                                    onMouseDown={() => { setFlightForm(f => ({ ...f, airline_code: a.code, airline_name: a.name })); setShowAirlineSuggestions(false) }}
+                                    style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 13, color: '#F1F5F9' }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = '#334155')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                  >
+                                    <span>{a.name}</span>
+                                    <span style={{ color: '#64748B', fontFamily: 'monospace' }}>{a.code}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )
+                          })()}
+                        </div>
+                      ) : (
+                        <div key={key} className={key === 'title' ? 'ff-span-2' : ''}>
+                          <label className="ff-field-label">{label}</label>
+                          <input type={type ?? 'text'} value={(flightForm as any)[key]} placeholder={placeholder} onChange={e => setFlightForm(f => ({ ...f, [key]: e.target.value }))} className="ff-field-input" />
+                        </div>
+                      )
                     ))}
                   </div>
                   <div className="ff-modal-footer">

@@ -9,6 +9,11 @@ interface Notification {
 }
 interface Org { id: string; name: string }
 interface Agent { id: string; agency_name: string }
+interface Alert {
+  id: string; type: string; title: string; body: string
+  read_at: string | null; created_at: string
+  org?: { name: string } | null
+}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -30,6 +35,27 @@ export default function NotificationsPage() {
   const [loadError, setLoadError] = useState('')
   const [permissionDenied, setPermissionDenied] = useState(false)
 
+  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [alertsLoading, setAlertsLoading] = useState(true)
+
+  function loadAlerts() {
+    setAlertsLoading(true)
+    adminFetch('/api/admin/super/notifications/inbox')
+      .then(d => setAlerts(d.notifications ?? []))
+      .catch(() => {})
+      .finally(() => setAlertsLoading(false))
+  }
+
+  async function markAlertRead(id: string) {
+    await adminFetch('/api/admin/super/notifications/inbox', { method: 'PATCH', body: JSON.stringify({ id }) })
+    setAlerts(prev => prev.map(a => (a.id === id ? { ...a, read_at: new Date().toISOString() } : a)))
+  }
+
+  async function markAllAlertsRead() {
+    await adminFetch('/api/admin/super/notifications/inbox', { method: 'PATCH', body: JSON.stringify({ markAllRead: true }) })
+    setAlerts(prev => prev.map(a => ({ ...a, read_at: a.read_at ?? new Date().toISOString() })))
+  }
+
   function load() {
     setLoading(true); setLoadError(''); setPermissionDenied(false)
     adminFetch('/api/admin/super/notifications')
@@ -40,6 +66,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     load()
+    loadAlerts()
     adminFetch('/api/admin/super/orgs').then(d => setOrgs(d.orgs ?? [])).catch(() => {})
     adminFetch('/api/admin/super/agents').then(d => setAgents(d.agents ?? [])).catch(() => {})
   }, [])
@@ -72,6 +99,42 @@ export default function NotificationsPage() {
       </div>
       <div className="admin-content">
         <div className="page-stack">
+
+          <section className="table-card">
+            <div className="table-header">
+              <div>
+                <div className="card-title">Alerts {alerts.some(a => !a.read_at) && `(${alerts.filter(a => !a.read_at).length} unread)`}</div>
+                <div className="card-copy">Inbound events needing attention — new support tickets, wallet thresholds, and other system alerts.</div>
+              </div>
+              {alerts.some(a => !a.read_at) && (
+                <button className="btn btn-ghost btn-sm" onClick={markAllAlertsRead}>Mark All Read</button>
+              )}
+            </div>
+            <table>
+              <thead>
+                <tr><th>Received</th><th>Org</th><th>Title</th><th>Details</th><th></th></tr>
+              </thead>
+              <tbody>
+                {alertsLoading ? (
+                  <tr><td colSpan={5} className="empty-state">Loading…</td></tr>
+                ) : alerts.length === 0 ? (
+                  <tr><td colSpan={5} className="empty-state">No alerts yet.</td></tr>
+                ) : alerts.map(a => (
+                  <tr key={a.id} style={{ fontWeight: a.read_at ? 400 : 700 }}>
+                    <td style={{ whiteSpace: 'nowrap' }}>{formatDate(a.created_at)}</td>
+                    <td>{a.org?.name ?? '--'}</td>
+                    <td>{a.title}</td>
+                    <td style={{ color: '#6B7280', maxWidth: 320, fontWeight: 400 }}>{a.body}</td>
+                    <td>
+                      {!a.read_at && (
+                        <button className="btn btn-ghost btn-sm" onClick={() => markAlertRead(a.id)}>Mark Read</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
 
           <section className="table-card">
             <div className="table-header"><div><div className="card-title">Compose</div></div></div>

@@ -35,33 +35,59 @@ interface Transaction {
   reference: string
   created_at: string
   created_by?: string
+  category?: 'flight' | 'hotel' | 'cab' | 'bus' | 'train' | 'meal' | null
 }
 
-function fmt(paise: number) {
-  return `₹${(paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+// biz_wallets.balance / biz_wallet_transactions.amount are stored in plain
+// rupees — Razorpay's own API is paise-denominated, but that's converted
+// right at the boundary (backend's createOrder()/verify route), never here.
+function fmt(rupees: number) {
+  return `₹${rupees.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
 }
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+// Each month preset is a distinct bucket (that month only), not "from this
+// month onward" — `to` is the exclusive upper bound (1st of the next month).
 const MONTHS_NOW = (() => {
   const now = new Date()
   const m = now.getMonth()
   const y = now.getFullYear()
   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   const results = []
   for (let i = 0; i <= 3; i++) {
-    const d = new Date(y, m - i, 1)
-    results.push({ label: `${MONTHS[d.getMonth()]} ${d.getFullYear()}`, from: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01` })
+    const d    = new Date(y, m - i, 1)
+    const next = new Date(y, m - i + 1, 1)
+    results.push({ label: `${MONTHS[d.getMonth()]} ${d.getFullYear()}`, from: ymd(d), to: ymd(next) })
   }
-  results.push({ label: `Q1 ${y}`, from: `${y}-01-01` })
-  results.push({ label: 'All Dates', from: '' })
+  results.push({ label: `Q1 ${y}`, from: `${y}-01-01`, to: `${y}-04-01` })
+  results.push({ label: 'All Dates', from: '', to: '' })
   return results
 })()
 
 const TRIP_TYPES = ['Flights', 'Hotels', 'Cabs', 'Bus', 'Train', 'Meals']
 const RECHARGE_METHODS = ['Payment Gateway', 'Bank Transfer (Virtual A/C)', 'Manual Topup']
+
+// TRIP_TYPES label -> biz_wallet_transactions.category value.
+const TRIP_TYPE_TO_CATEGORY: Record<string, string> = {
+  Flights: 'flight', Hotels: 'hotel', Cabs: 'cab', Bus: 'bus', Train: 'train', Meals: 'meal',
+}
+
+// Recharge method has no dedicated column — only 'topup' rows have one at
+// all, and the two write paths (admin/biz/wallet's manual credit, and its
+// verify route's Razorpay-paid credit) each write a fixed, recognizable
+// description. "Bank Transfer (Virtual A/C)" has no write path yet — it'll
+// just never match anything, same as Bus/Train/Meals category having no
+// bookings yet.
+function rechargeMethodOf(tx: Transaction): string | null {
+  if (tx.type !== 'topup') return null
+  if (tx.description === 'Razorpay wallet recharge') return 'Payment Gateway'
+  if (tx.description?.startsWith('Manual top-up by')) return 'Manual Topup'
+  return null
+}
 
 const TYPE_LABELS: Record<string, string> = {
   topup: 'CREDIT',
@@ -177,7 +203,7 @@ export default function WalletPage() {
     setSearch('')
   }
 
-  const LOW_THRESHOLD = 500000 // ₹5,000
+  const LOW_THRESHOLD = 5000 // ₹5,000 (balance is plain rupees, not paise)
   const isLow = !loading && balance < LOW_THRESHOLD
 
   const filteredTransactions = transactions.filter((tx) => {
@@ -193,6 +219,20 @@ export default function WalletPage() {
       const isCredit = tx.type === 'topup' || tx.type === 'refund'
       if (txnType.includes('Debit') && !isDebit) return false
       if (txnType.includes('Credit') && !isCredit) return false
+    }
+    const preset = MONTHS_NOW.find((p) => p.label === datePreset)
+    if (preset?.from) {
+      const txDate = tx.created_at.slice(0, 10)
+      if (txDate < preset.from) return false
+      if (preset.to && txDate >= preset.to) return false
+    }
+    if (tripType.length > 0) {
+      const wantCategories = tripType.map((t) => TRIP_TYPE_TO_CATEGORY[t])
+      if (!tx.category || !wantCategories.includes(tx.category)) return false
+    }
+    if (rechargeMethod.length > 0) {
+      const method = rechargeMethodOf(tx)
+      if (!method || !rechargeMethod.includes(method)) return false
     }
     return true
   })

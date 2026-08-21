@@ -35,6 +35,9 @@ export default function EditOrgPage() {
   const [toppingUp,     setToppingUp]       = useState(false)
   const [topupError,    setTopupError]      = useState('')
   const [topupSuccess,  setTopupSuccess]    = useState(false)
+  const [savingCreditLimit, setSavingCreditLimit] = useState(false)
+  const [creditLimitSaved,  setCreditLimitSaved]  = useState(false)
+  const [creditLimitErr,    setCreditLimitErr]    = useState('')
 
   function loadWallet() {
     adminFetch('/api/admin/biz/wallet', { orgId: id })
@@ -199,6 +202,28 @@ export default function EditOrgPage() {
       setError(err.message)
     } finally {
       setSaving(false)
+    }
+  }
+
+  // Credit Limit already has an editable field further down the page in the
+  // main org-settings form (submitted via handleSave) — this is a second,
+  // focused save right in the Wallet card itself, since editing it from
+  // there meant scrolling away from Current Balance / Available to Spend
+  // with no direct way to change the one number that affects both.
+  async function saveCreditLimit() {
+    setSavingCreditLimit(true); setCreditLimitErr(''); setCreditLimitSaved(false)
+    try {
+      const d = await adminFetch(`/api/admin/super/orgs/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ creditLimit: Number(form.credit_limit || 0) }),
+      })
+      setOrg(d.org)
+      setCreditLimitSaved(true)
+      setTimeout(() => setCreditLimitSaved(false), 3000)
+    } catch (err: any) {
+      setCreditLimitErr(err.message ?? 'Failed to save')
+    } finally {
+      setSavingCreditLimit(false)
     }
   }
 
@@ -748,18 +773,32 @@ export default function EditOrgPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #f1f5f9' }}>
             <span style={{ fontSize: 13, color: '#64748b', fontWeight: 700 }}>Current Balance</span>
             <span style={{ fontSize: 20, fontWeight: 900, color: walletBalance !== null && walletBalance < 0 ? '#DC2626' : '#0f172a' }}>
+              {/* biz_wallets.balance is stored in plain rupees — Razorpay's own
+                  API is paise-denominated, but that's converted only at the
+                  Razorpay boundary (backend's createOrder()/verify route). */}
               {walletBalance === null ? '—' : `₹${walletBalance.toLocaleString('en-IN')}`}
             </span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #f1f5f9', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 13, color: '#64748b', fontWeight: 700 }}>Credit Limit</span>
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>
-              ₹{Number(form.credit_limit || 0).toLocaleString('en-IN')}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13, color: '#64748b' }}>₹</span>
+              <input
+                type="number" min="0" step="1000" value={form.credit_limit}
+                onChange={e => setForm(f => ({ ...f, credit_limit: e.target.value }))}
+                style={{ width: 120, padding: '6px 8px', borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 13, fontWeight: 700, textAlign: 'right' }}
+              />
+              <button type="button" className="btn btn-ghost btn-sm" disabled={savingCreditLimit} onClick={saveCreditLimit}>
+                {savingCreditLimit ? 'Saving…' : 'Save'}
+              </button>
+              {creditLimitSaved && <span style={{ color: '#16A34A', fontSize: 12, fontWeight: 700 }}>✓ Saved</span>}
+              {creditLimitErr && <span style={{ color: '#DC2626', fontSize: 12 }}>{creditLimitErr}</span>}
+            </div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #f1f5f9', marginBottom: 16 }}>
             <span style={{ fontSize: 13, color: '#64748b', fontWeight: 700 }}>Available to Spend</span>
             <span style={{ fontSize: 14, fontWeight: 800, color: '#15803D' }}>
+              {/* Both credit_limit and walletBalance are plain rupees — summed raw. */}
               ₹{((walletBalance ?? 0) + Number(form.credit_limit || 0)).toLocaleString('en-IN')}
             </span>
           </div>

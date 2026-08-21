@@ -51,6 +51,7 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
       { key: 'manage_members', label: 'Manage Members',     description: 'Add/remove/role-change org members', dangerous: true },
       { key: 'view_spend',     label: 'View Spend',         description: 'See org-level spend dashboard' },
       { key: 'view_approvals', label: 'View Approvals',     description: 'See all pending approval requests' },
+      { key: 'view_trip_requests', label: 'View Trip Requests', description: 'See all raised trip requests across orgs' },
       { key: 'toggle_active',  label: 'Toggle Org Active',  description: "Flip an org's active/inactive kill-switch", dangerous: true },
       { key: 'override_cap',   label: 'Override Cap',       description: "Directly override an org's cap/buffer as a logged emergency action", dangerous: true },
       { key: 'view_policy_audit_log', label: 'View Policy Audit Log', description: 'See who changed which org cap/buffer, and when' },
@@ -92,6 +93,9 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
       { key: 'manage_packages',     label: 'Manage Packages',      description: 'Curated holiday packages' },
       { key: 'edit_fixed_flights',  label: 'Edit Fixed Flights',   description: 'Manage Nexus/FareGuide featured routes' },
       { key: 'manage_visa',         label: 'Manage Visa Pages',    description: 'Create/edit visa content pages and respond to visa enquiries' },
+      { key: 'manage_offline_hotels', label: 'Manage Offline Hotels', description: 'Manage direct tie-up hotel inventory (add/edit hotels, rooms, rates)' },
+      { key: 'manage_offline_hotel_bookings', label: 'Manage Offline Hotel Bookings', description: 'Review pending offline hotel booking requests and confirm/reject them' },
+      { key: 'manage_traveller_stories', label: 'Manage Traveller Stories', description: 'Review and approve/reject user-submitted travel stories' },
     ],
   },
   {
@@ -126,6 +130,12 @@ export const SUPER_ADMIN_MODULES: ModuleDef[] = [
       { key: 'manage_admin_staff', label: 'Manage Admin Staff', description: 'Assign/remove which AirDunia staff manage which orgs', dangerous: true },
       { key: 'view_provider_health', label: 'View Provider Health', description: 'Monitor supplier API errors, webhook delivery, and PNR sync health' },
       { key: 'resolve_provider_issues', label: 'Resolve Provider Issues', description: 'Resolve PNR mismatches and failed bookings', dangerous: true },
+    ],
+  },
+  {
+    key: 'notification', label: 'Notification Module', icon: '📣',
+    permissions: [
+      { key: 'send_notification', label: 'Send Notification', description: 'Email a targeted message to one org, one agent, or all B2C users' },
     ],
   },
 ]
@@ -187,6 +197,7 @@ export const BIZ_MODULES: ModuleDef[] = [
     permissions: [
       { key: 'view_invoices',    label: 'View Invoices',    description: 'Download booking invoices' },
       { key: 'view_wallet',      label: 'View Wallet',      description: 'See org prepaid wallet balance' },
+      { key: 'use_wallet',       label: 'Use Wallet',       description: 'Pay for bookings using the org prepaid wallet' },
     ],
   },
   {

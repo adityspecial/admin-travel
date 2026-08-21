@@ -33,6 +33,7 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   approval_decision: <CheckCircle2 size={16} />,
   policy_violation: <ShieldAlert size={16} />,
   wallet_low: <Wallet size={16} />,
+  wallet_topup: <Wallet size={16} />,
   blackout_warning: <CalendarOff size={16} />,
 }
 

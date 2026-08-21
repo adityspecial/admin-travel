@@ -55,6 +55,7 @@ export interface NavbarProps {
   navItems?: NavItem[]
   userEmail?: string
   pendingCount?: number
+  notificationsCount?: number
   walletBalance?: number
   walletHref?: string
   promoBalance?: number
@@ -75,6 +76,7 @@ export default function Navbar({
   navItems,
   userEmail = '',
   pendingCount = 0,
+  notificationsCount = 0,
   walletBalance,
   walletHref = '/biz/wallet',
   promoBalance,
@@ -143,7 +145,7 @@ export default function Navbar({
     {
       label: 'Notifications',
       href: '/biz/notifications',
-      badge: pendingCount > 0 ? String(pendingCount) : undefined,
+      badge: notificationsCount > 0 ? String(notificationsCount) : undefined,
       Icon: Bell,
     },
     {

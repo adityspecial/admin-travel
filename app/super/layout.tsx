@@ -28,6 +28,7 @@ import {
   ScrollText,
   AlertTriangle,
   TrendingUp,
+  Wrench,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -106,6 +107,8 @@ const NAV: NavEntry[] = [
       { href: '/super/payments', label: 'Razorpay Payments', Icon: CreditCard },
       { href: '/super/refunds',  label: 'Refund Aging',      Icon: CreditCard },
       { href: '/super/consumer', label: 'Fee Settings',      Icon: BadgePercent },
+      { href: '/super/manual-fulfillment', label: 'Manual Fulfillment Rules', Icon: Wrench },
+      { href: '/super/manual-fulfillment-queue', label: 'Manual Fulfillment Queue', Icon: ClipboardList },
     ],
   },
   {

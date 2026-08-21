@@ -11,6 +11,7 @@ export default function BizAdminLayout({ children }: { children: React.ReactNode
   const checked  = useRef(false)
   const [email, setEmail] = useState('')
   const [pendingCount, setPendingCount] = useState(0)
+  const [notificationsCount, setNotificationsCount] = useState(0)
   const [logoUrl, setLogoUrl] = useState('')
   const [promoBalance, setPromoBalance] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
@@ -72,6 +73,19 @@ export default function BizAdminLayout({ children }: { children: React.ReactNode
     return () => clearInterval(id)
   }, [])
 
+  useEffect(() => {
+    function poll() {
+      const token = sessionStorage.getItem('admin_dev_token')
+      if (!token) return
+      adminFetch('/api/admin/biz/notifications?unread=true')
+        .then(d => setNotificationsCount(d.unreadCount ?? 0))
+        .catch(() => {})
+    }
+    poll()
+    const id = setInterval(poll, 30000)
+    return () => clearInterval(id)
+  }, [])
+
   async function logout() {
     sessionStorage.removeItem('admin_dev_token')
     await supabase.auth.signOut()
@@ -84,6 +98,7 @@ export default function BizAdminLayout({ children }: { children: React.ReactNode
       <Navbar
         userEmail={email}
         pendingCount={pendingCount}
+        notificationsCount={notificationsCount}
         logoUrl={logoUrl}
         promoBalance={promoBalance}
         onLogout={logout}

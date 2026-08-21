@@ -1927,6 +1927,17 @@
   cursor: pointer;
 }
 
+.oh-status-toggle-btn {
+  border: none;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.oh-status-toggle-btn:hover {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
 .fc-alert {
   border-radius: 12px;
   padding: 12px 16px;
@@ -3181,6 +3192,16 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
+}
+
+/* Some labels here wrap to 2 lines ("International Flight Cap...") while
+   most stay on 1 — without a reserved height, each input starts right under
+   its own label, so inputs in the same row land at different Y positions.
+   Scoped to this grid only, not AppInput's shared CSS, since most other
+   forms in the app don't have this label-length mismatch. */
+.orgs-caps-grid .app-input-label {
+  min-height: 34px;
+  align-items: flex-start;
 }
 
 .orgs-checkbox-row {

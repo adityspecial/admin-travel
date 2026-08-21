@@ -70,7 +70,7 @@ export default function BizDashboard() {
   }, [])
 
   const s          = reports?.summary
-  const walletBal  = (wallet?.balance ?? 0) / 100
+  const walletBal  = wallet?.balance ?? 0
   const byType     = reports?.byType ?? []
   const travellers = (reports?.byEmployee ?? []).slice(0, 5)
 
